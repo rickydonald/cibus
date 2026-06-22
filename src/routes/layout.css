@@ -1,0 +1,29 @@
+@import 'tailwindcss';
+
+:root {
+    --safe-area-inset-top: env(safe-area-inset-top, 0px);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-inset-left: env(safe-area-inset-left, 0px);
+    --safe-area-inset-right: env(safe-area-inset-right, 0px);
+}
+
+@theme inline {
+    --font-geist-mono: "Geist Mono", monospace;
+}
+
+@layer utilities {
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .safe-top-offset {
+        padding-top: calc(env(safe-area-inset-top, 0px) + 1rem);
+    }
+}
+
+body {
+    font-family: "Plus Jakarta Sans", sans-serif;
+}
