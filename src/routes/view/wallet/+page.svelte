@@ -1,11 +1,12 @@
 <script lang="ts">
-    import { ArrowLeftIcon } from "@untitled-theme/icons-svelte";
-    import { onMount } from "svelte";
+    import { ArrowLeftIcon, XCircleIcon } from "@untitled-theme/icons-svelte";
+    import { onMount, onDestroy } from "svelte";
     import {
         fetchEatRight,
         redirectIfEatRightConnectRequired,
     } from "$lib/utils/eatright-client";
     import { toast } from "svelte-sonner";
+    import { browser } from "$app/env";
 
     type WalletTransaction = {
         date: string;
@@ -24,7 +25,6 @@
     let error = $state("");
     let message = $state("");
 
-    // High performance split helper
     function splitPrice(value: number | string | null) {
         const num = Number(value);
         if (!Number.isFinite(num)) return { main: "--", decimal: "00" };
@@ -32,10 +32,8 @@
         return { main, decimal };
     }
 
-    // High performance derived computations for primary balance representation
     let displayBalance = $derived(splitPrice(walletBalance));
 
-    // Fast static hash map lookup for transaction styling classes
     const TRANSACTION_THEMES: Record<string, string> = {
         CREDIT: "text-emerald-600 font-bold",
         DEBIT: "text-neutral-900 font-bold",
@@ -105,41 +103,114 @@
 
     let paymentTabRef: Window | null = null;
     let isPolling = $state(false);
-    let pollInterval: ReturnType<typeof setInterval> | null = null;
+
+    // Polling Control Machine Properties
+    let pollTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    let absoluteTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    let isFetchFlightActive = false;
+    let currentBaselineBalance = 0;
+    let currentPollDelay = 2500;
+
+    async function checkPaymentStatus() {
+        // Halt processing if cycle is terminated or an existing query flight is ongoing
+        if (!isPolling || isFetchFlightActive) return;
+
+        isFetchFlightActive = true;
+        try {
+            const res = await fetchEatRight("/api/v1/account/show");
+            const data = await res.json();
+
+            if (res.ok && !data.error && isPolling) {
+                const newBalance = Number(data.walletBalance ?? 0);
+                if (newBalance > currentBaselineBalance) {
+                    cleanUpPaymentCycle();
+                    walletBalance = data.walletBalance;
+                    message = "Payment completed successfully!";
+                    amount = "";
+                    await loadWallet();
+                    return;
+                }
+            }
+        } catch {
+            // Silently swallow network exceptions during transit drops
+        } finally {
+            isFetchFlightActive = false;
+        }
+
+        // Schedule next poll interval step with incremental backoff delay ceiling at 6s
+        if (isPolling) {
+            currentPollDelay = Math.min(currentPollDelay + 1000, 6000);
+            pollTimeoutId = setTimeout(checkPaymentStatus, currentPollDelay);
+        }
+    }
+
+    // Instantly checks balance the microsecond user refocuses back to our app tab
+    function handleVisibilityCheck() {
+        if (document.visibilityState === "visible" && isPolling) {
+            // Clear planned timer to avoid double concurrent runs
+            if (pollTimeoutId) clearTimeout(pollTimeoutId);
+            checkPaymentStatus();
+        }
+    }
 
     function startPolling(baselineBalance: number) {
+        cleanUpPaymentCycle(); // Reset any dirty artifacts
+
         isPolling = true;
+        currentBaselineBalance = baselineBalance;
+        currentPollDelay = 2500; // Fast initial trigger cadence
         message = "Processing payment...";
 
-        pollInterval = setInterval(async () => {
-            try {
-                const res = await fetchEatRight("/api/v1/account/show");
-                const data = await res.json();
-                if (res.ok && !data.error) {
-                    const newBalance = Number(data.walletBalance ?? 0);
-                    if (newBalance > baselineBalance) {
-                        clearInterval(pollInterval!);
-                        isPolling = false;
-                        walletBalance = data.walletBalance;
-                        message = "Payment completed successfully!";
-                        amount = "";
-                        paymentTabRef?.close();
-                        await loadWallet();
-                    }
-                }
-            } catch {
-                // ignore
-            }
-        }, 3000);
+        // Register window visual state hook listeners
+        document.addEventListener("visibilitychange", handleVisibilityCheck);
 
-        setTimeout(() => {
-            clearInterval(pollInterval!);
-            isPolling = false;
-            if (message === "Processing payment...") {
-                message =
-                    "Payment window timed out. Please check your balance.";
+        // Fire off initial check sequence line
+        pollTimeoutId = setTimeout(checkPaymentStatus, currentPollDelay);
+
+        // Absolute hard boundary global timeout fallback guard (2 minutes)
+        absoluteTimeoutId = setTimeout(() => {
+            if (isPolling) {
+                cleanUpPaymentCycle();
+                error = "Payment window timed out. Please check your balance.";
             }
         }, 120000);
+    }
+
+    function cancelPayment() {
+        cleanUpPaymentCycle();
+        error = "Payment initialized was cancelled by user.";
+        toast.error("Payment cancelled");
+    }
+
+    function cleanUpPaymentCycle() {
+        if (pollTimeoutId) clearTimeout(pollTimeoutId);
+        if (absoluteTimeoutId) clearTimeout(absoluteTimeoutId);
+
+        pollTimeoutId = null;
+        absoluteTimeoutId = null;
+        isPolling = false;
+        isSubmitting = false;
+        isFetchFlightActive = false;
+        message = "";
+
+        if (browser) {
+            document.removeEventListener(
+                "visibilitychange",
+                handleVisibilityCheck,
+            );
+
+            try {
+                if (paymentTabRef && !paymentTabRef.closed) {
+                    paymentTabRef.close();
+                }
+            } catch {
+                // Protection against cross-origin context locks
+            }
+        }
+        paymentTabRef = null;
+        if (browser) {
+            localStorage.removeItem("eatright:pending_payment");
+        }
     }
 
     async function rechargeWallet() {
@@ -182,6 +253,7 @@
                     return;
                 error =
                     data.error ?? data.message ?? "Unable to start recharge.";
+                isSubmitting = false;
                 return;
             }
 
@@ -207,16 +279,17 @@
             if (data.status === "success") {
                 message = data.message ?? "Recharge updated.";
                 amount = "";
+                isSubmitting = false;
                 toast.success(message, { duration: 3000 });
                 await loadWallet();
                 return;
             }
 
             error = data.message ?? "Unable to start recharge.";
+            isSubmitting = false;
         } catch {
             paymentTabRef?.close();
             error = "Unable to reach EatRight wallet.";
-        } finally {
             isSubmitting = false;
         }
     }
@@ -247,10 +320,13 @@
             loadWallet();
         }
     });
+
+    onDestroy(() => {
+        cleanUpPaymentCycle();
+    });
 </script>
 
 <div class="min-h-screen bg-[#F4F5F7] text-neutral-900 antialiased font-sans">
-    <!-- Header -->
     <div
         class="sticky top-0 z-20 bg-[#F4F5F7]/80 backdrop-blur-md border-b border-neutral-200/30"
     >
@@ -277,7 +353,6 @@
     </div>
 
     <div class="px-4 pb-12 max-w-md mx-auto space-y-5 pt-4">
-        <!-- Premium Balance Card -->
         <section
             class="overflow-hidden rounded-3xl bg-neutral-950 p-6 text-white shadow-[0_8px_30px_rgb(0,0,0,0.06)] relative"
         >
@@ -311,7 +386,6 @@
             </div>
         </section>
 
-        <!-- Recharge Interface -->
         <section
             class="rounded-3xl border border-neutral-200/50 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)]"
         >
@@ -334,35 +408,48 @@
                         step="0.01"
                         inputmode="decimal"
                         bind:value={amount}
-                        class="w-full rounded-2xl border border-neutral-200 bg-neutral-50 pl-9 pr-4 py-3.5 text-base font-bold outline-none focus:border-neutral-900 focus:bg-white transition-all tracking-wide"
+                        disabled={isSubmitting || isPolling}
+                        class="w-full rounded-2xl border border-neutral-200 bg-neutral-50 pl-9 pr-4 py-3.5 text-base font-bold outline-none focus:border-neutral-900 focus:bg-white transition-all tracking-wide disabled:opacity-50"
                         placeholder="0.00"
                     />
                 </div>
 
-                <!-- Quick Selection Chips -->
                 <div class="flex gap-2">
-                    {#each [100, 200, 500] as value}
+                    {#each [20, 50, 100] as value}
                         <button
                             onclick={() => quickSelect(value)}
-                            class="flex-1 rounded-xl border border-neutral-200/80 bg-white py-2 text-xs font-bold text-neutral-600 transition hover:bg-neutral-50 active:scale-95"
+                            disabled={isSubmitting || isPolling}
+                            class="flex-1 rounded-xl border border-neutral-200/80 bg-white py-2 text-xs font-bold text-neutral-600 transition hover:bg-neutral-50 active:scale-95 disabled:opacity-50"
                         >
-                            +{value}
+                            + ₹{value}
                         </button>
                     {/each}
                 </div>
             </div>
 
-            <button
-                class="mt-5 w-full rounded-2xl bg-neutral-900 py-4 font-bold text-sm text-white shadow-sm transition disabled:opacity-40 active:scale-[0.99]"
-                onclick={rechargeWallet}
-                disabled={isSubmitting || isPolling}
-            >
-                {isPolling
-                    ? "Waiting for Payment..."
-                    : isSubmitting
-                      ? "Starting Payment..."
-                      : "Add Money"}
-            </button>
+            <div class="flex flex-col gap-2 mt-5">
+                <button
+                    class="w-full rounded-2xl bg-neutral-900 py-4 font-bold text-sm text-white shadow-sm transition disabled:opacity-40 active:scale-[0.99]"
+                    onclick={rechargeWallet}
+                    disabled={isSubmitting}
+                >
+                    {isPolling
+                        ? "Waiting for Payment..."
+                        : isSubmitting
+                          ? "Starting Payment..."
+                          : "Add Money"}
+                </button>
+
+                {#if isSubmitting || isPolling}
+                    <button
+                        onclick={cancelPayment}
+                        class="w-full flex items-center justify-center gap-2 rounded-2xl bg-rose-50 border border-rose-200/60 py-3 text-sm font-semibold text-rose-600 hover:bg-rose-100/80 transition active:scale-[0.99]"
+                    >
+                        <XCircleIcon class="h-4 w-4" />
+                        Cancel Transaction
+                    </button>
+                {/if}
+            </div>
 
             {#if error || message}
                 <div
@@ -373,7 +460,6 @@
             {/if}
         </section>
 
-        <!-- Transactions Section -->
         <section class="space-y-3">
             <div class="px-1">
                 <h2
@@ -454,3 +540,15 @@
         </section>
     </div>
 </div>
+
+<style>
+    :global(body) {
+        background: #f5f5f7;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+</style>

@@ -292,7 +292,7 @@
                                 >
                                     Items Ordered
                                 </p>
-                                <div class="divide-y divide-neutral-50">
+                                <div class="divide-y divide-neutral-100">
                                     {#each order.items as item}
                                         <div
                                             class="flex items-start justify-between gap-4 py-2.5 first:pt-0 last:pb-0"
