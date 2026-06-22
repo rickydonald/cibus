@@ -2,7 +2,7 @@
     import LoyolaLogo from "$lib/assets/logos/loyola-logo.webp";
     import { Constants } from "$lib/constants";
     import RegistrationSwitch from "$lib/components/custom/RegistrationSwitch.svelte";
-    import { Bottomsheet, Longsheet } from "@devantic/diaper";
+    import { Bottomsheet } from "@devantic/diaper";
 
     let userType: "student" | "staff" | "guest" = $state("student");
     let showOtpSheet = $state(false);

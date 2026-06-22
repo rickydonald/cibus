@@ -6,6 +6,7 @@
         ChevronRightIcon,
         SearchMdIcon,
         ShoppingCart01Icon,
+        UserCircleIcon,
         Wallet01Icon,
         XCircleIcon,
     } from "@untitled-theme/icons-svelte";
@@ -29,6 +30,7 @@
     import juice from "$lib/assets/outlet-icons/bakery.svg";
     import organic from "$lib/assets/outlet-icons/ricebowl.svg";
     import fries from "$lib/assets/outlet-icons/fries.svg";
+    import Bottomsheet from "@devantic/diaper";
 
     const outletIcons: Record<string, string> = {
         "1": momo,
@@ -69,6 +71,8 @@
         grand_total: number;
         order_status: string;
     };
+
+    let isAccountSheetOpen: boolean = $state(false);
 
     let recentOrder = $state<RecentOrder | null>(null);
     let isRecentOrderLoading = $state(true);
@@ -153,9 +157,22 @@
     <div class="safe-top-offset text-neutral-900 antialiased font-sans">
         <div class="min-h-screen w-full">
             <ContentWrapper>
+                <div class="flex items-baseline justify-end-safe mr-5">
+                    <button
+                        onclick={() =>
+                            (isAccountSheetOpen = !isAccountSheetOpen)}
+                    >
+                        <UserCircleIcon
+                            width="28"
+                            height="28"
+                            color=""
+                            class="text-neutral-500"
+                        />
+                    </button>
+                </div>
                 <!-- Wallet Panel Tray -->
                 <div
-                    class="pt-12 px-5 border-b border-neutral-300/80 bg-gradient-to-b from-neutral-100 via-neutral-50 to-[#f5f5f7] relative max-w-md mx-auto sm:rounded-b-[32px]"
+                    class="pt-8 px-5 border-b border-neutral-300/80 bg-gradient-to-b from-neutral-100 via-neutral-50 to-[#f5f5f7] relative max-w-md mx-auto sm:rounded-b-[32px]"
                 >
                     <div class="flex flex-col items-center justify-center">
                         <p
@@ -381,6 +398,89 @@
         {/if}
     </div>
 </MainContainer>
+
+<Bottomsheet
+    bind:open={isAccountSheetOpen}
+    height="auto"
+    class="bg-white! text-black!"
+>
+    <div class="px-6 pt-5 pb-8 space-y-6">
+        <!-- Header / Profile Information Section -->
+        <div class="flex items-center gap-4 pb-2 border-b border-neutral-100">
+            <!-- Avatar Placeholder with initials -->
+            <div
+                class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-sm font-bold text-white uppercase"
+            >
+                RD
+            </div>
+
+            <div class="min-w-0">
+                <h3
+                    class="text-base font-bold tracking-tight text-neutral-900 truncate"
+                >
+                    {accountDetails?.user ?? "RICKY DONALD R(25-PCS-018)"}
+                </h3>
+                <p class="text-xs text-neutral-500 font-medium mt-0.5">
+                    Authorized Staff Profile
+                </p>
+            </div>
+        </div>
+
+        <!-- Meta Identity Attributes -->
+        <div class="grid grid-cols-2 gap-3">
+            <div
+                class="rounded-2xl bg-neutral-50 p-4 border border-neutral-100"
+            >
+                <span
+                    class="block text-[10px] font-bold uppercase tracking-wider text-neutral-400"
+                >
+                    Department No.
+                </span>
+                <span class="block text-sm font-bold text-neutral-800 mt-1">
+                    PCS
+                </span>
+            </div>
+
+            <div
+                class="rounded-2xl bg-neutral-50 p-4 border border-neutral-100"
+            >
+                <span
+                    class="block text-[10px] font-bold uppercase tracking-wider text-neutral-400"
+                >
+                    Staff Identifier
+                </span>
+                <span
+                    class="block text-sm font-mono font-bold text-neutral-800 mt-1"
+                >
+                    #25-PCS-018
+                </span>
+            </div>
+        </div>
+
+        <!-- Action Grid List -->
+        <div class="pt-2">
+            <button
+                class="w-full flex items-center justify-center gap-2.5 rounded-2xl bg-rose-50 border border-rose-100 py-3.5 text-sm font-bold text-rose-600 transition-all hover:bg-rose-100/60 active:scale-[0.99]"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                    stroke="currentColor"
+                    class="w-4 h-4"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75"
+                    />
+                </svg>
+                Sign Out Account
+            </button>
+        </div>
+    </div>
+</Bottomsheet>
 
 <style>
     :global(body) {
