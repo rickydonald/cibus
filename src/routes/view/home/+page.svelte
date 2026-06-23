@@ -21,6 +21,11 @@
     } from "$lib/utils/eatright-client";
 
     import { cart } from "$lib/store/cart.svelte";
+
+    async function disconnectEatRight() {
+        await fetch("/api/v1/disconnect", { method: "POST" });
+        await goto("/login");
+    }
     import momo from "$lib/assets/outlet-icons/dumpling.svg";
     import fish from "$lib/assets/outlet-icons/fish.svg";
     import hotpot from "$lib/assets/outlet-icons/hotbowl.svg";
@@ -366,6 +371,16 @@
                     {/if}
                 </div>
             </ContentWrapper>
+        </div>
+
+        <!-- Disconnect -->
+        <div class="mt-8 mb-4 flex justify-center">
+            <button
+                onclick={disconnectEatRight}
+                class="text-xs text-neutral-400 hover:text-red-500 transition-colors underline underline-offset-2"
+            >
+                Disconnect EatRight account
+            </button>
         </div>
 
         <!-- Sticky Bottom Floating Action Overlay Tray -->

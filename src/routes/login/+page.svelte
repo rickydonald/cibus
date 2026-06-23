@@ -1,9 +1,11 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
+    import { page } from "$app/state";
     import LoyolaLogo from "$lib/assets/logos/loyola-logo.webp";
     import { Constants } from "$lib/constants";
 
     let showPassword: boolean = $state(false);
+    let redirectTo = $derived(page.url.searchParams.get("redirect") ?? "");
 
     let userId: string = $state("");
     let password: string = $state("");
@@ -46,7 +48,7 @@
             return;
         }
 
-        await goto(res.redirectUrl);
+        await goto(redirectTo || res.redirectUrl);
     }
 </script>
 
