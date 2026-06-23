@@ -150,6 +150,16 @@ class CartStore {
   }
 
   /**
+   * Removes all items belonging to a specific outlet
+   */
+  removeByOutlet(outletName: string) {
+    this.items = this.items.filter(
+      (item) => item.outletname !== outletName,
+    );
+    this.persist();
+  }
+
+  /**
    * Method to clear the cart
    */
   clear() {

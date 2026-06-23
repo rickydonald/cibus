@@ -330,7 +330,7 @@
     });
 </script>
 
-<div class="min-h-screen bg-[#F4F5F7] text-neutral-900 antialiased font-sans">
+<div class="min-h-screen bg-[#F4F5F7] text-neutral-900 antialiased">
     <div
         class="sticky top-0 z-20 bg-[#F4F5F7]/80 backdrop-blur-md border-b border-neutral-200/30"
     >
@@ -394,7 +394,7 @@
             class="rounded-3xl border border-neutral-200/50 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)]"
         >
             <h2
-                class="text-sm font-bold tracking-tight text-neutral-400 uppercase tracking-wider"
+                class="text-sm font-bold pl-1 text-neutral-400 uppercase tracking-wider"
             >
                 Recharge Wallet
             </h2>
@@ -406,6 +406,7 @@
                         >₹</span
                     >
                     <input
+                        id="money_input"
                         type="number"
                         min="1"
                         max="1000"
@@ -465,13 +466,11 @@
         </section>
 
         <section class="space-y-3">
-            <div class="px-1">
-                <h2
-                    class="text-sm font-bold tracking-tight text-neutral-400 uppercase tracking-wider"
-                >
-                    Transaction History
-                </h2>
-            </div>
+            <h2
+                class="text-sm font-bold pl-5 text-neutral-400 uppercase tracking-wider"
+            >
+                Transaction History
+            </h2>
 
             {#if isLoading}
                 <div class="space-y-3">

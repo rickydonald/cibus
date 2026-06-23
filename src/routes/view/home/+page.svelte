@@ -4,6 +4,7 @@
 
     import {
         ChevronRightIcon,
+        LogOut01Icon,
         SearchMdIcon,
         ShoppingCart01Icon,
         UserCircleIcon,
@@ -35,6 +36,7 @@
     import juice from "$lib/assets/outlet-icons/bakery.svg";
     import organic from "$lib/assets/outlet-icons/ricebowl.svg";
     import fries from "$lib/assets/outlet-icons/fries.svg";
+    import FloatingCartBar from "$lib/components/custom/FloatingCartBar.svelte";
 
     const outletIcons: Record<string, string> = {
         "1": momo,
@@ -158,15 +160,14 @@
 </script>
 
 <MainContainer>
-    <div class="safe-top-offset text-neutral-900 antialiased font-sans">
+    <div class="safe-top-offset text-neutral-900 antialiased ">
         <div class="min-h-screen w-full">
             <ContentWrapper>
                 <div class="flex items-baseline justify-end-safe mr-5">
                     <button
-                        onclick={() =>
-                            (isAccountSheetOpen = !isAccountSheetOpen)}
+                        onclick={disconnectEatRight}
                     >
-                        <UserCircleIcon
+                        <LogOut01Icon
                             width="28"
                             height="28"
                             color=""
@@ -223,7 +224,7 @@
 
                     <!-- Balanced Navigation Action Layout (50/50 Symmetrical Split) -->
                     <div
-                        class="mt-10 flex items-center justify-between pb-4 gap-3"
+                        class="mt-12 flex items-center justify-between pb-4 gap-3"
                     >
                         <button
                             onclick={() => goto("/view/history")}
@@ -373,42 +374,9 @@
             </ContentWrapper>
         </div>
 
-        <!-- Disconnect -->
-        <div class="mt-8 mb-4 flex justify-center">
-            <button
-                onclick={disconnectEatRight}
-                class="text-xs text-neutral-400 hover:text-red-500 transition-colors underline underline-offset-2"
-            >
-                Disconnect EatRight account
-            </button>
-        </div>
-
         <!-- Sticky Bottom Floating Action Overlay Tray -->
         {#if cart.totalItems > 0}
-            <div class="fixed bottom-6 left-0 right-0 z-50 px-5">
-                <a
-                    href="/view/cart"
-                    class="mx-auto flex max-w-sm items-center justify-between rounded-2xl bg-neutral-950 px-5 py-4 text-white shadow-xl hover:bg-neutral-900 active:scale-98 transition border border-white/5"
-                >
-                    <div class="flex items-center gap-2.5">
-                        <div
-                            class="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10"
-                        >
-                            <ShoppingCart01Icon class="h-4 w-4 text-white" />
-                        </div>
-                        <span class="text-sm font-medium text-neutral-200"
-                            >{cart.totalItems}
-                            {cart.totalItems === 1 ? "item" : "items"} ready</span
-                        >
-                    </div>
-
-                    <div
-                        class="text-sm font-semibold tracking-tight text-white tabular-nums"
-                    >
-                        ₹{cart.totalAmount}
-                    </div>
-                </a>
-            </div>
+            <FloatingCartBar />
         {/if}
     </div>
 </MainContainer>

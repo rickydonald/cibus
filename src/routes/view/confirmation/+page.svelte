@@ -117,7 +117,7 @@
     });
 </script>
 
-<div class="min-h-screen bg-[#F4F5F7] text-neutral-900 antialiased font-sans">
+<div class="min-h-screen bg-[#F4F5F7] text-neutral-900 antialiased ">
     <!-- Header Navigation -->
     <div
         class="sticky top-0 z-20 bg-[#F4F5F7]/80 backdrop-blur-md border-b border-neutral-200/30"
