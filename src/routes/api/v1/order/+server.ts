@@ -233,7 +233,7 @@ export async function POST({ request, cookies }) {
     orders: placedOrders,
     grandTotal,
     payment,
-    redirectUrl: `/view/eatright/confirmation?${placedOrders
+    redirectUrl: `/view/confirmation?${placedOrders
       .map((order) => `order_no=${encodeURIComponent(order.order_no)}&outletid=${encodeURIComponent(order.outletid)}`)
       .join("&")}`,
   });
