@@ -1,7 +1,22 @@
 import { json } from "@sveltejs/kit";
 import { resolveEatRightSession } from "$lib/server/eatright";
+import { DEV_MODE } from "$lib/server/dev";
 
 export async function GET({cookies}) {
+  if (DEV_MODE) {
+    return json({
+      orders: [
+        {
+          order_no: "DEV-001",
+          outletid: "1",
+          outletname: "Momo's Kitchen",
+          grand_total: 240,
+          order_status: "Delivered",
+        },
+      ],
+    });
+  }
+
   const session = await resolveEatRightSession({
     cookies,
   });

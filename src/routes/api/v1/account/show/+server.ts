@@ -1,11 +1,23 @@
 import { json } from "@sveltejs/kit";
 import { resolveEatRightSession } from "$lib/server/eatright";
+import { DEV_MODE } from "$lib/server/dev";
 import * as cheerio from "cheerio";
 
 const PAGE_CONTROLLER_URL = "https://eatright.loyolacollege.edu/pagecontroller.jsp";
 const USER_AGENT = "Mozilla/5.0";
 
 export async function GET({cookies}) {
+  if (DEV_MODE) {
+    return json({
+      user: "Dev User",
+      walletBalance: "250.00",
+      outlets: [
+        { id: 1, name: "Momo's Kitchen", shopNo: 1, isClosed: false },
+        { id: 2, name: "Fish Fry Center", shopNo: 2, isClosed: false },
+      ],
+    });
+  }
+
   const session = await resolveEatRightSession({
     cookies,
   });

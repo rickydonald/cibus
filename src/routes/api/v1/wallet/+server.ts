@@ -1,5 +1,6 @@
 import { json } from "@sveltejs/kit";
 import { resolveEatRightSession } from "$lib/server/eatright";
+import { DEV_MODE } from "$lib/server/dev";
 
 const BASE_URL = "https://eatright.loyolacollege.edu";
 const DEPOSIT_URL = `${BASE_URL}/ajax/DepositAjax.jsp`;
@@ -27,7 +28,17 @@ function parseEatRightJson(text: string) {
   }
 }
 
+const DEV_TRANSACTIONS = [
+  { date: "2026-06-22 10:30 AM", amount: 200, balance: 250, sort_time: 1719045000, type: "CREDIT", remarks: "Online Recharge" },
+  { date: "2026-06-21 02:15 PM", amount: 120, balance: 50, sort_time: 1718958000, type: "DEBIT", remarks: "Chicken Momo - Steamed" },
+  { date: "2026-06-20 12:00 PM", amount: 50, balance: 170, sort_time: 1718870400, type: "CREDIT", remarks: "Online Recharge" },
+];
+
 export async function GET({ cookies }) {
+  if (DEV_MODE) {
+    return json({ transactions: DEV_TRANSACTIONS });
+  }
+
   const session = await resolveEatRightSession({
     cookies,
   });
@@ -70,14 +81,6 @@ export async function GET({ cookies }) {
 }
 
 export async function POST({ request, cookies }) {
-  const session = await resolveEatRightSession({
-    cookies,
-  });
-  if (!session.ok) {
-    return session.response;
-  }
-
-  const { cookieHeader } = session;
   const { amount, confirmAmount } = await request.json();
   const depositAmount = Number(amount);
   const confirmedAmount = Number(confirmAmount);
@@ -97,6 +100,19 @@ export async function POST({ request, cookies }) {
       { status: 400 },
     );
   }
+
+  if (DEV_MODE) {
+    return json({ status: "success", message: "Dev recharge successful" });
+  }
+
+  const session = await resolveEatRightSession({
+    cookies,
+  });
+  if (!session.ok) {
+    return session.response;
+  }
+
+  const { cookieHeader } = session;
 
   const form = new URLSearchParams({
     action: "insert",

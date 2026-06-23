@@ -1,5 +1,6 @@
 import { json } from "@sveltejs/kit";
 import { resolveEatRightSession, getEatRightSession } from "$lib/server/eatright";
+import { DEV_MODE } from "$lib/server/dev";
 
 const BASE_URL = "https://eatright.loyolacollege.edu";
 const REFERER = `${BASE_URL}/pagecontroller.jsp`;
@@ -86,6 +87,18 @@ export async function POST({ request, cookies }) {
   }: {
     cart: OrderItem[];
   } = await request.json();
+
+  if (DEV_MODE) {
+    return json({
+      success: true,
+      orders: (cart ?? []).length > 0
+        ? [{ order_no: "DEV-" + Date.now(), outletid: cart[0]?.outletid ?? 1 }]
+        : [],
+      grandTotal: (cart ?? []).reduce((sum, item) => sum + item.amount * item.qty, 0),
+      payment: { status: "success" },
+      redirectUrl: "/view/home",
+    });
+  }
 
   const session = await resolveEatRightSession({
     cookies,
