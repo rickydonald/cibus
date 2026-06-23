@@ -1,8 +1,8 @@
 {
     "name": "Eat Right",
     "short_name": "Eat Right",
-    "description": "Order food from outlets in Eat Right",
-    "theme_color": "#000000",
+    "description": "Rrder food directly from your favorite outlets in Eat Right.",
+    "theme_color": "#ffffff",
     "background_color": "#ffffff",
     "display": "standalone",
     "display_override": [
@@ -19,16 +19,10 @@
     "dir": "ltr",
     "icons": [
         {
-            "src": "/icons/ios/512.png",
+            "src": "/icons/512.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any"
-        },
-        {
-            "src": "/icons/merlien-icon-web.webp",
-            "sizes": "2048x2048",
-            "type": "image/webp",
-            "purpose": "maskable"
         }
     ]
 }
