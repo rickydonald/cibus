@@ -154,7 +154,11 @@
     }
 
     function startPolling(baselineBalance: number) {
-        cleanUpPaymentCycle(); // Reset any dirty artifacts
+        // Clear any stale timers without closing the popup
+        if (pollTimeoutId) clearTimeout(pollTimeoutId);
+        if (absoluteTimeoutId) clearTimeout(absoluteTimeoutId);
+        pollTimeoutId = null;
+        absoluteTimeoutId = null;
 
         isPolling = true;
         currentBaselineBalance = baselineBalance;
