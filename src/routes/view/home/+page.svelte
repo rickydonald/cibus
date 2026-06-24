@@ -251,7 +251,7 @@
                 </div>
 
                 <!-- Search Input Trigger -->
-                <div class="px-5 pt-6 max-w-md mx-auto">
+                <!-- <div class="px-5 pt-6 max-w-md mx-auto">
                     <button
                         onclick={() => goto("/view/search")}
                         class="flex w-full items-center justify-start gap-3 rounded-2xl border border-neutral-200/80 bg-white px-4 py-3.5 shadow-xs hover:border-neutral-300 transition-colors"
@@ -261,7 +261,7 @@
                             >Search food items or kitchens...</span
                         >
                     </button>
-                </div>
+                </div> -->
 
                 <!-- Section Subheader -->
                 <div class="mt-8 px-6 max-w-md mx-auto">
