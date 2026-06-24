@@ -214,7 +214,7 @@
                             >
                                 {order.delivered === "Y"
                                     ? "Delivered"
-                                    : "In Transit"}
+                                    : "Preparing"}
                             </span>
                         </div>
 
