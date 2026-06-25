@@ -291,7 +291,7 @@
                                     </button>
 
                                     <span
-                                        class="w-6 text-center text-xs font-medium text-neutral-800 tabular-nums"
+                                        class="w-6 text-center text-xs font-semibold text-neutral-800 tabular-nums"
                                     >
                                         {item.qty}
                                     </span>
@@ -340,7 +340,7 @@
             style="padding-bottom: max(env(safe-area-inset-bottom), 0px)"
         >
             <div
-                class="bg-neutral-950 p-5 shadow-[0_-8px_32px_rgba(0,0,0,0.08)] border-t border-white/5 max-w-md mx-auto sm:rounded-t-[32px]"
+                class="bg-neutral-950 p-5 pb-8 shadow-[0_-8px_32px_rgba(0,0,0,0.08)] border-t border-white/5 max-w-md mx-auto sm:rounded-t-4xl"
             >
                 <div class="flex items-center justify-between gap-4">
                     <div class="shrink-0 mr-3">
