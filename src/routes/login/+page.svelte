@@ -53,19 +53,19 @@
 </script>
 
 <div class="login-page flex flex-col items-center min-h-screen px-8 pt-16">
-    <div class="text-center w-full! flex flex-col self-center">
+    <div class="text-left w-full! flex flex-col">
         <img
             src={LoyolaLogo}
             alt="Loyola College Logo"
-            class="self-center!"
-            width="80"
+            width="88"
+            class="pl-[12px]!"
         />
-        <h1 class="text-4xl font-bold mb-2 text-neutral-800">
+        <h1 class="text-4xl font-bold mb-2 text-neutral-800 pl-[12px]!">
             {Constants._SITE.NAME}.
         </h1>
-        <p class="text-base text-gray-500">Sign in to your account</p>
+        <p class="text-base text-gray-500 pl-[12px]!">Sign in to your account</p>
         <!-- Login Form -->
-        <div class="flex flex-col items-center justify-center gap-4 mt-5">
+        <div class="flex flex-col gap-4 mt-5">
             <!-- Login Form: User ID Input -->
             <div class="flex flex-col items-start justify-center gap-1 w-full">
                 <label for="user-id" class="text-sm text-gray-600">
@@ -114,7 +114,7 @@
             <!-- <a href="/forgot-password" class="text-sm text-gray-500"
                 >Forgot password?</a
             > -->
-            <a href="/register" class="text-sm text-gray-500 mt-3">
+            <a href="/register" class="text-sm text-gray-500 mt-3 pl-[12px]!">
                 Don't have an account?
                 <span class="text-blue-500 underline underline-offset-5">
                     Register Now
