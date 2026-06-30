@@ -1,5 +1,5 @@
 import { json } from "@sveltejs/kit";
-import { resolveEatRightSession, getEatRightSession } from "$lib/server/eatright";
+import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
 import { DEV_MODE } from "$lib/server/dev";
 
 const BASE_URL = "https://eatright.loyolacollege.edu";
@@ -81,7 +81,8 @@ function normalizePlacedOrders(placeOrderPayload: unknown, cart: ReturnType<type
     .filter((order) => order.order_no && Number.isFinite(order.outletid));
 }
 
-export async function POST({ request, cookies }) {
+export async function POST(event) {
+  const { request } = event;
   const {
     cart,
   }: {
@@ -100,26 +101,12 @@ export async function POST({ request, cookies }) {
     });
   }
 
-  const session = await resolveEatRightSession({
-    cookies,
-  });
+  const session = await resolveEatRightSessionFromEvent(event);
   if (!session.ok) {
     return session.response;
   }
 
-  const { cookieHeader } = session;
-
-  const existingSession = getEatRightSession(cookies);
-  const userId = existingSession?.creds?.username;
-  if (!userId) {
-    return json(
-      {
-        error: "User session not found",
-        errorCode: "user_session_missing",
-      },
-      { status: 401 },
-    );
-  }
+  const { cookieHeader, username } = session;
 
   if (!Array.isArray(cart) || cart.length === 0) {
     return json(
@@ -160,7 +147,7 @@ export async function POST({ request, cookies }) {
   form.set("cart", JSON.stringify(orderCart));
   form.set("grandTotal", String(grandTotal));
   form.set("paymentStatus", "Payment Not Made");
-  form.set("userid", userId);
+  form.set("userid", username);
 
   const response = await fetch(
     `${BASE_URL}/ajax/placeOrder.jsp`,

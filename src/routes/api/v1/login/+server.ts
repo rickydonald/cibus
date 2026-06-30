@@ -4,6 +4,7 @@ import {
     scrapeEatRightCaptcha,
     setEatRightSessionCookie,
 } from "$lib/server/eatright";
+import { signAccessToken, signRefreshToken } from "$lib/server/jwt";
 
 export const POST: RequestHandler = async ({ request, cookies }) => {
     let body: { userId?: string; password?: string };
@@ -21,24 +22,23 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     const loginResult = await performEatRightLogin({ userId, password });
     if (!loginResult.success) {
         return json(
-            {
-                error: loginResult.error,
-            }, 
+            { error: loginResult.error },
             { status: 401 },
         );
     }
 
-    setEatRightSessionCookie(cookies, {
-        creds: {
-            username: userId,
-            password,
-        },
+    const session = {
+        creds: { username: userId, password },
         cookies: loginResult.cookieHeader,
-    });
+    };
+
+    setEatRightSessionCookie(cookies, session);
 
     return json({
         success: true,
         redirectUrl: "/view/home",
+        accessToken: signAccessToken(session),
+        refreshToken: signRefreshToken(session),
     });
 };
 

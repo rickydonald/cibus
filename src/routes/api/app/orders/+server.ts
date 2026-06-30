@@ -4,23 +4,19 @@ import { DEV_MODE } from "$lib/server/dev";
 
 export async function GET(event) {
   if (DEV_MODE) {
-    return json({
-      orders: [
-        {
-          order_no: "DEV-001",
-          outletid: "1",
-          outletname: "Momo's Kitchen",
-          grand_total: 240,
-          order_status: "Delivered",
-        },
-      ],
-    });
+    return json([
+      {
+        orderNo: "DEV-001",
+        outletId: 1,
+        outletName: "Momo's Kitchen",
+        grandTotal: 240,
+        status: "Delivered",
+      },
+    ]);
   }
 
   const session = await resolveEatRightSessionFromEvent(event);
-  if (!session.ok) {
-    return session.response;
-  }
+  if (!session.ok) return session.response;
 
   const { cookieHeader } = session;
 
@@ -39,26 +35,21 @@ export async function GET(event) {
   );
 
   const text = await response.text();
-
   if (!response.ok) {
-    return json(
-      {
-        error: "Failed to load EatRight order history",
-        response: text,
-      },
-      { status: response.status },
-    );
+    return json({ error: "Failed to load orders" }, { status: response.status });
   }
 
   try {
-    return json(JSON.parse(text.trim()));
+    const data = JSON.parse(text.trim());
+    const orders = (Array.isArray(data) ? data : []).map((o) => ({
+      orderNo: o.order_no,
+      outletId: o.outletid,
+      outletName: o.outletname,
+      grandTotal: o.grand_total,
+      status: o.order_status,
+    }));
+    return json(orders);
   } catch {
-    return json(
-      {
-        error: "EatRight returned an invalid order history response",
-        response: text,
-      },
-      { status: 502 },
-    );
+    return json({ error: "Invalid response from EatRight" }, { status: 502 });
   }
 }

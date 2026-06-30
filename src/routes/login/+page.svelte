@@ -16,7 +16,7 @@
 
     $effect(() => {
         if (userId.length <= 0 || password.length <= 0) {
-            error = "User ID and Password is required!"
+            error = "User ID and Password is required!";
             isLoginLoading = false;
             isLoginButtonDisabled = true;
             return;
@@ -26,7 +26,7 @@
             isLoginButtonDisabled = false;
             return;
         }
-    })
+    });
 
     async function handleLogin() {
         isLoginLoading = true;
@@ -52,18 +52,22 @@
     }
 </script>
 
-<div class="login-page flex flex-col items-center min-h-screen px-8 pt-16">
+<div
+    class="flex flex-col items-center justify-center-safe min-h-[80vh] px-8 pt-16"
+>
     <div class="text-left w-full! flex flex-col">
-        <img
+        <!-- <img
             src={LoyolaLogo}
             alt="Loyola College Logo"
             width="88"
             class="pl-[12px]!"
-        />
+        /> -->
         <h1 class="text-4xl font-bold mb-2 text-neutral-800 pl-[12px]!">
             {Constants._SITE.NAME}.
         </h1>
-        <p class="text-base text-gray-500 pl-[12px]!">Sign in to your account</p>
+        <p class="text-base text-gray-500 pl-[12px]!">
+            Sign in to your account
+        </p>
         <!-- Login Form -->
         <div class="flex flex-col gap-4 mt-5">
             <!-- Login Form: User ID Input -->

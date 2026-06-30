@@ -1,6 +1,7 @@
-import { json } from "@sveltejs/kit";
+import { json, type RequestEvent } from "@sveltejs/kit";
 import type { Cookies } from "@sveltejs/kit";
 import * as cheerio from "cheerio";
+import { verifyAccessToken } from "./jwt";
 
 const BASE = "https://eatright.loyolacollege.edu";
 const LOGIN_JSP = `${BASE}/ajax/loggedin.jsp`;
@@ -32,7 +33,7 @@ export class EatRightSessionError extends Error {
 }
 
 export type EatRightSessionResolution =
-    | { ok: true; cookieHeader: string; reauthenticated: boolean }
+    | { ok: true; cookieHeader: string; reauthenticated: boolean; username: string }
     | { ok: false; response: ReturnType<typeof json> };
 
 interface PageMeta {
@@ -301,9 +302,10 @@ export function jsonEatRightSessionError(error: EatRightSessionError) {
 }
 
 export async function ensureValidEatRightSession(input: {
-    cookies: Cookies;
-}): Promise<{ cookieHeader: string; reauthenticated: boolean }> {
-    const session = getEatRightSession(input.cookies);
+    cookies?: Cookies;
+    session?: EatRightSession;
+}): Promise<{ cookieHeader: string; reauthenticated: boolean; username: string }> {
+    const session = input.session ?? (input.cookies ? getEatRightSession(input.cookies) : null);
     if (!session) {
         throw new EatRightSessionError(
             "eatright_session_missing",
@@ -315,6 +317,7 @@ export async function ensureValidEatRightSession(input: {
         return {
             cookieHeader: session.cookies,
             reauthenticated: false,
+            username: session.creds.username,
         };
     }
 
@@ -324,30 +327,34 @@ export async function ensureValidEatRightSession(input: {
     });
 
     if (!loginResult.success) {
-        clearEatRightSessionCookie(input.cookies);
+        if (input.cookies) clearEatRightSessionCookie(input.cookies);
         throw new EatRightSessionError(
             "eatright_session_expired",
             "EatRight session expired. Please reconnect your account.",
         );
     }
 
-    setEatRightSessionCookie(input.cookies, {
-        creds: session.creds,
-        cookies: loginResult.cookieHeader,
-    });
+    if (input.cookies) {
+        setEatRightSessionCookie(input.cookies, {
+            creds: session.creds,
+            cookies: loginResult.cookieHeader,
+        });
+    }
 
     return {
         cookieHeader: loginResult.cookieHeader,
         reauthenticated: true,
+        username: session.creds.username,
     };
 }
 
 export async function resolveEatRightSession(input: {
-    cookies: Cookies;
+    cookies?: Cookies;
+    session?: EatRightSession;
 }): Promise<EatRightSessionResolution> {
     try {
-        const session = await ensureValidEatRightSession(input);
-        return { ok: true, ...session };
+        const result = await ensureValidEatRightSession(input);
+        return { ok: true, ...result };
     } catch (error) {
         if (error instanceof EatRightSessionError) {
             return { ok: false, response: jsonEatRightSessionError(error) };
@@ -355,6 +362,29 @@ export async function resolveEatRightSession(input: {
 
         throw error;
     }
+}
+
+export async function resolveEatRightSessionFromEvent(
+    event: RequestEvent,
+): Promise<EatRightSessionResolution> {
+    const authHeader = event.request.headers.get("authorization") ?? event.request.headers.get("Authorization");
+    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : null;
+
+    if (token) {
+        const payload = verifyAccessToken(token);
+        if (payload) {
+            return resolveEatRightSession({ session: payload.session });
+        }
+        return {
+            ok: false,
+            response: json(
+                { error: "Invalid or expired access token", errorCode: "token_invalid" },
+                { status: 401 },
+            ),
+        };
+    }
+
+    return resolveEatRightSession({ cookies: event.cookies });
 }
 
 export async function scrapeEatRightCaptcha(): Promise<string> {

@@ -1,12 +1,12 @@
 import { json } from "@sveltejs/kit";
-import { resolveEatRightSession } from "$lib/server/eatright";
+import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
 import { DEV_MODE } from "$lib/server/dev";
 import * as cheerio from "cheerio";
 
 const PAGE_CONTROLLER_URL = "https://eatright.loyolacollege.edu/pagecontroller.jsp";
 const USER_AGENT = "Mozilla/5.0";
 
-export async function GET({cookies}) {
+export async function GET(event) {
   if (DEV_MODE) {
     return json({
       user: "Dev User",
@@ -18,9 +18,7 @@ export async function GET({cookies}) {
     });
   }
 
-  const session = await resolveEatRightSession({
-    cookies,
-  });
+  const session = await resolveEatRightSessionFromEvent(event);
   if (!session.ok) {
     return session.response;
   }

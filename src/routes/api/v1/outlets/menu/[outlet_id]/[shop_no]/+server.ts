@@ -1,5 +1,5 @@
 import { json } from "@sveltejs/kit";
-import { resolveEatRightSession } from "$lib/server/eatright";
+import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
 import { DEV_MODE } from "$lib/server/dev";
 
 const baseUrl = "https://eatright.loyolacollege.edu";
@@ -43,16 +43,15 @@ const DEV_MENU_ITEMS: Record<string, Array<{
   ],
 };
 
-export async function GET({ params, cookies }) {
+export async function GET(event) {
+  const { params } = event;
   const { outlet_id, shop_no } = params;
 
   if (DEV_MODE) {
     return json(DEV_MENU_ITEMS[outlet_id] ?? []);
   }
 
-  const session = await resolveEatRightSession({
-    cookies,
-  });
+  const session = await resolveEatRightSessionFromEvent(event);
   if (!session.ok) {
     return session.response;
   }

@@ -1,5 +1,5 @@
 import { json } from "@sveltejs/kit";
-import { resolveEatRightSession } from "$lib/server/eatright";
+import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
 import { DEV_MODE } from "$lib/server/dev";
 
 const BASE_URL = "https://eatright.loyolacollege.edu";
@@ -34,14 +34,12 @@ const DEV_TRANSACTIONS = [
   { date: "2026-06-20 12:00 PM", amount: 50, balance: 170, sort_time: 1718870400, type: "CREDIT", remarks: "Online Recharge" },
 ];
 
-export async function GET({ cookies }) {
+export async function GET(event) {
   if (DEV_MODE) {
     return json({ transactions: DEV_TRANSACTIONS });
   }
 
-  const session = await resolveEatRightSession({
-    cookies,
-  });
+  const session = await resolveEatRightSessionFromEvent(event);
   if (!session.ok) {
     return session.response;
   }
@@ -80,7 +78,8 @@ export async function GET({ cookies }) {
   return json({ transactions: Array.isArray(data) ? data : [] });
 }
 
-export async function POST({ request, cookies }) {
+export async function POST(event) {
+  const { request } = event;
   const { amount, confirmAmount } = await request.json();
   const depositAmount = Number(amount);
   const confirmedAmount = Number(confirmAmount);
@@ -105,9 +104,7 @@ export async function POST({ request, cookies }) {
     return json({ status: "success", message: "Dev recharge successful" });
   }
 
-  const session = await resolveEatRightSession({
-    cookies,
-  });
+  const session = await resolveEatRightSessionFromEvent(event);
   if (!session.ok) {
     return session.response;
   }

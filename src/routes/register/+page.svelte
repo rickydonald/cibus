@@ -27,18 +27,18 @@
     });
 </script>
 
-<div class="register-page flex flex-col items-center min-h-screen px-8 pt-16">
-    <div class="text-center w-full! flex flex-col self-center">
-        <img
+<div class="flex flex-col items-center justify-center-safe min-h-[80vh] px-8 pt-16">
+    <div class="text-left w-full! flex flex-col self-center">
+        <!-- <img
             src={LoyolaLogo}
             alt="Loyola College Logo"
             class="self-center!"
             width="60"
-        />
+        /> -->
         <h1 class="text-xl font-medium mb-5 text-neutral-800">
             {Constants._SITE.NAME}.
         </h1>
-        <p class="text-xl text-neutral-800 font-bold">Create an Account</p>
+        <p class="text-2xl text-neutral-800 font-bold">Create an Account</p>
         <!-- Segmented Switch -->
         <div class="mt-5">
             <RegistrationSwitch
@@ -115,7 +115,7 @@
             <a href="/login" class="text-sm text-gray-500 mt-3">
                 Already Registered?
                 <span class="text-blue-500 underline underline-offset-5">
-                    Signin
+                    Sign in
                 </span>
             </a>
         </div>

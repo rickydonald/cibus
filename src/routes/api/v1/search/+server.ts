@@ -1,5 +1,5 @@
 import { json } from "@sveltejs/kit";
-import { resolveEatRightSession } from "$lib/server/eatright";
+import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
 import { DEV_MODE } from "$lib/server/dev";
 import * as cheerio from "cheerio";
 
@@ -70,8 +70,8 @@ async function fetchMenuItems(
   }
 }
 
-export async function GET({ url, cookies }) {
-  const q = url.searchParams.get("q")?.trim();
+export async function GET(event) {
+  const q = event.url.searchParams.get("q")?.trim();
   if (!q || q.length < 2) {
     return json({ results: [] });
   }
@@ -85,7 +85,7 @@ export async function GET({ url, cookies }) {
     });
   }
 
-  const session = await resolveEatRightSession({ cookies });
+  const session = await resolveEatRightSessionFromEvent(event);
   if (!session.ok) return session.response;
 
   const { cookieHeader } = session;

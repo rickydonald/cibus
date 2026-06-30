@@ -1,5 +1,5 @@
 import { json } from "@sveltejs/kit";
-import { resolveEatRightSession } from "$lib/server/eatright";
+import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
 import { DEV_MODE } from "$lib/server/dev";
 
 const BASE_URL = "https://eatright.loyolacollege.edu";
@@ -7,7 +7,8 @@ const REFERER = `${BASE_URL}/pagecontroller.jsp`;
 const USER_AGENT =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36";
 
-export async function GET({ url, cookies }) {
+export async function GET(event) {
+  const { url } = event;
   const orderNo = url.searchParams.get("order_no");
   const outletId = url.searchParams.get("outletid");
 
@@ -33,9 +34,7 @@ export async function GET({ url, cookies }) {
     });
   }
 
-  const session = await resolveEatRightSession({
-    cookies,
-  });
+  const session = await resolveEatRightSessionFromEvent(event);
   if (!session.ok) {
     return session.response;
   }
