@@ -93,9 +93,6 @@
                 <h1 class="text-lg font-bold tracking-tight text-neutral-900">
                     Order History
                 </h1>
-                <p class="text-xs text-neutral-500 font-medium">
-                    EatRight orders
-                </p>
             </div>
         </div>
     </div>

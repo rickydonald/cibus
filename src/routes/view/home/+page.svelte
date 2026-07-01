@@ -7,11 +7,8 @@
         ChevronRightIcon,
         LogOut01Icon,
         UserCircleIcon,
-        Wallet01Icon,
-        XCircleIcon,
+        Wallet02Icon,
     } from "@untitled-theme/icons-svelte";
-
-    import History from "@lucide/svelte/icons/history";
 
     import { goto } from "$app/navigation";
     import { onMount } from "svelte";
@@ -36,22 +33,8 @@
     import organic from "$lib/assets/outlet-icons/ricebowl.svg";
     import fries from "$lib/assets/outlet-icons/fries.svg";
     import FloatingCartBar from "$lib/components/custom/FloatingCartBar.svelte";
-
-    const outletIcons: Record<string, string> = {
-        "1": momo,
-        "2": fish,
-        "3": hotpot,
-        "4": kebab,
-        "5": traditional,
-        "6": bun,
-        "7": juice,
-        "8": organic,
-        "9": fries,
-    };
-
-    function getOutletIcon(name: number) {
-        return outletIcons[String(name)] ?? bun;
-    }
+    import { ReceiptIndianRupeeIcon } from "@lucide/svelte";
+    import helpers from "$lib/helpers";
 
     type Outlet = {
         id: number;
@@ -69,18 +52,8 @@
     let accountDetails = $state<EatRightAccountDetails | null>(null);
     let isNavigateLoading = $state(false);
 
-    type RecentOrder = {
-        order_no: string;
-        outletid: string;
-        outletname: string;
-        grand_total: number;
-        order_status: string;
-    };
-
     let isAccountSheetOpen: boolean = $state(false);
-
-    let recentOrder = $state<RecentOrder | null>(null);
-    let isRecentOrderLoading = $state(true);
+    let isAccountLoading: boolean = $state(false);
 
     function getBalanceMajor(balanceStr: string | undefined): string {
         if (!balanceStr) return "--";
@@ -97,6 +70,7 @@
 
     async function getAccountDetails() {
         try {
+            isAccountLoading = true;
             const response = await fetchEatRight("/api/v1/account/show");
             const data = await response.json();
 
@@ -113,49 +87,34 @@
             accountDetails = data;
         } catch (error) {
             console.error(error);
-        }
-    }
-
-    async function getRecentOrder() {
-        isRecentOrderLoading = true;
-
-        try {
-            const response = await fetchEatRight("/api/v1/orders");
-            const data = await response.json();
-
-            if (!response.ok || data.error) {
-                if (await redirectIfEatRightConnectRequired(data.errorCode))
-                    return;
-                return;
-            }
-
-            const orders = data.orders;
-            if (Array.isArray(orders) && orders.length > 0) {
-                const latest = orders[0];
-                recentOrder = {
-                    order_no: latest.order_no,
-                    outletid: latest.outletid,
-                    outletname: latest.outletname,
-                    grand_total: latest.grand_total,
-                    order_status: latest.order_status,
-                };
-            }
-        } catch {
-            // silently ignore
         } finally {
-            isRecentOrderLoading = false;
+            isAccountLoading = false;
         }
     }
 
     onMount(() => {
         getAccountDetails();
-        getRecentOrder();
     });
 
     async function handleNavigation(outletId: number, shopNo: number) {
         isNavigateLoading = true;
         await goto(`/view/order/${outletId}/${shopNo}`);
     }
+
+    function parseStudent() {
+        const match = accountDetails?.user.match(/^(.*?)\((.*?)\)$/);
+        if (!match) return null;
+        return {
+            name: match[1].trim(),
+            deptNo: match[2].trim(),
+        };
+    }
+
+    const allOutletsClosed = $derived(
+        accountDetails?.outlets && accountDetails.outlets.length > 0
+            ? accountDetails.outlets.every((o) => o.isClosed)
+            : false,
+    );
 </script>
 
 <MainContainer>
@@ -164,6 +123,7 @@
             <ContentWrapper>
                 <div class="flex items-baseline justify-end-safe mr-5">
                     <button
+                        aria-label="Open Account Settings"
                         onclick={() =>
                             (isAccountSheetOpen = !isAccountSheetOpen)}
                     >
@@ -176,7 +136,7 @@
                 </div>
                 <!-- Wallet Panel Tray -->
                 <div
-                    class="pt-8 px-5 border-b border-neutral-300/80 bg-linear-to-b from-neutral-100 via-neutral-50 to-neutral-200 relative max-w-md mx-auto sm:rounded-b-[32px]"
+                    class="pt-8 px-5 border-b border-neutral-300/80 bg-linear-to-b from-neutral-100 via-neutral-50 to-neutral-300 relative max-w-md mx-auto sm:rounded-b-[32px]"
                 >
                     <div class="flex flex-col items-center justify-center">
                         <p
@@ -195,7 +155,7 @@
                         >
                             {#if accountDetails}
                                 <h2
-                                    class="flex items-baseline justify-center text-5xl font-bold tracking-tight text-neutral-900 tabular-nums"
+                                    class="flex items-baseline justify-center text-5xl font-bold tracking-wide text-neutral-900 tabular-nums"
                                 >
                                     <span
                                         class="text-neutral-400 text-4xl mr-0.5 font-normal"
@@ -221,26 +181,28 @@
                         </div>
                     </div>
 
-                    <!-- Balanced Navigation Action Layout (50/50 Symmetrical Split) -->
+                    <!-- Balanced Navigation Action Layout -->
                     <div
                         class="mt-12 flex items-center justify-between pb-4 gap-3"
                     >
                         <button
                             onclick={() => goto("/view/history")}
-                            class="flex-1 w-1/2 rounded-full bg-white border border-neutral-200 shadow-2xs px-3 py-3 text-sm flex items-center justify-center gap-2 font-medium text-neutral-700 hover:bg-neutral-50 active:scale-98 transition whitespace-nowrap"
+                            class="flex-1 w-1/2 rounded-full bg-white border border-neutral-200 shadow-2xs px-3 py-3 text-sm flex items-center justify-center gap-2 font-semibold text-neutral-700 hover:bg-neutral-50 active:scale-98 transition whitespace-nowrap h-12"
+                            aria-label="View Order History"
                         >
-                            <History
+                            <ReceiptIndianRupeeIcon
                                 size="16"
                                 class="text-neutral-500 shrink-0"
                             />
-                            <span>View History</span>
+                            <span>View Orders</span>
                         </button>
 
                         <button
                             onclick={() => goto("/view/wallet")}
-                            class="flex-1 w-1/2 rounded-full bg-neutral-900 shadow-sm px-3 py-3 text-sm text-white flex items-center justify-center gap-2 font-medium hover:bg-neutral-800 active:scale-98 transition whitespace-nowrap"
+                            class="flex-1 w-1/2 rounded-full bg-neutral-900 shadow-sm px-3 text-sm text-white flex items-center justify-center gap-2 font-semibold hover:bg-neutral-800 active:scale-98 transition whitespace-nowrap h-12"
+                            aria-label="Add Money to Wallet"
                         >
-                            <Wallet01Icon
+                            <Wallet02Icon
                                 width="16"
                                 class="text-neutral-300 shrink-0"
                             />
@@ -271,7 +233,7 @@
                     </h2>
                 </div>
 
-                <!-- Outlets Card Engine -->
+                <!-- Outlets Card -->
                 <div
                     class="mt-3 grid grid-cols-1 gap-3 px-5 pb-32 max-w-md mx-auto"
                 >
@@ -293,8 +255,8 @@
                                             class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-neutral-50 border border-neutral-100"
                                         >
                                             <img
-                                                src={getOutletIcon(
-                                                    outlet.shopNo,
+                                                src={helpers.mapStoreIcon(
+                                                    String(outlet.shopNo),
                                                 )}
                                                 alt={outlet.name}
                                                 class="h-8 w-8 object-contain"
@@ -320,9 +282,6 @@
                                             <div
                                                 class="flex items-center gap-1 rounded-full bg-rose-50 border border-rose-100 px-2.5 py-1"
                                             >
-                                                <XCircleIcon
-                                                    class="h-3.5 w-3.5 text-rose-500"
-                                                />
                                                 <span
                                                     class="text-[11px] font-semibold text-rose-600"
                                                     >Closed</span
@@ -374,7 +333,7 @@
         </div>
 
         <!-- Sticky Bottom Floating Action Overlay Tray -->
-        {#if cart.totalItems > 0}
+        {#if cart.totalItems > 0 && !allOutletsClosed && !isAccountLoading}
             <FloatingCartBar />
         {/if}
     </div>
@@ -399,7 +358,7 @@
                             Name
                         </p>
                         <p class="text-lg font-semibold">
-                            {accountDetails?.user.split(" ")[0]}
+                            {parseStudent()?.name}
                         </p>
                     </div>
                     <div
@@ -411,7 +370,7 @@
                             Department Number/Staff ID
                         </p>
                         <p class="text-lg font-semibold">
-                            {accountDetails?.user.split(" ")[1]}
+                            {parseStudent()?.deptNo}
                         </p>
                     </div>
                     <button

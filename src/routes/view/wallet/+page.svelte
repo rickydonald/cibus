@@ -7,6 +7,7 @@
     } from "$lib/utils/eatright-client";
     import { toast } from "svelte-sonner";
     import { browser } from "$app/env";
+    import Spinner from "$lib/components/custom/Spinner.svelte";
 
     type WalletTransaction = {
         date: string;
@@ -36,7 +37,7 @@
 
     const TRANSACTION_THEMES: Record<string, string> = {
         CREDIT: "text-emerald-600 font-bold",
-        DEBIT: "text-neutral-900 font-bold",
+        DEBIT: "text-red-600 font-bold",
         ABORTED: "text-neutral-400 line-through font-medium",
     };
 
@@ -349,44 +350,73 @@
                 <h1 class="text-lg font-bold tracking-tight text-neutral-900">
                     Manage Wallet
                 </h1>
-                <p class="text-xs text-neutral-500 font-medium">
-                    EatRight balance
-                </p>
             </div>
         </div>
     </div>
 
     <div class="px-4 pb-12 max-w-md mx-auto space-y-5 pt-4">
         <section
-            class="overflow-hidden rounded-3xl bg-neutral-950 p-6 text-white shadow-[0_8px_30px_rgb(0,0,0,0.06)] relative"
+            class="group relative overflow-hidden rounded-[32px] border border-white/5 bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-800 p-6 text-white shadow-[0_24px_50px_rgba(0,0,0,0.25)] h-34"
         >
+            <!-- Mesh Background -->
             <div
-                class="absolute right-0 top-0 -mr-6 -mt-6 w-24 h-24 rounded-full bg-white/5 blur-xl"
+                class="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(255,255,255,0.08),transparent_30%),radial-gradient(circle_at_90%_0%,rgba(255,255,255,0.05),transparent_30%),radial-gradient(circle_at_100%_100%,rgba(255,255,255,0.04),transparent_40%)]"
             ></div>
-            <div>
-                <p
-                    class="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400"
-                >
-                    Available Balance
-                </p>
-                {#if isLoading}
-                    <div
-                        class="mt-2 h-10 w-36 animate-pulse rounded-xl bg-white/10"
-                    ></div>
-                {:else}
-                    <h2
-                        class="flex items-baseline text-5xl font-bold tracking-tight text-white tabular-nums"
-                    >
-                        <span
-                            class="text-neutral-300 text-4xl mr-0.5 font-normal"
-                            >₹</span
+
+            <!-- Grid Texture -->
+            <div
+                class="absolute inset-0 opacity-[0.025]"
+                style="
+            background-image:
+                linear-gradient(to right, white 1px, transparent 1px),
+                linear-gradient(to bottom, white 1px, transparent 1px);
+            background-size: 28px 28px;
+        "
+            ></div>
+
+            <div class="relative z-10">
+                <!-- Header -->
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p
+                            class="text-[10px] font-bold uppercase tracking-[0.24em] text-neutral-400"
                         >
-                        <span>{displayBalance.main}.</span>
-                        <span class="text-3xl font-medium text-neutral-300"
-                            >{displayBalance.decimal}</span
+                            Available Balance
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Balance Section with Baseline Realignment -->
+                <div class="mt-4">
+                    {#if isLoading}
+                        <div
+                            class="h-14 w-48 animate-pulse rounded-xl bg-white/10"
+                        ></div>
+                    {:else}
+                        <div
+                            class="flex items-baseline justify-start tabular-nums tracking-tight"
                         >
-                    </h2>
-                {/if}
+                            <!-- Adjusted sizing and alignment scales -->
+                            <span
+                                class="text-3xl font-light text-white/60 mr-1.5 select-none"
+                            >
+                                ₹
+                            </span>
+
+                            <h1
+                                class="text-5xl font-extrabold text-white leading-none tracking-tight"
+                            >
+                                {displayBalance.main}
+                            </h1>
+
+                            <span
+                                class="text-2xl font-semibold text-white/50 ml-0.5"
+                            >
+                                .{displayBalance.decimal}
+                            </span>
+                        </div>
+                    {/if}
+                </div>
             </div>
         </section>
 
@@ -422,9 +452,15 @@
                 <div class="flex gap-2">
                     {#each [20, 50, 100] as value}
                         <button
+                            type="button"
                             onclick={() => quickSelect(value)}
                             disabled={isSubmitting || isPolling}
-                            class="flex-1 rounded-xl border border-neutral-200/80 bg-white py-2 text-xs font-bold text-neutral-600 transition hover:bg-neutral-50 active:scale-95 disabled:opacity-50"
+                            class={`flex-1 rounded-xl border text-xs font-bold transition-all duration-200 active:scale-95 disabled:opacity-50 h-9
+                            ${
+                                Number(amount) === value
+                                    ? "border-neutral-900 bg-neutral-900 text-white shadow-xs"
+                                    : "border-neutral-200/80 bg-white text-neutral-600 hover:bg-neutral-50 hover:border-neutral-300"
+                            }`}
                         >
                             + ₹{value}
                         </button>
@@ -434,15 +470,24 @@
 
             <div class="flex flex-col gap-2 mt-5">
                 <button
-                    class="w-full rounded-2xl bg-neutral-900 py-4 font-bold text-sm text-white shadow-sm transition disabled:opacity-40 active:scale-[0.99]"
+                    type="button"
+                    class="w-full rounded-2xl bg-neutral-900 hover:bg-neutral-800 font-bold text-sm text-white shadow-xs transition-all duration-200 disabled:opacity-50 disabled:hover:bg-neutral-900 active:scale-[0.98] h-12 flex items-center justify-center gap-2.5"
                     onclick={rechargeWallet}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isPolling}
                 >
-                    {isPolling
-                        ? "Waiting for Payment..."
-                        : isSubmitting
-                          ? "Starting Payment..."
-                          : "Add Money"}
+                    {#if isSubmitting || isPolling}
+                        <Spinner />
+                    {/if}
+
+                    <span>
+                        {#if isPolling}
+                            Waiting for Payment...
+                        {:else if isSubmitting}
+                            Starting Payment...
+                        {:else}
+                            Add Money
+                        {/if}
+                    </span>
                 </button>
 
                 {#if isSubmitting || isPolling}
