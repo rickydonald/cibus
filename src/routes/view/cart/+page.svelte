@@ -336,7 +336,7 @@
     <!-- Order Bar Summary Footer -->
     {#if cart.items.length > 0}
         <div
-            class="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-[#f5f5f7] via-[#f5f5f7] to-transparent pt-6"
+            class="fixed bottom-0 left-0 right-0 z-40 bg-linear-to-t from-[#f5f5f7] via-[#f5f5f7] to-transparent pt-6"
             style="padding-bottom: max(env(safe-area-inset-bottom), 0px)"
         >
             <div

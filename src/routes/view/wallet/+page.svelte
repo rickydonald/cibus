@@ -356,7 +356,7 @@
 
     <div class="px-4 pb-12 max-w-md mx-auto space-y-5 pt-4">
         <section
-            class="group relative overflow-hidden rounded-[32px] border border-white/5 bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-800 p-6 text-white shadow-[0_24px_50px_rgba(0,0,0,0.25)] h-34"
+            class="group relative overflow-hidden rounded-[32px] border border-white/5 bg-linear-to-br from-neutral-950 via-neutral-900 to-neutral-800 p-6 text-white shadow-[0_24px_50px_rgba(0,0,0,0.25)] h-34"
         >
             <!-- Mesh Background -->
             <div
@@ -394,7 +394,7 @@
                         ></div>
                     {:else}
                         <div
-                            class="flex items-baseline justify-start tabular-nums tracking-tight"
+                            class="flex items-baseline justify-start tabular-nums tracking-wide!"
                         >
                             <!-- Adjusted sizing and alignment scales -->
                             <span
@@ -404,7 +404,7 @@
                             </span>
 
                             <h1
-                                class="text-5xl font-extrabold text-white leading-none tracking-tight"
+                                class="text-5xl font-extrabold text-white leading-none tracking-wide"
                             >
                                 {displayBalance.main}
                             </h1>
@@ -550,7 +550,7 @@
                         >
                             <div class="min-w-0 space-y-0.5">
                                 <h3
-                                    class="font-semibold text-neutral-900 text-sm leading-snug break-words"
+                                    class="font-semibold text-neutral-900 text-sm leading-snug wrap-break-word"
                                 >
                                     {tx.remarks}
                                 </h3>
