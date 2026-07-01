@@ -2,8 +2,7 @@
     import ContentWrapper from "$lib/components/ui/ContentWrapper.svelte";
     import MainContainer from "$lib/components/ui/MainContainer.svelte";
 
-    // import { BottomSheet } from "svelte-bottom-sheet";
-    import { Bottomsheet } from "@devantic/diaper";
+    import { BottomSheet } from "svelte-bottom-sheet";
     import {
         ChevronRightIcon,
         LogOut01Icon,
@@ -381,60 +380,52 @@
     </div>
 </MainContainer>
 
-<!-- <BottomSheet
+<BottomSheet
     bind:isSheetOpen={isAccountSheetOpen}
-    settings={{ maxHeight: 0.7 }}
+    settings={{ maxHeight: 0.5 }}
 >
     <BottomSheet.Overlay>
         <BottomSheet.Sheet>
             <BottomSheet.Handle />
-            <BottomSheet.Content>
-                <h3>Content inside the bottom sheet</h3>
-                <p>Here you can put any content you need.</p>
+            <BottomSheet.Content class="w-full!">
+                <div class="w-full">
+                    <h1 class="text-black text-xl font-bold pl-3">Account</h1>
+                    <div
+                        class="border-t border-x border-neutral-300/80 relative rounded-t-xl p-3 mt-5 bg-gray-50"
+                    >
+                        <p
+                            class="text-gray-500/80 uppercase tracking-widest text-[11px] font-semibold"
+                        >
+                            Name
+                        </p>
+                        <p class="text-lg font-semibold">
+                            {accountDetails?.user.split(" ")[0]}
+                        </p>
+                    </div>
+                    <div
+                        class="border-x border-b border-neutral-300/80 relative rounded-b-xl border-t p-3 bg-gray-50"
+                    >
+                        <p
+                            class="text-gray-500/80 uppercase tracking-widest text-[11px] font-semibold"
+                        >
+                            Department Number/Staff ID
+                        </p>
+                        <p class="text-lg font-semibold">
+                            {accountDetails?.user.split(" ")[1]}
+                        </p>
+                    </div>
+                    <button
+                        class="bg-red-500 text-white w-full rounded-xl mt-3 p-3 flex items-center justify-center-safe gap-3 relative"
+                        onclick={disconnectEatRight}
+                    >
+                        <LogOut01Icon class="absolute left-27" />
+                        <span class="font-semibold">Logout</span>
+                    </button>
+                </div>
             </BottomSheet.Content>
         </BottomSheet.Sheet>
     </BottomSheet.Overlay>
-</BottomSheet> -->
-<Bottomsheet
-    class="bg-white! text-black!"
-    bind:open={isAccountSheetOpen}
-    height="auto"
->
-    <div class="px-4 py-8">
-        <h1 class="text-black text-xl font-bold pl-3">Account</h1>
-        <div
-            class="border-t border-x border-neutral-300/80 relative rounded-t-xl p-3 mt-5 bg-gray-50"
-        >
-            <p
-                class="text-gray-500/80 uppercase tracking-widest text-[11px] font-semibold"
-            >
-                Name
-            </p>
-            <p class="text-lg font-semibold">
-                {accountDetails?.user.split(" ")[0]}
-            </p>
-        </div>
-        <div
-            class="border-x border-b border-neutral-300/80 relative rounded-b-xl border-t p-3 bg-gray-50"
-        >
-            <p
-                class="text-gray-500/80 uppercase tracking-widest text-[11px] font-semibold"
-            >
-                Department Number/Staff ID
-            </p>
-            <p class="text-lg font-semibold">
-                {accountDetails?.user.split(" ")[1]}
-            </p>
-        </div>
-        <button
-            class="bg-red-500 text-white w-full rounded-xl mt-3 p-3 flex items-center justify-center-safe gap-3 relative"
-            onclick={disconnectEatRight}
-        >
-            <LogOut01Icon class="absolute left-27" />
-            <span class="font-semibold">Logout</span>
-        </button>
-    </div>
-</Bottomsheet>
+</BottomSheet>
 
 <style>
     :global(body) {
