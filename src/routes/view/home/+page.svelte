@@ -23,15 +23,7 @@
         await fetch("/api/v1/disconnect", { method: "POST" });
         await goto("/login");
     }
-    import momo from "$lib/assets/outlet-icons/dumpling.svg";
-    import fish from "$lib/assets/outlet-icons/fish.svg";
-    import hotpot from "$lib/assets/outlet-icons/hotbowl.svg";
-    import kebab from "$lib/assets/outlet-icons/kebab.svg";
-    import traditional from "$lib/assets/outlet-icons/ricebowl.svg";
-    import bun from "$lib/assets/outlet-icons/wheat.svg";
-    import juice from "$lib/assets/outlet-icons/bakery.svg";
-    import organic from "$lib/assets/outlet-icons/ricebowl.svg";
-    import fries from "$lib/assets/outlet-icons/fries.svg";
+
     import FloatingCartBar from "$lib/components/custom/FloatingCartBar.svelte";
     import { ReceiptIndianRupeeIcon } from "@lucide/svelte";
     import helpers from "$lib/helpers";
