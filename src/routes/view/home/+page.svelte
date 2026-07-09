@@ -16,11 +16,18 @@
         fetchEatRight,
         redirectIfEatRightConnectRequired,
     } from "$lib/utils/eatright-client";
+    import {
+        cacheEatRightProfileFromUser,
+        clearCachedEatRightProfile,
+        getCachedEatRightProfile,
+        type CachedEatRightProfile,
+    } from "$lib/client/eatright-profile";
 
     import { cart } from "$lib/store/cart.svelte";
 
     async function disconnectEatRight() {
         await fetch("/api/v1/disconnect", { method: "POST" });
+        clearCachedEatRightProfile();
         await goto("/login");
     }
 
@@ -42,6 +49,7 @@
     };
 
     let accountDetails = $state<EatRightAccountDetails | null>(null);
+    let cachedProfile = $state<CachedEatRightProfile | null>(null);
     let isNavigateLoading = $state(false);
 
     let isAccountSheetOpen: boolean = $state(false);
@@ -77,6 +85,7 @@
             }
 
             accountDetails = data;
+            cachedProfile = cacheEatRightProfileFromUser(data.user);
         } catch (error) {
             console.error(error);
         } finally {
@@ -85,6 +94,7 @@
     }
 
     onMount(() => {
+        cachedProfile = getCachedEatRightProfile();
         getAccountDetails();
     });
 
@@ -93,19 +103,15 @@
         await goto(`/view/order/${outletId}/${shopNo}`);
     }
 
-    function parseStudent() {
-        const match = accountDetails?.user.match(/^(.*?)\((.*?)\)$/);
-        if (!match) return null;
-        return {
-            name: match[1].trim(),
-            deptNo: match[2].trim(),
-        };
-    }
-
     const allOutletsClosed = $derived(
         accountDetails?.outlets && accountDetails.outlets.length > 0
             ? accountDetails.outlets.every((o) => o.isClosed)
             : false,
+    );
+
+    const profile = $derived(cachedProfile);
+    const walletOwnerName = $derived(
+        profile?.name ? profile.name.split(" ")[0] : "",
     );
 </script>
 
@@ -134,9 +140,8 @@
                         <p
                             class="text-[10px] uppercase tracking-[0.16em] text-neutral-400 text-center font-bold"
                         >
-                            {#if accountDetails}
-                                {accountDetails.user.split(" ")[0]}'s Wallet
-                                Balance
+                            {#if walletOwnerName}
+                                {walletOwnerName}'s Wallet Balance
                             {:else}
                                 Wallet Balance
                             {/if}
@@ -184,19 +189,19 @@
                         >
                             <ReceiptIndianRupeeIcon
                                 size="16"
-                                class="text-neutral-500 shrink-0"
+                                class="text-amber-600 shrink-0"
                             />
                             <span>View Orders</span>
                         </button>
 
                         <button
                             onclick={() => goto("/view/wallet")}
-                            class="flex-1 w-1/2 rounded-full bg-neutral-900 shadow-sm px-3 text-sm text-white flex items-center justify-center gap-2 font-semibold hover:bg-neutral-800 active:scale-98 transition whitespace-nowrap h-12"
+                            class="flex-1 w-1/2 rounded-full bg-amber-400 shadow-sm px-3 text-sm text-neutral-950 flex items-center justify-center gap-2 font-semibold hover:bg-amber-300 active:scale-98 transition whitespace-nowrap h-12"
                             aria-label="Add Money to Wallet"
                         >
                             <Wallet02Icon
                                 width="16"
-                                class="text-neutral-300 shrink-0"
+                                class="text-neutral-950 shrink-0"
                             />
                             <span>Add Money</span>
                         </button>
@@ -350,7 +355,7 @@
                             Name
                         </p>
                         <p class="text-lg font-semibold">
-                            {parseStudent()?.name}
+                            {profile?.name ?? "--"}
                         </p>
                     </div>
                     <div
@@ -362,7 +367,7 @@
                             Department Number/Staff ID
                         </p>
                         <p class="text-lg font-semibold">
-                            {parseStudent()?.deptNo}
+                            {profile?.deptNo || "--"}
                         </p>
                     </div>
                     <button

@@ -117,7 +117,7 @@
     });
 </script>
 
-<div class="min-h-screen bg-[#F4F5F7] text-neutral-900 antialiased ">
+<div class="min-h-screen bg-[#F4F5F7] text-neutral-900 antialiased">
     <!-- Header Navigation -->
     <div
         class="sticky top-0 z-20 bg-[#F4F5F7]/80 backdrop-blur-md border-b border-neutral-200/30"
@@ -212,7 +212,7 @@
                                 Show this Pickup Code
                             </p>
                             <h2
-                                class="mt-3 mb-1 text-6xl font-black text-neutral-950 tracking-wide tabular-nums"
+                                class="mt-3 mb-1 text-6xl font-black text-neutral-950 tracking-wide tabular-nums font-geist-mono!"
                             >
                                 {pickupCode(order.order_no)}
                             </h2>

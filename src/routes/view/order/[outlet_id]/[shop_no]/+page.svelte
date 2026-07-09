@@ -14,7 +14,6 @@
         redirectIfEatRightConnectRequired,
     } from "$lib/utils/eatright-client";
     import FloatingCartBar from "$lib/components/custom/FloatingCartBar.svelte";
-    import { fade, fly } from "svelte/transition";
 
     let { params }: PageProps = $props();
 
@@ -32,12 +31,31 @@
     let search = $state("");
     let selectedCategory = $state("All");
     let isLoading = $state(true);
+    let isHeaderCollapsed = $state(false);
+    let lastScrollY = 0;
+    let ticking = false;
 
-    function cleanString(str: string) {
-        return str
-            .replace(/-YAMUNA\s*KITCHEN/gi, "")
-            .replace(/-YAMUNA'S\s*KITCHEN/gi, "")
-            .trim();
+    function titleCase(value: string) {
+        return value
+            .toLowerCase()
+            .replace(/\b([a-z])/g, (char) => char.toUpperCase())
+            .replace(/\bIdly\b/g, "Idli")
+            .replace(/\bVeg\b/g, "Veg");
+    }
+
+    function cleanString(str: string | undefined) {
+        if (!str) return "";
+
+        return titleCase(
+            str
+                .replace(/\s*-\s*(YAMUNA'?S?\s*KITCHEN|GIVE\s*LIFE).*$/gi, "")
+                .replace(/\s+/g, " ")
+                .trim(),
+        );
+    }
+
+    function itemTitle(str: string) {
+        return cleanString(str.split(/\s+-\s+/)[0]);
     }
 
     async function getItems() {
@@ -68,14 +86,18 @@
 
     const categories = $derived([
         "All",
-        ...new Set(items.map((i) => i.categoryname)),
+        ...new Set(items.map((item) => item.categoryname)),
     ]);
 
     const filteredItems = $derived(
         items.filter((item) => {
-            const matchesSearch = item.itemname
+            const normalizedName = itemTitle(item.itemname);
+            const normalizedCategory = cleanString(item.categoryname);
+            const normalizedQuery = search.trim().toLowerCase();
+
+            const matchesSearch = `${normalizedName} ${normalizedCategory}`
                 .toLowerCase()
-                .includes(search.toLowerCase());
+                .includes(normalizedQuery);
 
             const matchesCategory =
                 selectedCategory === "All" ||
@@ -84,71 +106,101 @@
             return matchesSearch && matchesCategory;
         }),
     );
+
+    function handleWindowScroll() {
+        if (ticking) return;
+
+        ticking = true;
+        requestAnimationFrame(() => {
+            const currentScrollY = window.scrollY;
+            const scrollDelta = currentScrollY - lastScrollY;
+
+            if (currentScrollY < 48 || search.trim().length > 0) {
+                isHeaderCollapsed = false;
+            } else if (scrollDelta > 10 && currentScrollY > 96) {
+                isHeaderCollapsed = true;
+            } else if (scrollDelta < -10) {
+                isHeaderCollapsed = false;
+            }
+
+            lastScrollY = currentScrollY;
+            ticking = false;
+        });
+    }
 </script>
 
-<div
-    class="min-h-screen bg-[#F6F6F9] text-neutral-900 antialiased  pb-36"
->
+<svelte:window onscroll={handleWindowScroll} />
+
+<div class="min-h-screen bg-[#f5f5f7] text-neutral-900 antialiased pb-36">
     <div
-        class="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-neutral-200/40 shadow-[0_2px_12px_rgba(0,0,0,0.015)]"
+        class={`sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-neutral-200/50 transition-transform duration-250 ease-out ${
+            isHeaderCollapsed && !isLoading && categories.length > 1
+                ? "-translate-y-full"
+                : "translate-y-0"
+        }`}
     >
         <div class="max-w-md mx-auto">
-            <header
-                class="safe-top-offset flex items-center justify-between px-5 pt-4 pb-3"
-            >
-                <div class="flex items-center gap-3.5 min-w-0">
-                    <button
-                        onclick={() => history.back()}
-                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-neutral-50 border border-neutral-200/50 text-neutral-700 active:scale-95 transition-all"
-                        aria-label="Go back"
-                    >
-                        <ArrowLeftIcon class="h-4 w-4" />
-                    </button>
-                    <div class="min-w-0">
-                        <h1
-                            class="text-lg font-extrabold tracking-tight text-neutral-900 truncate"
-                        >
-                            {items[0]?.outletname ??
-                                (isLoading
-                                    ? "Loading Menu..."
-                                    : "Outlet Store")}
-                        </h1>
-                    </div>
-                </div>
-            </header>
-            <div class="px-5 pb-3">
-                <div
-                    class="flex items-center gap-2.5 rounded-xl bg-neutral-100/80 px-3.5 py-2.5 transition-all focus-within:bg-white focus-within:ring-2 focus-within:ring-neutral-950/5"
+            <div>
+                <header
+                    class="safe-top-offset flex items-center justify-between px-5 pt-4 pb-3"
                 >
-                    <SearchMdIcon class="h-4 w-4 text-neutral-400" />
-                    <input
-                        bind:value={search}
-                        placeholder="Search menu items..."
-                        class="w-full bg-transparent text-xs font-semibold outline-none placeholder:text-neutral-400 text-neutral-800"
-                    />
+                    <div class="flex items-center gap-3.5 min-w-0">
+                        <button
+                            onclick={() => history.back()}
+                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-neutral-50 border border-neutral-200/50 text-neutral-700 active:scale-95 transition-all"
+                            aria-label="Go back"
+                        >
+                            <ArrowLeftIcon class="h-4 w-4" />
+                        </button>
+                        <div class="min-w-0">
+                            <h1
+                                class="text-xl font-bold tracking-tight text-neutral-900 truncate"
+                            >
+                                {items[0]?.outletname
+                                    ? cleanString(items[0].outletname)
+                                    : isLoading
+                                      ? "Loading Menu"
+                                      : "Outlet Store"}
+                            </h1>
+                            <p
+                                class="mt-0.5 text-xs font-medium text-neutral-400"
+                            >
+                                Counter {params.shop_no}
+                            </p>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="px-5 pb-3">
+                    <div
+                        class="flex items-center gap-2.5 rounded-2xl border border-neutral-200/70 bg-neutral-100/80 px-3.5 py-3 transition-all focus-within:bg-white focus-within:ring-2 focus-within:ring-neutral-950/5"
+                    >
+                        <SearchMdIcon class="h-4 w-4 text-neutral-400" />
+                        <input
+                            bind:value={search}
+                            onfocus={() => (isHeaderCollapsed = false)}
+                            placeholder="Search menu items..."
+                            class="w-full bg-transparent text-sm font-medium outline-none placeholder:text-neutral-400 text-neutral-800"
+                        />
+                    </div>
                 </div>
             </div>
 
             {#if !isLoading && categories.length > 1}
                 <nav
-                    class="flex gap-1 overflow-x-auto px-4 pb-2.5 no-scrollbar mask-gradient"
+                    class="flex gap-2 overflow-x-auto px-5 pb-3 no-scrollbar mask-gradient"
                     aria-label="Menu categories"
                 >
                     {#each categories as category}
                         <button
                             onclick={() => (selectedCategory = category)}
-                            class={`whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all relative shrink-0 ${
+                            class={`whitespace-nowrap rounded-full px-3.5 py-2 text-xs font-semibold transition-all shrink-0 ${
                                 selectedCategory === category
-                                    ? "text-neutral-950"
-                                    : "text-neutral-400 hover:text-neutral-600"
+                                    ? "bg-neutral-950 text-white shadow-sm"
+                                    : "bg-neutral-100 text-neutral-500 hover:bg-neutral-200/70 hover:text-neutral-700"
                             }`}
                         >
-                            {cleanString(category)}
-                            {#if selectedCategory === category}
-                                <div
-                                    class="absolute bottom-0 left-3.5 right-3.5 h-0.5 bg-neutral-950 rounded-full"
-                                ></div>
-                            {/if}
+                            {category === "All" ? "All" : cleanString(category)}
                         </button>
                     {/each}
                 </nav>
@@ -158,77 +210,78 @@
 
     <main class="max-w-md mx-auto px-5 mt-5">
         {#if isLoading}
-            <div class="space-y-4">
-                {#each Array(3) as _}
+            <div class="space-y-3">
+                {#each Array(4) as _}
                     <div
-                        class="rounded-2xl border border-neutral-200/50 bg-white p-5 space-y-4 animate-pulse"
+                        class="rounded-3xl border border-neutral-200/50 bg-white p-4.5 space-y-4 animate-pulse"
                     >
                         <div class="flex justify-between items-start">
                             <div class="space-y-2 w-2/3">
                                 <div
-                                    class="h-3 bg-neutral-200/60 rounded w-1/4"
+                                    class="h-3 bg-neutral-200/70 rounded-full w-1/3"
                                 ></div>
                                 <div
-                                    class="h-5 bg-neutral-200/60 rounded w-3/4"
+                                    class="h-5 bg-neutral-200/70 rounded-lg w-4/5"
                                 ></div>
                             </div>
                             <div
-                                class="h-5 w-14 bg-neutral-200/60 rounded-full"
+                                class="h-6 w-16 bg-neutral-200/70 rounded-full"
                             ></div>
                         </div>
                         <div
-                            class="h-8 w-20 bg-neutral-200/60 rounded-lg self-end ml-auto"
+                            class="h-9 w-20 bg-neutral-200/70 rounded-xl self-end ml-auto"
                         ></div>
                     </div>
                 {/each}
             </div>
         {:else if filteredItems.length === 0}
-            <!-- Empty State Illustration Box -->
             <div
-                class="text-center py-20 px-4 bg-white rounded-2xl border border-neutral-200/40 shadow-sm"
+                class="text-center py-20 px-4 bg-white rounded-3xl border border-neutral-200/50 shadow-sm"
             >
                 <div
-                    class="flex h-11 w-11 items-center justify-center rounded-xl bg-neutral-50 border border-neutral-100 mx-auto text-neutral-400"
+                    class="flex h-11 w-11 items-center justify-center rounded-2xl bg-neutral-50 border border-neutral-100 mx-auto text-neutral-400"
                 >
                     <ShoppingBag01Icon class="h-4 w-4" />
                 </div>
-                <h3 class="mt-3.5 text-xs font-bold text-neutral-800">
+                <h3 class="mt-3.5 text-sm font-bold text-neutral-800">
                     No matching dishes
                 </h3>
                 <p
-                    class="mt-1 text-[11px] text-neutral-400 font-medium max-w-[200px] mx-auto"
+                    class="mt-1 text-xs text-neutral-400 font-medium max-w-[220px] mx-auto"
                 >
-                    We couldn't find items matching your dynamic filter terms.
+                    Try another dish name or switch categories.
                 </p>
             </div>
         {:else}
-            <div class="space-y-4">
+            <div class="space-y-3">
                 {#each filteredItems as item}
                     {@const cartItem = cart.items.find(
-                        (i) => i.id === item.id && i.outletid === item.outletid,
+                        (entry) =>
+                            entry.id === item.id &&
+                            entry.outletid === item.outletid,
                     )}
                     {#if item.available_qty > 0}
                         <article
-                            class="overflow-hidden rounded-2xl border border-neutral-200/50 bg-white p-4.5 flex gap-4 items-start shadow-[0_4px_16px_rgba(0,0,0,0.02)] transition-all duration-200 hover:shadow-[0_6px_20px_rgba(0,0,0,0.04)] hover:border-neutral-300"
+                            class="overflow-hidden rounded-3xl border border-neutral-200/60 bg-white p-4 flex gap-4 items-start shadow-[0_8px_24px_rgba(0,0,0,0.025)] transition-all duration-200 hover:border-neutral-300"
                         >
-                            <div class="min-w-0 flex-1 space-y-1">
-                                <div class="flex items-center gap-1.5">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
                                     <span
-                                        class="text-[9px] font-bold uppercase tracking-wider text-neutral-400 truncate"
+                                        class="max-w-full rounded-full bg-neutral-100 px-2 py-1 text-[10px] font-bold text-neutral-500 truncate"
                                     >
                                         {cleanString(item.categoryname)}
                                     </span>
                                 </div>
 
                                 <h3
-                                    class="text-[15px] font-bold tracking-tight text-neutral-900 leading-tight"
+                                    class="mt-2 text-[15px] font-bold tracking-tight text-neutral-900 leading-snug"
                                 >
-                                    {item.itemname.split(" - ")[0]}
+                                    {itemTitle(item.itemname)}
                                 </h3>
 
-                                <div class="flex items-center gap-2 pt-1.5">
+                                <div class="flex items-center gap-2 pt-2">
                                     <div
-                                        class="text-base font-black tracking-tight text-neutral-900"
+                                        class="text-base font-black tracking-tight text-neutral-900 tabular-nums"
                                     >
                                         ₹{item.amount}
                                     </div>
@@ -249,10 +302,10 @@
                             <div class="shrink-0 self-center">
                                 {#if cartItem}
                                     <div
-                                        class="flex items-center gap-2.5 rounded-lg bg-neutral-900 p-1 text-white shadow-sm shadow-neutral-900/10"
+                                        class="flex items-center gap-2.5 rounded-xl bg-neutral-950 p-1 text-white shadow-sm shadow-neutral-900/10"
                                     >
                                         <button
-                                            class="flex h-6 w-6 items-center justify-center rounded bg-white/10 text-white transition-all active:scale-90"
+                                            class="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 text-white transition-all active:scale-90"
                                             onclick={() =>
                                                 cart.remove(
                                                     item.id,
@@ -260,24 +313,28 @@
                                                 )}
                                             aria-label="Remove item"
                                         >
-                                            <MinusIcon class="h-2.5 w-2.5" />
+                                            <MinusIcon
+                                                class="h-3 w-3"
+                                                stroke-width="3"
+                                            />
                                         </button>
 
                                         <span
-                                            class="font-bold text-xs min-w-[12px] text-center tabular-nums"
+                                            class="font-bold text-xs min-w-[14px] text-center tabular-nums"
                                         >
                                             {cartItem.qty}
                                         </span>
 
                                         <button
-                                            class="flex h-6 w-6 items-center justify-center rounded bg-white/10 text-white transition-all active:scale-90 disabled:opacity-20"
+                                            class="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 text-white transition-all active:scale-90 disabled:opacity-20"
                                             onclick={() =>
                                                 cart.add({
                                                     id: item.id,
                                                     itemname: item.itemname,
                                                     amount: item.amount,
                                                     outletid: item.outletid,
-                                                    outletname: item.outletname,
+                                                    outletname:
+                                                        item.outletname,
                                                     shopno: Number(
                                                         params.shop_no,
                                                     ),
@@ -293,7 +350,10 @@
                                                 )}
                                             aria-label="Add item"
                                         >
-                                            <PlusIcon class="h-2.5 w-2.5" />
+                                            <PlusIcon
+                                                class="h-3 w-3"
+                                                stroke-width="3"
+                                            />
                                         </button>
                                     </div>
                                 {:else}
@@ -311,7 +371,7 @@
                                                     item.available_qty,
                                                 ),
                                             })}
-                                        class="rounded-lg border border-neutral-200 bg-white px-4 py-1.5 text-xs font-bold text-neutral-900 shadow-sm transition-all hover:bg-neutral-50 active:scale-[0.96]"
+                                        class="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-xs font-bold text-neutral-900 shadow-sm transition-all hover:bg-neutral-50 active:scale-[0.96]"
                                     >
                                         Add
                                     </button>
@@ -324,14 +384,12 @@
         {/if}
     </main>
 
-    <!-- Floating Actions Container Dynamic Layout Anchor -->
     {#if cart.totalItems > 0}
         <FloatingCartBar />
     {/if}
 </div>
 
 <style>
-    /* Premium UX global layout scrollbar masks resets */
     .no-scrollbar::-webkit-scrollbar {
         display: none;
     }
@@ -347,19 +405,5 @@
             transparent 100%
         );
         mask-image: linear-gradient(to right, black 88%, transparent 100%);
-    }
-
-    @keyframes slideUp {
-        from {
-            transform: translateY(20px);
-            opacity: 0;
-        }
-        to {
-            transform: translateY(0);
-            opacity: 1;
-        }
-    }
-    .animate-slide-up {
-        animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 </style>

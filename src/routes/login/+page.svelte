@@ -3,6 +3,7 @@
     import { page } from "$app/state";
     import LoyolaLogo from "$lib/assets/logos/loyola-logo.webp";
     import { Constants } from "$lib/constants";
+    import { clearCachedEatRightProfile } from "$lib/client/eatright-profile";
 
     let showPassword: boolean = $state(false);
     let redirectTo = $derived(page.url.searchParams.get("redirect") ?? "");
@@ -30,6 +31,8 @@
 
     async function handleLogin() {
         isLoginLoading = true;
+        clearCachedEatRightProfile();
+
         const login = await fetch("/api/v1/login", {
             method: "POST",
             headers: {

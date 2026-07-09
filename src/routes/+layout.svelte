@@ -20,7 +20,14 @@
 		href="https://fonts.gstatic.com"
 		crossorigin="anonymous"
 	/>
-	<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+	<link
+		href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"
+		rel="stylesheet"
+	/>
+	<link
+		href="https://fonts.googleapis.com/css2?family=Geist+Mono:ital,wght@0,700;1,700&display=swap"
+		rel="stylesheet"
+	/>
 	<link rel="icon" href={favicon} />
 	<link rel="manifest" href="/manifest.json" />
 	<meta name="theme-color" content="#f5f5f7" />

@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@plugin "tailwindcss-corner-shape/presets/squircle";
 
 :root {
     --safe-area-inset-top: env(safe-area-inset-top, 0px);

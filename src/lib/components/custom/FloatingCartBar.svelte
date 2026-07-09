@@ -1,29 +1,47 @@
 <script lang="ts">
     import { cart } from "$lib/store/cart.svelte";
-    import { ShoppingCart01Icon } from "@untitled-theme/icons-svelte";
+    import {
+        ChevronRightIcon,
+        ShoppingCart01Icon,
+    } from "@untitled-theme/icons-svelte";
 </script>
 
-<div class="fixed bottom-6 left-0 right-0 z-50 px-5">
+<div
+    class="fixed left-0 right-0 z-50 px-5"
+    style="bottom: max(env(safe-area-inset-bottom), 0px); padding-bottom: 1rem;"
+>
     <a
         href="/view/cart"
-        class="mx-auto flex max-w-sm items-center justify-between rounded-4xl bg-neutral-950 px-5 py-4 text-white shadow-xl hover:bg-neutral-900 active:scale-98 transition border border-white/5"
+        class="mx-auto flex max-w-sm items-center justify-between gap-4 rounded-[28px] border border-white/10 bg-neutral-950/95 px-4 py-3.5 text-white shadow-[0_18px_44px_rgba(0,0,0,0.26)] backdrop-blur-xl transition-all hover:bg-neutral-900 active:scale-[0.985]"
+        aria-label="View cart"
     >
-        <div class="flex items-center gap-2.5">
+        <div class="flex min-w-0 items-center gap-3">
             <div
-                class="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10"
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/10"
             >
-                <ShoppingCart01Icon class="h-4 w-4 text-white" />
+                <ShoppingCart01Icon class="h-5 w-5 text-white" />
             </div>
-            <span class="text-sm font-medium text-neutral-200"
-                >{cart.totalItems}
-                {cart.totalItems === 1 ? "item" : "items"}</span
-            >
+            <div class="min-w-0">
+                <p class="text-sm font-bold tracking-tight text-white">
+                    View cart
+                </p>
+                <p class="text-xs font-medium text-neutral-400">
+                    {cart.totalItems} {cart.totalItems === 1 ? "item" : "items"}
+                </p>
+            </div>
         </div>
 
-        <div
-            class="text-sm font-semibold tracking-tight text-white tabular-nums"
-        >
-            ₹{cart.totalAmount}
+        <div class="flex shrink-0 items-center gap-2">
+            <p
+                class="rounded-full bg-amber-400 px-3.5 py-2 text-sm font-black tracking-tight text-neutral-950 tabular-nums"
+            >
+                ₹{cart.totalAmount}
+            </p>
+            <div
+                class="flex h-9 w-9 items-center justify-center rounded-full bg-white/10"
+            >
+                <ChevronRightIcon class="h-4 w-4 text-white" />
+            </div>
         </div>
     </a>
 </div>

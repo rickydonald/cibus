@@ -1,4 +1,5 @@
 import { goto } from "$app/navigation";
+import { clearCachedEatRightProfile } from "$lib/client/eatright-profile";
 
 const EATRIGHT_CONNECT_ERROR_CODES = new Set([
     "eatright_session_missing",
@@ -13,6 +14,7 @@ export async function redirectIfEatRightConnectRequired(
     errorCode?: string,
 ): Promise<boolean> {
     if (!isEatRightConnectRequired(errorCode)) return false;
+    clearCachedEatRightProfile();
     await goto("/login");
     return true;
 }
