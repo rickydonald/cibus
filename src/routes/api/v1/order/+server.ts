@@ -1,5 +1,6 @@
 import { json } from "@sveltejs/kit";
 import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
+import { clearEatRightDataCache } from "$lib/server/eatright-data";
 import { DEV_MODE } from "$lib/server/dev";
 
 const BASE_URL = "https://eatright.loyolacollege.edu";
@@ -227,6 +228,8 @@ export async function POST(event) {
       { status: 502 },
     );
   }
+
+  clearEatRightDataCache(cookieHeader);
 
   return json({
     success: true,

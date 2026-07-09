@@ -1,8 +1,7 @@
 import { json } from "@sveltejs/kit";
 import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
+import { getMenuItems } from "$lib/server/eatright-data";
 import { DEV_MODE } from "$lib/server/dev";
-
-const baseUrl = "https://eatright.loyolacollege.edu";
 
 const DEV_MENU_ITEMS: Record<string, Array<{
   id: number;
@@ -58,20 +57,10 @@ export async function GET(event) {
 
   const { cookieHeader } = session;
 
-  const res = await fetch(
-    `${baseUrl}/ajax/getItemsByOutlet.jsp?outletId=${outlet_id}&shopno=${shop_no}`,
-    {
-      headers: {
-        Cookie: cookieHeader,
-      },
-    },
-  );
-
-  if (!res.ok) {
-    return json({ error: "Failed to fetch items" }, { status: res.status });
+  try {
+    return json(await getMenuItems({ cookieHeader, outletId: outlet_id, shopNo: shop_no }));
+  } catch (error) {
+    console.error(error);
+    return json({ error: "Failed to fetch items" }, { status: 502 });
   }
-
-  const items = await res.json();
-
-  return json(items);
 }

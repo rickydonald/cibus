@@ -1,6 +1,7 @@
 import { json, type RequestHandler } from "@sveltejs/kit";
 import {
     performEatRightLogin,
+    markEatRightSessionValid,
     scrapeEatRightCaptcha,
     setEatRightSessionCookie,
 } from "$lib/server/eatright";
@@ -33,6 +34,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     };
 
     setEatRightSessionCookie(cookies, session);
+    markEatRightSessionValid(loginResult.cookieHeader);
 
     return json({
         success: true,

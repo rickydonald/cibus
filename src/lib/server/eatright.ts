@@ -2,6 +2,7 @@ import { json, type RequestEvent } from "@sveltejs/kit";
 import type { Cookies } from "@sveltejs/kit";
 import * as cheerio from "cheerio";
 import { verifyAccessToken } from "./jwt";
+import { TtlCache, hashCacheKey } from "./cache";
 
 const BASE = "https://eatright.loyolacollege.edu";
 const LOGIN_JSP = `${BASE}/ajax/loggedin.jsp`;
@@ -12,6 +13,7 @@ const UA =
     "(KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 
 const SESSION_COOKIE_NAME = "RioX5EatRightSession";
+const sessionValidationCache = new TtlCache<boolean>(60 * 1000);
 
 export type EatRightSession = {
     creds: {
@@ -115,7 +117,9 @@ function isAuthenticatedPage(html: string): boolean {
 export async function isEatRightSessionValid(cookieHeader: string): Promise<boolean> {
     if (!cookieHeader) return false;
 
-    try {
+    const cacheKey = hashCacheKey(cookieHeader);
+
+    return sessionValidationCache.getOrSet(cacheKey, async () => {
         const response = await fetch(PAGE_CONTROLLER_URL, {
             headers: {
                 "User-Agent": UA,
@@ -137,10 +141,10 @@ export async function isEatRightSessionValid(cookieHeader: string): Promise<bool
 
         const html = await response.text();
         return isAuthenticatedPage(html);
-    } catch (error) {
+    }).catch((error) => {
         console.error("[eatright] failed to validate session:", error);
         return false;
-    }
+    });
 }
 
 export async function performEatRightLogin(input: {
@@ -246,6 +250,10 @@ export async function performEatRightLogin(input: {
     };
 }
 
+export function markEatRightSessionValid(cookieHeader: string) {
+    sessionValidationCache.set(hashCacheKey(cookieHeader), true);
+}
+
 export function setEatRightSessionCookie(cookies: Cookies, session: EatRightSession) {
     const encoded = btoa(JSON.stringify(session));
 
@@ -340,6 +348,8 @@ export async function ensureValidEatRightSession(input: {
             cookies: loginResult.cookieHeader,
         });
     }
+
+    markEatRightSessionValid(loginResult.cookieHeader);
 
     return {
         cookieHeader: loginResult.cookieHeader,

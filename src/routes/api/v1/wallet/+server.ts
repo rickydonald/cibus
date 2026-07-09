@@ -1,5 +1,6 @@
 import { json } from "@sveltejs/kit";
 import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
+import { clearEatRightDataCache } from "$lib/server/eatright-data";
 import { DEV_MODE } from "$lib/server/dev";
 
 const BASE_URL = "https://eatright.loyolacollege.edu";
@@ -164,11 +165,14 @@ export async function POST(event) {
 
     const gatewayLocation = gatewayResponse.headers.get("location");
     if (gatewayResponse.status >= 300 && gatewayResponse.status < 400 && gatewayLocation) {
+      clearEatRightDataCache(cookieHeader);
       return json({ status: "redirect", url: gatewayLocation });
     }
 
+    clearEatRightDataCache(cookieHeader);
     return json({ status: "redirect", url: paymentUrl });
   }
 
+  clearEatRightDataCache(cookieHeader);
   return json(result);
 }
