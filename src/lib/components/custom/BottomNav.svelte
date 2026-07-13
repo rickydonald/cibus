@@ -1,14 +1,14 @@
 <script lang="ts">
     import { page } from "$app/state";
     import {
-        HomeIcon,
         SearchIcon,
         ReceiptTextIcon,
         WalletIcon,
+        HouseIcon,
     } from "@lucide/svelte";
 
     const tabs = [
-        { href: "/view/home", label: "Home", icon: HomeIcon },
+        { href: "/view/home", label: "Home", icon: HouseIcon },
         { href: "/view/search", label: "Search", icon: SearchIcon },
         { href: "/view/history", label: "Orders", icon: ReceiptTextIcon },
         { href: "/view/wallet", label: "Wallet", icon: WalletIcon },
@@ -40,7 +40,7 @@
                     <tab.icon size={19} strokeWidth={isActive ? 2.4 : 2} />
                 </span>
                 <span
-                    class="text-[10px] tracking-wide {isActive
+                    class="text-[10px] {isActive
                         ? 'font-bold'
                         : 'font-semibold'}"
                 >

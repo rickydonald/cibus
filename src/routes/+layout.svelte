@@ -37,7 +37,7 @@
 		rel="stylesheet"
 	/>
 	<link
-		href="https://fonts.googleapis.com/css2?family=Geist+Mono:ital,wght@0,700;1,700&display=swap"
+		href="https://fonts.googleapis.com/css2?family=Red+Hat+Mono:wght@600&display=swap"
 		rel="stylesheet"
 	/>
 	<link rel="icon" href={favicon} />
@@ -54,5 +54,27 @@
 	<link rel="apple-touch-icon" href="/icons/512.png" />
 	<title>Eat Right</title>
 </svelte:head>
-<Toaster position="top-center" class="rounded-2xl" />
+<Toaster
+	position="top-center"
+	theme="light"
+	closeButton
+	expand
+	duration={3500}
+	gap={10}
+	visibleToasts={3}
+	offset={{ top: "calc(var(--safe-area-inset-top) + 1rem)" }}
+	mobileOffset={{ top: "calc(var(--safe-area-inset-top) + 0.75rem)", left: "0.75rem", right: "0.75rem" }}
+	toastOptions={{
+		classes: {
+			toast: "eatright-toast",
+			content: "eatright-toast-content",
+			title: "eatright-toast-title",
+			description: "eatright-toast-description",
+			icon: "eatright-toast-icon",
+			closeButton: "eatright-toast-close",
+			actionButton: "eatright-toast-action",
+			cancelButton: "eatright-toast-cancel",
+		},
+	}}
+/>
 {@render children()}

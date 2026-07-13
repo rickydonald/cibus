@@ -1,5 +1,15 @@
 <script lang="ts">
-    import { ArrowLeftIcon, XCircleIcon } from "@untitled-theme/icons-svelte";
+    import { XCircleIcon } from "@untitled-theme/icons-svelte";
+    import {
+        ArrowDownLeftIcon,
+        ArrowUpRightIcon,
+        MinusIcon,
+    } from "@lucide/svelte";
+    import {
+        cacheEatRightProfileFromUser,
+        getCachedEatRightProfile,
+        type CachedEatRightProfile,
+    } from "$lib/client/eatright-profile";
     import { onMount, onDestroy } from "svelte";
     import {
         fetchEatRight,
@@ -19,6 +29,7 @@
     };
 
     let walletBalance = $state<string | null>(null);
+    let profile = $state<CachedEatRightProfile | null>(null);
     let transactions = $state<WalletTransaction[]>([]);
     let amount = $state("");
     let isLoading = $state(true);
@@ -35,17 +46,35 @@
 
     let displayBalance = $derived(splitPrice(walletBalance));
 
-    const TRANSACTION_THEMES: Record<string, string> = {
-        CREDIT: "text-success font-bold",
-        DEBIT: "text-danger font-bold",
-        ABORTED: "text-ink-faint line-through font-medium",
-    };
+    function formatMain(main: string) {
+        const num = Number(main);
+        return Number.isFinite(num) ? num.toLocaleString("en-IN") : main;
+    }
 
-    function transactionStyle(type: string) {
-        return (
-            TRANSACTION_THEMES[type.toUpperCase()] ??
-            "text-ink-muted font-medium"
-        );
+    function txVisual(type: string) {
+        const normalized = type.toUpperCase();
+        if (normalized === "CREDIT") {
+            return {
+                icon: ArrowDownLeftIcon,
+                chip: "bg-success-soft text-success",
+                amount: "font-semibold text-success",
+                sign: "+",
+            };
+        }
+        if (normalized === "DEBIT") {
+            return {
+                icon: ArrowUpRightIcon,
+                chip: "bg-danger-soft text-danger",
+                amount: "font-semibold text-ink",
+                sign: "−",
+            };
+        }
+        return {
+            icon: MinusIcon,
+            chip: "bg-canvas text-ink-faint",
+            amount: "font-medium text-ink-faint line-through",
+            sign: "",
+        };
     }
 
     function quickSelect(val: number) {
@@ -89,6 +118,7 @@
             }
 
             walletBalance = accountData.walletBalance ?? "0.00";
+            profile = cacheEatRightProfileFromUser(accountData.user) ?? profile;
             transactions = Array.isArray(walletData.transactions)
                 ? walletData.transactions.sort(
                       (a: any, b: any) =>
@@ -300,6 +330,7 @@
     }
 
     onMount(() => {
+        profile = getCachedEatRightProfile();
         const pending = localStorage.getItem("eatright:pending_payment");
         if (pending) {
             try {
@@ -332,87 +363,76 @@
 </script>
 
 <div class="min-h-screen text-ink antialiased">
-    <div class="page-header">
-        <div
-            class="safe-top-offset flex items-center gap-4 px-6 py-4 max-w-md mx-auto"
-        >
-            <button
-                onclick={() => history.back()}
-                class="icon-btn"
-                aria-label="Go back"
-            >
-                <ArrowLeftIcon class="h-4 w-4" />
-            </button>
-
-            <div>
-                <h1 class="text-lg font-bold tracking-tight text-ink">
-                    Manage Wallet
-                </h1>
-            </div>
-        </div>
-    </div>
-
-    <div class="px-4 pb-nav max-w-md mx-auto space-y-5 pt-4">
+    <div class="px-4 pb-nav max-w-md mx-auto pt-4">
+        <!-- Balance card: campus food-court card -->
         <section
-            class="group relative overflow-hidden rounded-[28px] bg-primary p-6 text-white shadow-card h-34"
+            class="relative aspect-[1.586/1] overflow-hidden rounded-[24px] bg-gradient-to-br from-[#25415f] via-[#1a3452] to-[#101d2e] text-white shadow-float"
         >
-            <!-- Mesh Background -->
             <div
-                class="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(255,255,255,0.1),transparent_35%),radial-gradient(circle_at_90%_0%,rgba(255,255,255,0.06),transparent_30%),radial-gradient(circle_at_100%_100%,rgba(255,255,255,0.05),transparent_40%)]"
+                class="absolute inset-0 bg-[radial-gradient(circle_at_20%_-25%,rgba(255,255,255,0.12),transparent_55%)]"
             ></div>
 
-            <div class="relative z-10">
-                <!-- Header -->
-                <div class="flex items-start justify-between">
-                    <div>
-                        <p
-                            class="text-[10px] font-bold uppercase tracking-[0.24em] text-white/60"
-                        >
-                            Available Balance
-                        </p>
-                    </div>
+            <div class="relative z-10 flex h-full flex-col p-6">
+                <div>
+                    <p
+                        class="text-[15px] font-bold leading-tight tracking-tight"
+                    >
+                        Eat Right
+                    </p>
+                    <p
+                        class="mt-0.5 text-[9px] font-bold uppercase tracking-[0.22em] text-white/50"
+                    >
+                        Campus Food Court
+                    </p>
                 </div>
 
-                <!-- Balance Section with Baseline Realignment -->
-                <div class="mt-4">
+                <div class="mt-auto">
                     {#if isLoading}
                         <div
-                            class="h-14 w-48 animate-pulse rounded-xl bg-white/15"
+                            class="h-10 w-40 animate-pulse rounded-xl bg-white/15"
                         ></div>
                     {:else}
-                        <div
-                            class="flex items-baseline justify-start tabular-nums tracking-wide!"
+                        <p
+                            class="text-[9px] font-bold uppercase tracking-[0.22em] text-white/50"
                         >
-                            <span
-                                class="text-3xl font-light text-white/60 mr-1.5 select-none"
+                            Balance
+                        </p>
+                        <div class="mt-1 flex items-baseline tabular-nums">
+                            <span class="mr-1 text-xl font-medium text-white/60"
+                                >₹</span
                             >
-                                ₹
-                            </span>
-
                             <h1
-                                class="text-5xl font-extrabold text-white leading-none tracking-wide"
+                                class="text-4xl font-bold leading-none tracking-tight"
                             >
-                                {displayBalance.main}
+                                {formatMain(displayBalance.main)}
                             </h1>
-
-                            <span
-                                class="text-2xl font-semibold text-white/50 ml-0.5"
+                            <span class="text-lg font-medium text-white/50"
+                                >.{displayBalance.decimal}</span
                             >
-                                .{displayBalance.decimal}
-                            </span>
                         </div>
                     {/if}
+
+                    <div
+                        class="mt-4 flex items-baseline justify-between gap-3 font-geist-mono text-[10px] tracking-[0.18em] text-white/55 uppercase"
+                    >
+                        <span class="truncate"
+                            >{profile?.name ?? "Loyola College"}</span
+                        >
+                        {#if profile?.deptNo}
+                            <span class="shrink-0">{profile.deptNo}</span>
+                        {/if}
+                    </div>
                 </div>
             </div>
         </section>
 
-        <section class="card p-6">
-            <h2 class="section-label pl-1">Recharge Wallet</h2>
+        <!-- Add money -->
+        <section class="mt-6">
+            <h2 class="section-label pl-4">Add Money</h2>
 
-            <div class="mt-4 space-y-3">
-                <div class="relative flex items-center">
-                    <span
-                        class="absolute left-4 text-lg font-bold text-ink-faint"
+            <div class="card mt-2 rounded-[22px] p-5">
+                <div class="flex items-baseline justify-center py-2">
+                    <span class="mr-0.5 text-3xl font-semibold text-ink-faint"
                         >₹</span
                     >
                     <input
@@ -424,134 +444,147 @@
                         inputmode="decimal"
                         bind:value={amount}
                         disabled={isSubmitting || isPolling}
-                        class="w-full rounded-2xl border border-line bg-canvas pl-9 pr-4 py-3.5 text-base font-bold outline-none focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/15 transition-all tracking-wide disabled:opacity-50"
-                        placeholder="0.00"
+                        class="bg-transparent text-4xl font-bold tracking-tight text-ink outline-none tabular-nums placeholder:text-ink-faint/40 disabled:opacity-50"
+                        style={`width: ${Math.max(String(amount ?? "").length, 1) + 0.75}ch`}
+                        placeholder="0"
                     />
                 </div>
 
-                <div class="flex gap-2">
+                <div class="mt-3 flex justify-center gap-2">
                     {#each [20, 50, 100] as value}
                         <button
                             type="button"
                             onclick={() => quickSelect(value)}
                             disabled={isSubmitting || isPolling}
-                            class={`flex-1 rounded-xl border text-xs font-bold transition-all duration-200 active:scale-95 disabled:opacity-50 h-9
-                            ${
+                            class={`h-9 rounded-full px-5 text-[13px] font-semibold transition-all active:scale-95 disabled:opacity-50 ${
                                 Number(amount) === value
-                                    ? "border-primary bg-primary text-white shadow-xs"
-                                    : "border-line bg-surface text-ink-muted hover:bg-primary-soft hover:border-primary/30 hover:text-primary"
+                                    ? "bg-primary text-white"
+                                    : "bg-primary-soft text-primary hover:bg-primary/15"
                             }`}
                         >
-                            + ₹{value}
+                            ₹{value}
                         </button>
                     {/each}
                 </div>
-            </div>
 
-            <div class="flex flex-col gap-2 mt-5">
-                <button
-                    type="button"
-                    class="btn-primary w-full text-sm h-12"
-                    onclick={rechargeWallet}
-                    disabled={isSubmitting || isPolling}
-                >
-                    {#if isSubmitting || isPolling}
-                        <Spinner />
-                    {/if}
-
-                    <span>
-                        {#if isPolling}
-                            Waiting for Payment...
-                        {:else if isSubmitting}
-                            Starting Payment...
-                        {:else}
-                            Add Money
-                        {/if}
-                    </span>
-                </button>
-
-                {#if isSubmitting || isPolling}
+                <div class="mt-5 flex flex-col gap-2">
                     <button
-                        onclick={cancelPayment}
-                        class="w-full flex items-center justify-center gap-2 rounded-2xl bg-danger-soft border border-danger/15 py-3 text-sm font-semibold text-danger hover:bg-danger/10 transition active:scale-[0.99]"
+                        type="button"
+                        class="btn-primary h-12 w-full rounded-full text-sm"
+                        onclick={rechargeWallet}
+                        disabled={isSubmitting || isPolling}
                     >
-                        <XCircleIcon class="h-4 w-4" />
-                        Cancel Transaction
+                        {#if isSubmitting || isPolling}
+                            <Spinner />
+                        {/if}
+
+                        <span>
+                            {#if isPolling}
+                                Waiting for Payment...
+                            {:else if isSubmitting}
+                                Starting Payment...
+                            {:else}
+                                Add Money
+                            {/if}
+                        </span>
                     </button>
+
+                    {#if isSubmitting || isPolling}
+                        <button
+                            onclick={cancelPayment}
+                            class="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-danger-soft text-sm font-semibold text-danger transition hover:bg-danger/10 active:scale-[0.99]"
+                        >
+                            <XCircleIcon class="h-4 w-4" />
+                            Cancel Transaction
+                        </button>
+                    {/if}
+                </div>
+
+                {#if error || message}
+                    <p
+                        class={`mt-4 text-center text-xs font-medium leading-relaxed ${error ? "text-danger" : "text-success"}`}
+                    >
+                        {error || message}
+                    </p>
                 {/if}
             </div>
-
-            {#if error || message}
-                <div
-                    class={`mt-4 rounded-xl px-4 py-3 text-xs font-semibold leading-relaxed border ${error ? "bg-danger-soft border-danger/10 text-danger" : "bg-success-soft border-success/10 text-success"}`}
-                >
-                    {error || message}
-                </div>
-            {/if}
         </section>
 
-        <section class="space-y-3">
-            <h2 class="section-label pl-5">Transaction History</h2>
+        <!-- Recent activity -->
+        <section class="mt-6">
+            <h2 class="section-label pl-4">Recent Activity</h2>
 
             {#if isLoading}
-                <div class="space-y-3">
-                    {#each Array(3) as _}
-                        <div class="card rounded-2xl p-5 space-y-2">
+                <div class="card mt-2 overflow-hidden rounded-[22px]">
+                    {#each Array(3) as _, i}
+                        {#if i > 0}
                             <div
-                                class="h-4 w-2/3 animate-pulse rounded bg-canvas"
+                                class="ml-[4.25rem] border-t border-line/60"
                             ></div>
+                        {/if}
+                        <div class="flex items-center gap-3.5 p-4">
                             <div
-                                class="h-3 w-1/3 animate-pulse rounded bg-canvas"
+                                class="h-9 w-9 shrink-0 animate-pulse rounded-full bg-canvas"
                             ></div>
+                            <div class="flex-1 space-y-2">
+                                <div
+                                    class="h-3.5 w-2/3 animate-pulse rounded bg-canvas"
+                                ></div>
+                                <div
+                                    class="h-3 w-1/3 animate-pulse rounded bg-canvas"
+                                ></div>
+                            </div>
                         </div>
                     {/each}
                 </div>
             {:else if transactions.length === 0}
                 <div
-                    class="card rounded-2xl p-8 text-center text-xs font-medium text-ink-faint"
+                    class="card mt-2 rounded-[22px] p-8 text-center text-xs font-medium text-ink-faint"
                 >
                     No transactions recorded yet.
                 </div>
             {:else}
-                <div class="card overflow-hidden divide-y divide-line/70">
-                    {#each transactions as tx}
+                <div class="card mt-2 overflow-hidden rounded-[22px]">
+                    {#each transactions as tx, i}
                         {@const parsedAmount = splitPrice(tx.amount)}
                         {@const parsedBalance = splitPrice(tx.balance)}
-                        <article
-                            class="p-5 flex items-start justify-between gap-4 bg-surface hover:bg-canvas/50 transition"
-                        >
-                            <div class="min-w-0 space-y-0.5">
+                        {@const visual = txVisual(tx.type)}
+                        {#if i > 0}
+                            <div
+                                class="ml-[4.25rem] border-t border-line/60"
+                            ></div>
+                        {/if}
+                        <article class="flex items-center gap-3.5 p-4">
+                            <span
+                                class={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${visual.chip}`}
+                            >
+                                <visual.icon size={16} strokeWidth={2.25} />
+                            </span>
+
+                            <div class="min-w-0 flex-1">
                                 <h3
-                                    class="font-semibold text-ink text-sm leading-snug wrap-break-word"
+                                    class="truncate text-sm font-semibold leading-snug text-ink"
                                 >
                                     {tx.remarks}
                                 </h3>
                                 <p
-                                    class="text-[11px] text-ink-faint font-medium"
+                                    class="mt-0.5 text-[11px] font-medium text-ink-faint"
                                 >
                                     {tx.date}
                                 </p>
-                                <p
-                                    class="text-[10px] text-ink-faint font-mono pt-1"
-                                >
-                                    Bal: ₹{parsedBalance.main}.<span
-                                        class="text-[9px]"
-                                        >{parsedBalance.decimal}</span
-                                    >
-                                </p>
                             </div>
 
-                            <div class="text-right whitespace-nowrap shrink-0">
-                                <span
-                                    class={`text-base tracking-tight ${transactionStyle(tx.type)}`}
+                            <div class="shrink-0 text-right">
+                                <p
+                                    class={`text-sm tabular-nums ${visual.amount}`}
                                 >
-                                    {tx.type.toUpperCase() === "DEBIT"
-                                        ? "-"
-                                        : "+"} ₹{parsedAmount.main}.<span
-                                        class="text-xs font-normal"
-                                        >{parsedAmount.decimal}</span
-                                    >
-                                </span>
+                                    {visual.sign}₹{parsedAmount.main}.{parsedAmount.decimal}
+                                </p>
+                                <p
+                                    class="mt-0.5 text-[10px] font-medium tabular-nums text-ink-faint"
+                                >
+                                    Bal ₹{parsedBalance.main}.{parsedBalance.decimal}
+                                </p>
                             </div>
                         </article>
                     {/each}

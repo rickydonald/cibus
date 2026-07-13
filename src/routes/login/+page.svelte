@@ -1,19 +1,25 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { page } from "$app/state";
-    import { Constants } from "$lib/constants";
     import { clearCachedEatRightProfile } from "$lib/client/eatright-profile";
+    import LoyolaCollegeLogo from "$lib/assets/logos/loyola-logo.webp";
     import Spinner from "$lib/components/custom/Spinner.svelte";
+    import {
+        ArrowRightIcon,
+        EyeIcon,
+        EyeOffIcon,
+        ShieldCheckIcon,
+    } from "@lucide/svelte";
 
-    let showPassword: boolean = $state(false);
+    let showPassword = $state(false);
     let redirectTo = $derived(page.url.searchParams.get("redirect") ?? "");
 
-    let userId: string = $state("");
-    let password: string = $state("");
-    let error: string = $state("");
+    let userId = $state("");
+    let password = $state("");
+    let error = $state("");
 
-    let isLoginButtonDisabled: boolean = $state(true);
-    let isLoginLoading: boolean = $state(false);
+    let isLoginButtonDisabled = $state(true);
+    let isLoginLoading = $state(false);
 
     $effect(() => {
         if (userId.length <= 0 || password.length <= 0) {
@@ -21,12 +27,11 @@
             isLoginLoading = false;
             isLoginButtonDisabled = true;
             return;
-        } else {
-            error = "";
-            isLoginLoading = false;
-            isLoginButtonDisabled = false;
-            return;
         }
+
+        error = "";
+        isLoginLoading = false;
+        isLoginButtonDisabled = false;
     });
 
     async function handleLogin() {
@@ -35,13 +40,8 @@
 
         const login = await fetch("/api/v1/login", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                userId,
-                password,
-            }),
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, password }),
         });
 
         const res = await login.json();
@@ -55,108 +55,197 @@
     }
 </script>
 
-<div
-    class="flex min-h-screen flex-col items-center justify-center px-6 py-16 antialiased"
+<svelte:head>
+    <title>Sign in · Eat Right</title>
+    <meta
+        name="description"
+        content="Sign in to your Loyola College Eat Right account."
+    />
+</svelte:head>
+
+<main
+    class="min-h-screen bg-canvas lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(480px,0.95fr)]"
 >
-    <div class="w-full max-w-md">
-        <!-- Brand -->
-        <div class="mb-8">
+    <section
+        class="relative hidden min-h-screen overflow-hidden bg-primary px-12 py-10 text-white lg:flex lg:flex-col lg:justify-between xl:px-16 xl:py-14"
+    >
+        <div
+            class="absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(255,255,255,0.13),transparent_30%),radial-gradient(circle_at_90%_85%,rgba(255,255,255,0.08),transparent_32%)]"
+        ></div>
+        <div
+            class="absolute -right-32 top-1/4 h-80 w-80 rounded-full border border-white/10"
+        ></div>
+        <div
+            class="absolute -right-20 top-1/3 h-52 w-52 rounded-full border border-white/10"
+        ></div>
+
+        <div class="relative flex items-center gap-3">
             <div
-                class="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-xl font-black text-white"
+                class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white"
             >
-                {Constants._SITE.NAME.charAt(0)}
+                <img
+                    src={LoyolaCollegeLogo}
+                    alt="Loyola College"
+                    class="h-14 w-auto object-contain"
+                />
             </div>
-            <h1 class="text-3xl font-bold tracking-tight text-ink">
-                {Constants._SITE.NAME}
+            <div>
+                <p class="text-sm font-bold tracking-tight">Eat Right</p>
+                <p
+                    class="text-[10px] font-bold uppercase tracking-[0.16em] text-white/55"
+                >
+                    Loyola College
+                </p>
+            </div>
+        </div>
+
+        <div class="relative max-w-xl pb-8">
+            <p
+                class="mb-5 text-xs font-bold uppercase tracking-[0.18em] text-white/55"
+            >
+                Your campus food court
+            </p>
+            <h1
+                class="max-w-lg text-5xl font-bold leading-[1.06] tracking-[-0.04em] xl:text-6xl"
+            >
+                Good food,<br />without the queue.
             </h1>
-            <p class="mt-1 text-base text-ink-muted">
-                Sign in to order from the food court
+            <p class="mt-6 max-w-md text-base leading-7 text-white/65">
+                Browse the day’s menu, order ahead, and pay directly from your
+                campus wallet.
             </p>
         </div>
 
-        <!-- Login Form -->
-        <form
-            class="flex flex-col gap-4"
-            onsubmit={(e) => {
-                e.preventDefault();
-                if (!isLoginButtonDisabled && !isLoginLoading) handleLogin();
-            }}
-        >
-            <!-- Login Form: User ID Input -->
-            <div class="flex w-full flex-col gap-1.5">
-                <label
-                    for="user-id"
-                    class="pl-1 text-sm font-medium text-ink-muted"
-                >
-                    User ID
-                </label>
-                <input
-                    type="text"
-                    bind:value={userId}
-                    placeholder="Department Number/Faculty ID/Staff ID"
-                    id="user-id"
-                    required
-                    class="field-input uppercase"
-                />
-            </div>
+        <div class="relative flex items-center gap-3 text-sm text-white/60">
+            <ShieldCheckIcon size="18" strokeWidth="1.8" />
+            <span>Secure access through your Eat Right account</span>
+        </div>
+    </section>
 
-            <!-- Login Form: Password Input -->
-            <div class="relative flex w-full flex-col gap-1.5">
-                <label
-                    for="password"
-                    class="pl-1 text-sm font-medium text-ink-muted"
-                >
-                    Password
-                </label>
-                <input
-                    type={showPassword ? "text" : "password"}
-                    bind:value={password}
-                    placeholder="Enter your Password"
-                    id="password"
-                    required
-                    class="field-input pr-16"
-                />
-                <!-- Login Form: Password Visibility Button -->
-                <button
-                    type="button"
-                    onclick={() => (showPassword = !showPassword)}
-                    class="absolute bottom-3.5 right-3 rounded-lg px-2 py-1 text-[13px] font-semibold text-primary"
-                >
-                    {showPassword ? "Hide" : "Show"}
-                </button>
-            </div>
-
-            {#if error}
-                <div
-                    class="rounded-xl border border-danger/10 bg-danger-soft px-4 py-3 text-sm font-medium text-danger"
-                >
-                    {error}
+    <section
+        class="flex min-h-screen items-center justify-center px-5 py-[max(2rem,var(--safe-area-inset-top))] sm:px-10 lg:px-12"
+    >
+        <div class="w-full max-w-md">
+            <div class="mb-10 flex items-center justify-between lg:hidden">
+                <div class="flex items-center gap-3">
+                    <img
+                        src={LoyolaCollegeLogo}
+                        alt="Loyola College"
+                        class="h-15 w-auto object-contain"
+                    />
+                    <div class="h-7 w-px bg-line-strong"></div>
+                    <span class="text-lg font-bold tracking-tight text-primary">
+                        Eat Right
+                    </span>
                 </div>
-            {/if}
+            </div>
 
-            <!-- Login Form: Submit Button -->
-            <button
-                type="submit"
-                class="btn-primary mt-1 h-12 w-full text-sm"
-                disabled={isLoginButtonDisabled || isLoginLoading}
-            >
-                {#if isLoginLoading}
-                    <Spinner />
-                {/if}
-                <span>{isLoginLoading ? "Signing in..." : "Sign in"}</span>
-            </button>
-
-            <a
-                href="/register"
-                class="mt-3 pl-1 text-sm text-ink-muted"
-            >
-                Don't have an account?
-                <span
-                    class="font-semibold text-primary underline underline-offset-4"
+            <div class="mb-8">
+                <p class="section-label mb-3">Welcome back</p>
+                <h2
+                    class="text-[2rem] font-bold leading-tight tracking-[-0.035em] text-ink sm:text-4xl"
                 >
-                    Register Now
-                </span>
-            </a>
-        </form>
-    </div>
-</div>
+                    Sign in to Eat Right
+                </h2>
+                <p class="mt-2.5 text-[15px] leading-6 text-ink-muted">
+                    Use the same details you use for your campus food court account.
+                </p>
+            </div>
+
+            <form
+                class="flex flex-col gap-5"
+                onsubmit={(event) => {
+                    event.preventDefault();
+                    if (!isLoginButtonDisabled && !isLoginLoading)
+                        handleLogin();
+                }}
+            >
+                <div class="flex flex-col gap-2">
+                    <label
+                        for="user-id"
+                        class="pl-1 text-sm font-semibold text-ink"
+                        >User ID</label
+                    >
+                    <input
+                        type="text"
+                        bind:value={userId}
+                        placeholder="Department number, faculty or staff ID"
+                        id="user-id"
+                        autocomplete="username"
+                        autocapitalize="characters"
+                        required
+                        class="field-input h-14 uppercase"
+                    />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label
+                        for="password"
+                        class="pl-1 text-sm font-semibold text-ink"
+                        >Password</label
+                    >
+                    <div class="relative">
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            bind:value={password}
+                            placeholder="Enter your password"
+                            id="password"
+                            autocomplete="current-password"
+                            required
+                            class="field-input h-14 pr-14"
+                        />
+                        <button
+                            type="button"
+                            onclick={() => (showPassword = !showPassword)}
+                            class="absolute inset-y-0 right-1 flex w-12 items-center justify-center rounded-xl text-ink-muted transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-primary"
+                            aria-label={showPassword
+                                ? "Hide password"
+                                : "Show password"}
+                        >
+                            {#if showPassword}
+                                <EyeOffIcon size="19" strokeWidth="1.8" />
+                            {:else}
+                                <EyeIcon size="19" strokeWidth="1.8" />
+                            {/if}
+                        </button>
+                    </div>
+                </div>
+
+                {#if error}
+                    <div
+                        role="alert"
+                        class="rounded-2xl border border-danger/15 bg-danger-soft px-4 py-3.5 text-sm font-medium leading-5 text-danger"
+                    >
+                        {error}
+                    </div>
+                {/if}
+
+                <button
+                    type="submit"
+                    class="btn-primary mt-1 h-14 w-full px-5 text-sm"
+                    disabled={isLoginButtonDisabled || isLoginLoading}
+                >
+                    {#if isLoginLoading}
+                        <Spinner />
+                    {/if}
+                    <span>{isLoginLoading ? "Signing in…" : "Sign in"}</span>
+                    {#if !isLoginLoading}
+                        <ArrowRightIcon size="18" strokeWidth="2" />
+                    {/if}
+                </button>
+            </form>
+
+            <div class="mt-8 flex items-center gap-3">
+                <div class="h-px flex-1 bg-line"></div>
+                <span class="text-xs font-medium text-ink-faint"
+                    >New to Eat Right?</span
+                >
+                <div class="h-px flex-1 bg-line"></div>
+            </div>
+
+            <a href="/register" class="btn-quiet mt-5 h-13 w-full text-sm"
+                >Create an account</a
+            >
+        </div>
+    </section>
+</main>

@@ -23,7 +23,7 @@
     --color-ink-muted: #626a78;
     --color-ink-faint: #979fad;
 
-    --color-primary: #24466b;
+    --color-primary: #137ec1;
     --color-primary-strong: #1a3452;
     --color-primary-soft: #e9eef5;
 
@@ -41,7 +41,8 @@
 }
 
 @theme inline {
-    --font-geist-mono: "Geist Mono", monospace;
+    --font-geist-mono: "Red Hat Mono", monospace;
+    --font-mono: "Red Hat Mono", monospace;
 }
 
 @layer components {
@@ -68,6 +69,23 @@
     }
     .chip {
         @apply rounded-lg border px-2 py-1 text-[10px] font-bold uppercase tracking-wider;
+    }
+    /* Fake barcode for the order receipt; bars pick up currentColor */
+    .receipt-barcode {
+        height: 2.5rem;
+        background: repeating-linear-gradient(
+            90deg,
+            currentColor 0 2px,
+            transparent 2px 4px,
+            currentColor 4px 7px,
+            transparent 7px 9px,
+            currentColor 9px 10px,
+            transparent 10px 14px,
+            currentColor 14px 16px,
+            transparent 16px 17px,
+            currentColor 17px 18px,
+            transparent 18px 22px
+        );
     }
 }
 
@@ -133,5 +151,136 @@ input[type="number"]::-webkit-outer-spin-button {
 @keyframes vt-fade-in {
     from {
         opacity: 0;
+    }
+}
+
+/*
+ * Eat Right notifications
+ * Dark ink pill floating over the porcelain UI — high contrast, iOS-banner feel.
+ * Semantic type is carried by the circular icon chip, not the whole surface.
+ */
+html [data-sonner-toaster] {
+    --width: min(21rem, calc(100vw - 1.5rem));
+    font-family: var(--font-sans);
+}
+
+html [data-sonner-toast].eatright-toast[data-styled="true"] {
+    /* bright-on-dark semantic tints */
+    --toast-tint: #6db3e8;
+    min-height: 4rem;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.8rem 3.25rem 0.8rem 0.8rem;
+    overflow: hidden;
+    border: 1px solid rgb(255 255 255 / 0.09);
+    border-radius: 2rem;
+    background:
+        linear-gradient(rgb(255 255 255 / 0.05), rgb(255 255 255 / 0)),
+        color-mix(in srgb, var(--color-ink) 94%, transparent);
+    color: #fff;
+    box-shadow:
+        0 1px 1px rgb(26 30 38 / 0.12),
+        0 16px 40px rgb(26 30 38 / 0.35);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+}
+
+html [data-sonner-toast].eatright-toast[data-styled="true"][data-type="success"] {
+    --toast-tint: #5fd39a;
+}
+
+html [data-sonner-toast].eatright-toast[data-styled="true"][data-type="error"] {
+    --toast-tint: #f08e8b;
+}
+
+html [data-sonner-toast].eatright-toast[data-styled="true"][data-type="warning"] {
+    --toast-tint: #e8bd66;
+}
+
+html [data-sonner-toast].eatright-toast[data-styled="true"] [data-icon].eatright-toast-icon {
+    display: flex;
+    width: 2.4rem;
+    height: 2.4rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: color-mix(in srgb, var(--toast-tint) 16%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--toast-tint) 24%, transparent);
+    color: var(--toast-tint);
+}
+
+html [data-sonner-toast].eatright-toast[data-styled="true"] [data-icon] svg {
+    width: 1.15rem;
+    height: 1.15rem;
+    margin: 0;
+    stroke-width: 2;
+}
+
+html [data-sonner-toast].eatright-toast[data-styled="true"] [data-content].eatright-toast-content {
+    min-width: 0;
+    gap: 0.2rem;
+    padding-block: 0.125rem;
+}
+
+html [data-sonner-toast].eatright-toast[data-styled="true"] [data-title].eatright-toast-title {
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+}
+
+html [data-sonner-toast].eatright-toast[data-styled="true"] [data-description].eatright-toast-description {
+    color: rgb(255 255 255 / 0.65);
+    font-size: 0.75rem;
+    line-height: 1.45;
+}
+
+html [data-sonner-toast].eatright-toast[data-styled="true"] [data-close-button].eatright-toast-close {
+    top: 50%;
+    right: 0.9rem;
+    left: auto;
+    width: 1.8rem;
+    height: 1.8rem;
+    transform: translateY(-50%);
+    border: 0;
+    border-radius: 9999px;
+    background: rgb(255 255 255 / 0.08);
+    color: rgb(255 255 255 / 0.6);
+    transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+html [data-sonner-toast].eatright-toast[data-styled="true"] [data-close-button].eatright-toast-close:hover {
+    background: rgb(255 255 255 / 0.16);
+    color: #fff;
+    transform: translateY(-50%) scale(1.05);
+}
+
+html [data-sonner-toast].eatright-toast[data-styled="true"] [data-close-button].eatright-toast-close:focus-visible {
+    box-shadow: 0 0 0 2px rgb(255 255 255 / 0.35);
+}
+
+html [data-sonner-toast].eatright-toast[data-styled="true"] [data-button].eatright-toast-action,
+html [data-sonner-toast].eatright-toast[data-styled="true"] [data-button].eatright-toast-cancel {
+    height: 2rem;
+    border-radius: 9999px;
+    padding-inline: 0.85rem;
+    font-size: 0.75rem;
+    font-weight: 650;
+}
+
+html [data-sonner-toast].eatright-toast[data-styled="true"] [data-button].eatright-toast-action {
+    background: #fff;
+    color: var(--color-ink);
+}
+
+html [data-sonner-toast].eatright-toast[data-styled="true"] [data-button].eatright-toast-cancel {
+    background: rgb(255 255 255 / 0.1);
+    color: rgb(255 255 255 / 0.85);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html [data-sonner-toast] {
+        transition-duration: 1ms;
     }
 }

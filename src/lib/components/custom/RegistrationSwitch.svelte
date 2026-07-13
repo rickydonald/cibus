@@ -15,7 +15,7 @@
     );
 </script>
 
-<div class="segment-control" role="tablist" aria-label="User Type">
+<div class="segment-control" role="tablist" aria-label="Account type">
     <div
         class="indicator"
         style="transform: translateX(calc({activeIndex} * 100%));"
@@ -40,27 +40,28 @@
         position: relative;
         display: flex;
         width: 100%;
-        padding: 0.375rem;
-        background: var(--color-line);
-        border-radius: 1.75rem;
+        padding: 0.25rem;
+        background: var(--color-primary-soft);
+        border: 1px solid var(--color-line);
+        border-radius: 1rem;
         box-sizing: border-box;
         overflow: hidden;
     }
 
     .indicator {
         position: absolute;
-        top: 0.375rem;
-        bottom: 0.375rem;
-        left: 0.375rem;
+        top: 0.25rem;
+        bottom: 0.25rem;
+        left: 0.25rem;
 
-        width: calc((100% - 0.75rem) / 3);
+        width: calc((100% - 0.5rem) / 3);
 
         background: var(--color-primary);
-        border-radius: 1.4rem;
+        border-radius: 0.75rem;
 
         box-shadow:
-            0 2px 8px rgba(0, 0, 0, 0.08),
-            0 1px 2px rgba(0, 0, 0, 0.06);
+            0 2px 8px rgba(26, 52, 82, 0.12),
+            0 1px 2px rgba(26, 52, 82, 0.08);
 
         transition:
             transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -74,11 +75,11 @@
         flex: 1;
         border: none;
         background: transparent;
-        border-radius: 1.4rem;
-        padding: 1rem 1.25rem;
+        border-radius: 0.75rem;
+        padding: 0.75rem 1rem;
 
-        font-size: 1.125rem;
-        font-weight: 500;
+        font-size: 0.875rem;
+        font-weight: 650;
 
         color: var(--color-ink-muted);
         cursor: pointer;
@@ -101,24 +102,8 @@
         transform: scale(0.98);
     }
 
-    @media (max-width: 640px) {
-        .segment-control {
-            padding: 0.25rem;
-            border-radius: 1.25rem;
-        }
-
-        .indicator {
-            top: 0.25rem;
-            bottom: 0.25rem;
-            left: 0.25rem;
-            width: calc((100% - 0.5rem) / 3);
-            border-radius: 1rem;
-        }
-
-        .segment-button {
-            padding: 0.875rem 0.75rem;
-            font-size: 1rem;
-            border-radius: 1rem;
-        }
+    .segment-button:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: -3px;
     }
 </style>

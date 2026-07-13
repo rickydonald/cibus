@@ -78,27 +78,6 @@
 </script>
 
 <div class="min-h-screen text-ink antialiased">
-    <!-- Header -->
-    <div class="page-header">
-        <div
-            class="safe-top-offset flex items-center gap-4 px-6 py-4 max-w-md mx-auto"
-        >
-            <button
-                onclick={() => history.back()}
-                class="icon-btn"
-                aria-label="Go back"
-            >
-                <ArrowLeftIcon class="h-4 w-4" />
-            </button>
-
-            <div>
-                <h1 class="text-lg font-bold tracking-tight text-ink">
-                    Order History
-                </h1>
-            </div>
-        </div>
-    </div>
-
     <div class="px-4 pb-nav max-w-md mx-auto">
         {#if isLoading}
             <div class="space-y-4 pt-4">

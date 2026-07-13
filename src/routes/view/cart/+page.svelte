@@ -695,42 +695,6 @@
 
                 <!-- Scrollable body -->
                 <div class="overflow-y-auto px-6 pb-2">
-                    <!-- Itemized order summary -->
-                    <div
-                        class="mt-3 rounded-2xl border border-line bg-canvas/60 divide-y divide-line/70"
-                    >
-                        {#each Object.entries(grouped) as [outlet, items]}
-                            {@const outletItems = items ?? []}
-                            <div class="px-4 py-3">
-                                <p
-                                    class="text-[11px] font-semibold uppercase tracking-wider text-ink-faint mb-1.5"
-                                >
-                                    {outlet}
-                                </p>
-                                <div class="space-y-1">
-                                    {#each outletItems as item}
-                                        <div
-                                            class="flex items-baseline justify-between gap-3 text-sm"
-                                        >
-                                            <span class="text-ink truncate">
-                                                <span
-                                                    class="font-medium text-ink-muted tabular-nums"
-                                                    >{item.qty}×</span
-                                                >
-                                                {item.itemname}
-                                            </span>
-                                            <span
-                                                class="shrink-0 font-semibold text-ink tabular-nums"
-                                            >
-                                                ₹{item.amount * item.qty}
-                                            </span>
-                                        </div>
-                                    {/each}
-                                </div>
-                            </div>
-                        {/each}
-                    </div>
-
                     <!-- Total -->
                     <div class="mt-3 flex items-center justify-between px-1">
                         <span class="text-sm font-semibold text-ink"
