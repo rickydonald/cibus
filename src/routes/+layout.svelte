@@ -37,7 +37,7 @@
 		rel="stylesheet"
 	/>
 	<link
-		href="https://fonts.googleapis.com/css2?family=Red+Hat+Mono:wght@600&display=swap"
+		href="https://fonts.googleapis.com/css2?family=Red+Hat+Mono:wght@300..700&display=swap"
 		rel="stylesheet"
 	/>
 	<link rel="icon" href={favicon} />
@@ -63,7 +63,11 @@
 	gap={10}
 	visibleToasts={3}
 	offset={{ top: "calc(var(--safe-area-inset-top) + 1rem)" }}
-	mobileOffset={{ top: "calc(var(--safe-area-inset-top) + 0.75rem)", left: "0.75rem", right: "0.75rem" }}
+	mobileOffset={{
+		top: "calc(var(--safe-area-inset-top) + 0.75rem)",
+		left: "0.75rem",
+		right: "0.75rem",
+	}}
 	toastOptions={{
 		classes: {
 			toast: "eatright-toast",

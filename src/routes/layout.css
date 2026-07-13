@@ -156,7 +156,7 @@ input[type="number"]::-webkit-outer-spin-button {
 
 /*
  * Eat Right notifications
- * Dark ink pill floating over the porcelain UI — high contrast, iOS-banner feel.
+ * Dark ink pill floating over the porcelain UI — high contrast.
  * Semantic type is carried by the circular icon chip, not the whole surface.
  */
 html [data-sonner-toaster] {

@@ -270,7 +270,7 @@
                             >
                                 <p class="section-label">Pickup Code</p>
                                 <p
-                                    class="mt-1.5 font-geist-mono text-[44px] leading-none tracking-[0.16em] mr-[-0.16em] text-ink font-semibold!"
+                                    class="mt-1.5 font-geist-mono text-[44px] leading-none tracking-[0.16em] mr-[-0.16em] text-ink font-bold!"
                                 >
                                     {pickupCode(order.order_no)}
                                 </p>
@@ -309,7 +309,7 @@
                                                     class="flex-1 border-b border-dotted border-line-strong"
                                                 ></span>
                                                 <span
-                                                    class="shrink-0 font-geist-mono text-sm text-ink tabular-nums"
+                                                    class="shrink-0 font-geist-mono text-sm text-ink tabular-nums font-semibold"
                                                     >₹{Number(
                                                         item.total,
                                                     ).toFixed(2)}</span
@@ -347,7 +347,7 @@
                                         </span>
                                     </div>
                                     <p
-                                        class="font-geist-mono text-xl text-ink tabular-nums"
+                                        class="font-mono font-semibold text-xl text-ink tabular-nums"
                                     >
                                         ₹{Number(order.grand_total).toFixed(2)}
                                     </p>
