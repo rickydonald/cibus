@@ -116,123 +116,121 @@
 </script>
 
 <MainContainer>
-    <div class="safe-top-offset text-neutral-900 antialiased">
+    <div class="safe-top-offset antialiased">
         <div class="min-h-screen w-full">
             <ContentWrapper>
-                <div class="flex items-baseline justify-end-safe mr-5">
+                <!-- Greeting Header -->
+                <div
+                    class="flex items-center justify-between px-5 pt-1 max-w-md mx-auto"
+                >
+                    <div class="min-w-0">
+                        <h1
+                            class="text-xl font-bold tracking-tight text-ink truncate"
+                        >
+                            {#if walletOwnerName}
+                                Hi, {walletOwnerName}
+                            {:else}
+                                Welcome
+                            {/if}
+                        </h1>
+                        <p class="text-xs font-medium text-ink-muted mt-0.5">
+                            What are you eating today?
+                        </p>
+                    </div>
                     <button
                         aria-label="Open Account Settings"
+                        class="icon-btn"
                         onclick={() =>
                             (isAccountSheetOpen = !isAccountSheetOpen)}
                     >
                         <UserCircleIcon
-                            width="28"
-                            height="28"
-                            class="text-neutral-500"
+                            width="22"
+                            height="22"
+                            class="text-ink-muted"
                         />
                     </button>
                 </div>
-                <!-- Wallet Panel Tray -->
-                <div
-                    class="pt-8 px-5 border-b border-neutral-300/80 bg-linear-to-b from-neutral-100 via-neutral-50 to-neutral-300 relative max-w-md mx-auto sm:rounded-b-[32px]"
-                >
-                    <div class="flex flex-col items-center justify-center">
-                        <p
-                            class="text-[10px] uppercase tracking-[0.16em] text-neutral-400 text-center font-bold"
-                        >
-                            {#if walletOwnerName}
-                                {walletOwnerName}'s Wallet Balance
-                            {:else}
-                                Wallet Balance
-                            {/if}
-                        </p>
 
-                        <div
-                            class="mt-2.5 h-12 flex items-center justify-center"
-                        >
-                            {#if accountDetails}
-                                <h2
-                                    class="flex items-baseline justify-center text-5xl font-bold tracking-wide text-neutral-900 tabular-nums"
-                                >
-                                    <span
-                                        class="text-neutral-400 text-4xl mr-0.5 font-normal"
-                                        >₹</span
-                                    >
-                                    <span
-                                        >{getBalanceMajor(
-                                            accountDetails?.walletBalance,
-                                        )}.</span
-                                    >
-                                    <span
-                                        class="text-3xl font-medium text-neutral-400"
-                                        >{getBalanceMinor(
-                                            accountDetails?.walletBalance,
-                                        )}</span
-                                    >
-                                </h2>
-                            {:else}
-                                <div
-                                    class="h-10 w-40 animate-pulse rounded-full bg-neutral-200/70"
-                                ></div>
-                            {/if}
-                        </div>
-                    </div>
-
-                    <!-- Balanced Navigation Action Layout -->
+                <!-- Wallet Hero Card -->
+                <div class="mt-5 px-5 max-w-md mx-auto">
                     <div
-                        class="mt-12 flex items-center justify-between pb-4 gap-3"
+                        class="relative overflow-hidden rounded-[28px] bg-primary p-6 text-white shadow-card"
                     >
-                        <button
-                            onclick={() => goto("/view/history")}
-                            class="flex-1 w-1/2 rounded-full bg-white border border-neutral-200 shadow-2xs px-3 py-3 text-sm flex items-center justify-center gap-2 font-semibold text-neutral-700 hover:bg-neutral-50 active:scale-98 transition whitespace-nowrap h-12"
-                            aria-label="View Order History"
-                        >
-                            <ReceiptIndianRupeeIcon
-                                size="16"
-                                class="text-amber-600 shrink-0"
-                            />
-                            <span>View Orders</span>
-                        </button>
+                        <div
+                            class="absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(255,255,255,0.1),transparent_45%),radial-gradient(circle_at_100%_100%,rgba(255,255,255,0.06),transparent_40%)]"
+                        ></div>
 
-                        <button
-                            onclick={() => goto("/view/wallet")}
-                            class="flex-1 w-1/2 rounded-full bg-amber-400 shadow-sm px-3 text-sm text-neutral-950 flex items-center justify-center gap-2 font-semibold hover:bg-amber-300 active:scale-98 transition whitespace-nowrap h-12"
-                            aria-label="Add Money to Wallet"
-                        >
-                            <Wallet02Icon
-                                width="16"
-                                class="text-neutral-950 shrink-0"
-                            />
-                            <span>Add Money</span>
-                        </button>
+                        <div class="relative z-10">
+                            <p
+                                class="text-[10px] uppercase tracking-[0.16em] text-white/60 font-bold"
+                            >
+                                Wallet Balance
+                            </p>
+
+                            <div class="mt-2 h-12 flex items-center">
+                                {#if accountDetails}
+                                    <h2
+                                        class="flex items-baseline text-5xl font-bold tracking-wide tabular-nums"
+                                    >
+                                        <span
+                                            class="text-white/50 text-4xl mr-1 font-normal"
+                                            >₹</span
+                                        >
+                                        <span
+                                            >{getBalanceMajor(
+                                                accountDetails?.walletBalance,
+                                            )}.</span
+                                        >
+                                        <span
+                                            class="text-3xl font-medium text-white/50"
+                                            >{getBalanceMinor(
+                                                accountDetails?.walletBalance,
+                                            )}</span
+                                        >
+                                    </h2>
+                                {:else}
+                                    <div
+                                        class="h-10 w-40 animate-pulse rounded-full bg-white/15"
+                                    ></div>
+                                {/if}
+                            </div>
+
+                            <div class="mt-6 flex items-center gap-3">
+                                <button
+                                    onclick={() => goto("/view/history")}
+                                    class="flex-1 h-11 rounded-full bg-white/12 border border-white/15 px-3 text-sm flex items-center justify-center gap-2 font-semibold text-white hover:bg-white/20 active:scale-98 transition whitespace-nowrap"
+                                    aria-label="View Order History"
+                                >
+                                    <ReceiptIndianRupeeIcon
+                                        size="16"
+                                        class="shrink-0"
+                                    />
+                                    <span>View Orders</span>
+                                </button>
+
+                                <button
+                                    onclick={() => goto("/view/wallet")}
+                                    class="flex-1 h-11 rounded-full bg-white px-3 text-sm text-primary flex items-center justify-center gap-2 font-bold hover:bg-primary-soft active:scale-98 transition whitespace-nowrap"
+                                    aria-label="Add Money to Wallet"
+                                >
+                                    <Wallet02Icon width="16" class="shrink-0" />
+                                    <span>Add Money</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Search Input Trigger -->
-                <!-- <div class="px-5 pt-6 max-w-md mx-auto">
-                    <button
-                        onclick={() => goto("/view/search")}
-                        class="flex w-full items-center justify-start gap-3 rounded-2xl border border-neutral-200/80 bg-white px-4 py-3.5 shadow-xs hover:border-neutral-300 transition-colors"
-                    >
-                        <SearchMdIcon class="h-4 w-4 text-neutral-400" />
-                        <span class="text-sm text-neutral-400 font-medium"
-                            >Search food items or kitchens...</span
-                        >
-                    </button>
-                </div> -->
-
                 <!-- Section Subheader -->
                 <div class="mt-8 px-6 max-w-md mx-auto">
-                    <h2
-                        class="text-xl font-bold tracking-tight text-neutral-900"
-                    >
+                    <h2 class="text-xl font-bold tracking-tight text-ink">
                         Food Counters
                     </h2>
                 </div>
 
                 <!-- Outlets Card -->
                 <div
-                    class="mt-3 grid grid-cols-1 gap-3 px-5 pb-32 max-w-md mx-auto"
+                    class="mt-3 grid grid-cols-1 gap-3 px-5 pb-nav-float max-w-md mx-auto"
                 >
                     {#if accountDetails}
                         {#each accountDetails.outlets as outlet}
@@ -240,7 +238,7 @@
                                 onclick={() =>
                                     handleNavigation(outlet.id, outlet.shopNo)}
                                 disabled={outlet.isClosed || isNavigateLoading}
-                                class="group rounded-3xl border border-neutral-200/60 bg-white p-4 text-left shadow-xs transition-all hover:border-neutral-300 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                                class="group card p-4 text-left transition-all hover:border-line-strong active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 <div
                                     class="flex items-center justify-between gap-3"
@@ -249,7 +247,7 @@
                                         class="flex items-center gap-3.5 min-w-0"
                                     >
                                         <div
-                                            class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-neutral-50 border border-neutral-100"
+                                            class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-soft border border-primary/10"
                                         >
                                             <img
                                                 src={helpers.mapStoreIcon(
@@ -262,12 +260,12 @@
 
                                         <div class="min-w-0">
                                             <h3
-                                                class="truncate text-base font-semibold tracking-tight text-neutral-900"
+                                                class="truncate text-base font-semibold tracking-tight text-ink"
                                             >
                                                 {outlet.name}
                                             </h3>
                                             <p
-                                                class="text-xs text-neutral-400 font-medium mt-0.5"
+                                                class="text-xs text-ink-faint font-medium mt-0.5"
                                             >
                                                 Counter {outlet.shopNo}
                                             </p>
@@ -277,19 +275,19 @@
                                     <div>
                                         {#if outlet.isClosed}
                                             <div
-                                                class="flex items-center gap-1 rounded-full bg-rose-50 border border-rose-100 px-2.5 py-1"
+                                                class="flex items-center gap-1 rounded-full bg-danger-soft border border-danger/10 px-2.5 py-1"
                                             >
                                                 <span
-                                                    class="text-[11px] font-semibold text-rose-600"
+                                                    class="text-[11px] font-semibold text-danger"
                                                     >Closed</span
                                                 >
                                             </div>
                                         {:else}
                                             <div
-                                                class="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-50 border border-neutral-200/40 group-hover:bg-neutral-100 transition-colors"
+                                                class="flex h-7 w-7 items-center justify-center rounded-full bg-canvas border border-line group-hover:bg-primary-soft transition-colors"
                                             >
                                                 <ChevronRightIcon
-                                                    class="h-4 w-4 text-neutral-400 transition-transform group-hover:translate-x-0.5"
+                                                    class="h-4 w-4 text-ink-faint transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
                                                 />
                                             </div>
                                         {/if}
@@ -299,27 +297,25 @@
                         {/each}
                     {:else}
                         {#each Array(4) as _}
-                            <div
-                                class="rounded-3xl border border-neutral-200/40 bg-white p-4 shadow-xs"
-                            >
+                            <div class="card p-4">
                                 <div class="flex items-center justify-between">
                                     <div
                                         class="flex items-center gap-3.5 w-full"
                                     >
                                         <div
-                                            class="h-12 w-12 animate-pulse rounded-xl bg-neutral-100"
+                                            class="h-12 w-12 animate-pulse rounded-xl bg-canvas"
                                         ></div>
                                         <div class="flex-1 space-y-2">
                                             <div
-                                                class="h-4 w-1/2 animate-pulse rounded-md bg-neutral-100"
+                                                class="h-4 w-1/2 animate-pulse rounded-md bg-canvas"
                                             ></div>
                                             <div
-                                                class="h-3 w-1/4 animate-pulse rounded-md bg-neutral-100"
+                                                class="h-3 w-1/4 animate-pulse rounded-md bg-canvas"
                                             ></div>
                                         </div>
                                     </div>
                                     <div
-                                        class="h-6 w-6 animate-pulse rounded-full bg-neutral-100"
+                                        class="h-6 w-6 animate-pulse rounded-full bg-canvas"
                                     ></div>
                                 </div>
                             </div>
@@ -345,36 +341,28 @@
             <BottomSheet.Handle />
             <BottomSheet.Content class="w-full!">
                 <div class="w-full">
-                    <h1 class="text-black text-xl font-bold pl-3">Account</h1>
+                    <h1 class="text-ink text-xl font-bold pl-3">Account</h1>
                     <div
-                        class="border-t border-x border-neutral-300/80 relative rounded-t-xl p-3 mt-5 bg-gray-50"
+                        class="border-t border-x border-line relative rounded-t-xl p-3 mt-5 bg-canvas"
                     >
-                        <p
-                            class="text-gray-500/80 uppercase tracking-widest text-[11px] font-semibold"
-                        >
-                            Name
-                        </p>
-                        <p class="text-lg font-semibold">
+                        <p class="section-label">Name</p>
+                        <p class="text-lg font-semibold text-ink">
                             {profile?.name ?? "--"}
                         </p>
                     </div>
                     <div
-                        class="border-x border-b border-neutral-300/80 relative rounded-b-xl border-t p-3 bg-gray-50"
+                        class="border-x border-b border-line relative rounded-b-xl border-t p-3 bg-canvas"
                     >
-                        <p
-                            class="text-gray-500/80 uppercase tracking-widest text-[11px] font-semibold"
-                        >
-                            Department Number/Staff ID
-                        </p>
-                        <p class="text-lg font-semibold">
+                        <p class="section-label">Department Number/Staff ID</p>
+                        <p class="text-lg font-semibold text-ink">
                             {profile?.deptNo || "--"}
                         </p>
                     </div>
                     <button
-                        class="bg-red-500 text-white w-full rounded-xl mt-3 p-3 flex items-center justify-center-safe gap-3 relative"
+                        class="bg-danger text-white w-full rounded-xl mt-3 p-3 flex items-center justify-center gap-2 transition-all hover:bg-danger/90 active:scale-[0.99]"
                         onclick={disconnectEatRight}
                     >
-                        <LogOut01Icon class="absolute left-27" />
+                        <LogOut01Icon class="h-5 w-5" />
                         <span class="font-semibold">Logout</span>
                     </button>
                 </div>
@@ -382,13 +370,3 @@
         </BottomSheet.Sheet>
     </BottomSheet.Overlay>
 </BottomSheet>
-
-<style>
-    :global(body) {
-        background: #f5f5f7;
-    }
-
-    :global(*) {
-        -webkit-tap-highlight-color: transparent;
-    }
-</style>

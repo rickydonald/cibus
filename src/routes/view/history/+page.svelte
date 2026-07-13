@@ -23,16 +23,16 @@
     let error = $state("");
 
     const STATUS_THEMES: Record<string, string> = {
-        PLACED: "bg-blue-50 text-blue-700 border-blue-200/40",
-        PAID: "bg-emerald-50 text-emerald-700 border-emerald-200/40",
-        PENDING: "bg-amber-50 text-amber-700 border-amber-200/40",
-        CANCELLED: "bg-rose-50 text-rose-700 border-rose-200/40",
+        PLACED: "bg-primary-soft text-primary border-primary/10",
+        PAID: "bg-success-soft text-success border-success/10",
+        PENDING: "bg-warning-soft text-warning border-warning/10",
+        CANCELLED: "bg-danger-soft text-danger border-danger/10",
     };
 
     function getStatusStyle(status: string) {
         return (
             STATUS_THEMES[status.toUpperCase()] ??
-            "bg-neutral-50 text-neutral-600 border-neutral-200/40"
+            "bg-canvas text-ink-muted border-line"
         );
     }
 
@@ -60,7 +60,11 @@
                 return;
             }
 
-            orders = Array.isArray(data.orders) ? data.orders : [];
+            orders = Array.isArray(data.orders)
+                ? data.orders
+                : Array.isArray(data)
+                  ? data
+                  : [];
         } catch {
             error = "Unable to load order history.";
         } finally {
@@ -73,52 +77,48 @@
     });
 </script>
 
-<div class="min-h-screen bg-[#F4F5F7] text-neutral-900 antialiased ">
+<div class="min-h-screen text-ink antialiased">
     <!-- Header -->
-    <div
-        class="sticky top-0 z-20 bg-[#F4F5F7]/80 backdrop-blur-md border-b border-neutral-200/30"
-    >
+    <div class="page-header">
         <div
             class="safe-top-offset flex items-center gap-4 px-6 py-4 max-w-md mx-auto"
         >
             <button
                 onclick={() => history.back()}
-                class="flex h-10 w-10 items-center justify-center rounded-full bg-white border border-neutral-200/80 shadow-sm active:scale-95 transition-transform"
+                class="icon-btn"
                 aria-label="Go back"
             >
-                <ArrowLeftIcon class="h-4 w-4 text-neutral-700" />
+                <ArrowLeftIcon class="h-4 w-4" />
             </button>
 
             <div>
-                <h1 class="text-lg font-bold tracking-tight text-neutral-900">
+                <h1 class="text-lg font-bold tracking-tight text-ink">
                     Order History
                 </h1>
             </div>
         </div>
     </div>
 
-    <div class="px-4 pb-12 max-w-md mx-auto">
+    <div class="px-4 pb-nav max-w-md mx-auto">
         {#if isLoading}
             <div class="space-y-4 pt-4">
                 {#each Array(4) as _}
-                    <div
-                        class="rounded-3xl border border-neutral-200/50 bg-white p-5 shadow-sm space-y-4"
-                    >
+                    <div class="card p-5 space-y-4">
                         <div class="flex justify-between items-start">
                             <div class="space-y-2 w-2/3">
                                 <div
-                                    class="h-4 w-full animate-pulse rounded bg-neutral-100"
+                                    class="h-4 w-full animate-pulse rounded bg-canvas"
                                 ></div>
                                 <div
-                                    class="h-3 w-1/2 animate-pulse rounded bg-neutral-100"
+                                    class="h-3 w-1/2 animate-pulse rounded bg-canvas"
                                 ></div>
                             </div>
                             <div
-                                class="h-6 w-16 animate-pulse rounded bg-neutral-100"
+                                class="h-6 w-16 animate-pulse rounded bg-canvas"
                             ></div>
                         </div>
                         <div
-                            class="h-10 w-full animate-pulse rounded-xl bg-neutral-50"
+                            class="h-10 w-full animate-pulse rounded-xl bg-canvas"
                         ></div>
                     </div>
                 {/each}
@@ -127,16 +127,16 @@
             <div
                 class="flex min-h-[60vh] flex-col items-center justify-center text-center px-4"
             >
-                <h2 class="text-base font-bold text-neutral-800">
+                <h2 class="text-base font-bold text-ink">
                     Could not load orders
                 </h2>
                 <p
-                    class="mt-1 max-w-xs text-xs font-medium text-neutral-500 leading-relaxed"
+                    class="mt-1 max-w-xs text-xs font-medium text-ink-muted leading-relaxed"
                 >
                     {error}
                 </p>
                 <button
-                    class="mt-5 rounded-xl bg-neutral-900 px-5 py-2.5 text-xs font-bold text-white shadow-sm active:scale-95 transition-transform"
+                    class="btn-primary mt-5 rounded-xl px-5 py-2.5 text-xs"
                     onclick={getOrders}
                 >
                     Try Again
@@ -146,11 +146,9 @@
             <div
                 class="flex min-h-[60vh] flex-col items-center justify-center text-center px-4"
             >
-                <h2 class="text-base font-bold text-neutral-800">
-                    No orders yet
-                </h2>
+                <h2 class="text-base font-bold text-ink">No orders yet</h2>
                 <p
-                    class="mt-1 max-w-xs text-xs font-medium text-neutral-500 leading-relaxed"
+                    class="mt-1 max-w-xs text-xs font-medium text-ink-muted leading-relaxed"
                 >
                     Your EatRight orders will appear here automatically after
                     checkout.
@@ -161,7 +159,7 @@
                 {#each orders as order}
                     {@const price = splitPrice(order.grand_total)}
                     <button
-                        class="w-full rounded-3xl border border-neutral-200/50 bg-white p-5 text-left shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:border-neutral-300/80 transition-all duration-200 group block relative overflow-hidden"
+                        class="card w-full p-5 text-left hover:border-line-strong transition-all duration-200 group block relative overflow-hidden"
                         onclick={() =>
                             goto(
                                 `/view/confirmation?order_no=${encodeURIComponent(order.order_no)}&outletid=${encodeURIComponent(order.outletid)}`,
@@ -171,12 +169,12 @@
                         <div class="flex items-start justify-between gap-4">
                             <div class="min-w-0">
                                 <h2
-                                    class="truncate text-lg font-bold tracking-tight text-neutral-900"
+                                    class="truncate text-lg font-bold tracking-tight text-ink"
                                 >
                                     {order.outletname}
                                 </h2>
                                 <p
-                                    class="text-[11px] font-medium text-neutral-400 mt-0.5"
+                                    class="text-[11px] font-medium text-ink-faint mt-0.5"
                                 >
                                     {order.created_on}
                                 </p>
@@ -184,10 +182,10 @@
 
                             <div class="text-right whitespace-nowrap shrink-0">
                                 <p
-                                    class="text-xl font-black tracking-tight text-neutral-900 tabular-nums"
+                                    class="text-xl font-black tracking-tight text-ink tabular-nums"
                                 >
                                     &#8377;{price.main}.<span
-                                        class="text-xs font-normal text-neutral-500"
+                                        class="text-xs font-normal text-ink-muted"
                                         >{price.decimal}</span
                                     >
                                 </p>
@@ -197,17 +195,17 @@
                         <!-- Mid Section: Micro Badge Tokens -->
                         <div class="mt-3.5 flex flex-wrap gap-1.5">
                             <span
-                                class={`rounded-lg border px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${getStatusStyle(order.order_status)}`}
+                                class={`chip ${getStatusStyle(order.order_status)}`}
                             >
                                 {order.order_status}
                             </span>
                             <span
-                                class={`rounded-lg border px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${getStatusStyle(order.payment_status)}`}
+                                class={`chip ${getStatusStyle(order.payment_status)}`}
                             >
                                 {order.payment_status}
                             </span>
                             <span
-                                class={`rounded-lg border px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${order.delivered === "Y" ? "bg-emerald-50 text-emerald-700 border-emerald-200/40" : "bg-neutral-50 text-neutral-600 border-neutral-200/40"}`}
+                                class={`chip ${order.delivered === "Y" ? "bg-success-soft text-success border-success/10" : "bg-canvas text-ink-muted border-line"}`}
                             >
                                 {order.delivered === "Y"
                                     ? "Delivered"
@@ -217,22 +215,22 @@
 
                         <!-- Lower Tray: Order System Details and Action Trigger -->
                         <div
-                            class="mt-4 rounded-2xl bg-neutral-50 px-4 py-3 border border-neutral-100/60 flex items-center justify-between gap-3 group-hover:bg-neutral-100/40 transition-colors"
+                            class="mt-4 rounded-2xl bg-canvas px-4 py-3 border border-line flex items-center justify-between gap-3 group-hover:bg-primary-soft/50 transition-colors"
                         >
                             <div class="min-w-0">
                                 <p
-                                    class="text-[9px] font-bold uppercase tracking-widest text-neutral-400"
+                                    class="text-[9px] font-bold uppercase tracking-widest text-ink-faint"
                                 >
                                     Order Reference
                                 </p>
                                 <p
-                                    class="mt-0.5 break-all font-mono text-xs text-neutral-600 font-medium"
+                                    class="mt-0.5 break-all font-mono text-xs text-ink-muted font-medium"
                                 >
                                     {order.order_no}
                                 </p>
                             </div>
                             <span
-                                class="shrink-0 rounded-xl bg-neutral-900 px-3 py-1.5 text-[11px] font-bold text-white transition-colors group-hover:bg-neutral-850"
+                                class="shrink-0 rounded-xl bg-primary px-3 py-1.5 text-[11px] font-bold text-white transition-colors group-hover:bg-primary-strong"
                             >
                                 View
                             </span>

@@ -23,6 +23,8 @@ type PlacedOrder = {
   outletid: number;
 };
 
+type EatRightCartItem = ReturnType<typeof toEatRightCartPayload>[number];
+
 function eatRightHeaders(cookieHeader: string) {
   return {
     Accept: "application/json, text/javascript, */*; q=0.01",
@@ -55,6 +57,31 @@ function toEatRightCartPayload(cart: OrderItem[]) {
   }));
 }
 
+function getCartTotal(cart: EatRightCartItem[]) {
+  return cart.reduce((sum, item) => sum + item.total, 0);
+}
+
+function getCartGroupKey(item: EatRightCartItem) {
+  return `${item.outletid}:${item.shopno}`;
+}
+
+function groupCartByShop(cart: EatRightCartItem[]) {
+  const groups = new Map<string, EatRightCartItem[]>();
+
+  for (const item of cart) {
+    const key = getCartGroupKey(item);
+    const group = groups.get(key);
+
+    if (group) {
+      group.push(item);
+    } else {
+      groups.set(key, [item]);
+    }
+  }
+
+  return [...groups.values()];
+}
+
 function normalizePlacedOrders(placeOrderPayload: unknown, cart: ReturnType<typeof toEatRightCartPayload>): PlacedOrder[] {
   const payload = placeOrderPayload as Record<string, unknown> | null;
   const orders = payload?.orders;
@@ -80,6 +107,103 @@ function normalizePlacedOrders(placeOrderPayload: unknown, cart: ReturnType<type
       outletid: Number(outletIds[index] ?? outletIds[0]),
     }))
     .filter((order) => order.order_no && Number.isFinite(order.outletid));
+}
+
+function normalizeOrderList(payload: unknown): Array<Record<string, unknown>> {
+  if (Array.isArray(payload)) return payload as Array<Record<string, unknown>>;
+
+  if (payload && typeof payload === "object") {
+    const value = payload as Record<string, unknown>;
+    if (Array.isArray(value.orders)) return value.orders as Array<Record<string, unknown>>;
+    if (Array.isArray(value.data)) return value.data as Array<Record<string, unknown>>;
+  }
+
+  return [];
+}
+
+async function waitForOrdersToAppear(cookieHeader: string, placedOrders: PlacedOrder[]) {
+  const expected = new Set(placedOrders.map((order) => order.order_no));
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const response = await fetch(`${BASE_URL}/ajax/getUserOrders.jsp`, {
+      headers: {
+        Accept: "application/json, text/javascript, */*; q=0.01",
+        Referer: REFERER,
+        "User-Agent": USER_AGENT,
+        "X-Requested-With": "XMLHttpRequest",
+        Cookie: cookieHeader,
+      },
+    });
+
+    if (response.ok) {
+      const payload = parseJsonText(await response.text());
+      const orders = normalizeOrderList(payload);
+      const foundOrderNos = new Set(
+        orders.map((order) => String(order.order_no ?? order.orderNo ?? "")),
+      );
+      const found = [...expected].every((orderNo) => foundOrderNos.has(orderNo));
+
+      if (found) return true;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 700));
+  }
+
+  return false;
+}
+
+async function placeEatRightOrder(
+  cookieHeader: string,
+  username: string,
+  cart: EatRightCartItem[],
+) {
+  const form = new URLSearchParams();
+
+  form.set("cart", JSON.stringify(cart));
+  form.set("grandTotal", String(getCartTotal(cart)));
+  form.set("paymentStatus", "Payment Not Made");
+  form.set("userid", username);
+
+  const response = await fetch(`${BASE_URL}/ajax/placeOrder.jsp`, {
+    method: "POST",
+    headers: eatRightHeaders(cookieHeader),
+    body: form.toString(),
+  });
+  const text = await response.text();
+
+  if (!response.ok) {
+    return {
+      ok: false as const,
+      status: response.status,
+      error: "Failed to place EatRight order",
+      response: text,
+    };
+  }
+
+  const payload = parseJsonText(text);
+  if (!payload) {
+    return {
+      ok: false as const,
+      status: 502,
+      error: "EatRight returned an invalid place order response",
+      response: text,
+    };
+  }
+
+  const orders = normalizePlacedOrders(payload, cart);
+  if (orders.length === 0) {
+    return {
+      ok: false as const,
+      status: 502,
+      error: "EatRight did not return an order number",
+      response: payload,
+    };
+  }
+
+  return {
+    ok: true as const,
+    orders,
+  };
 }
 
 export async function POST(event) {
@@ -120,7 +244,7 @@ export async function POST(event) {
   }
 
   const orderCart = toEatRightCartPayload(cart);
-  const grandTotal = orderCart.reduce((sum, item) => sum + item.total, 0);
+  const grandTotal = getCartTotal(orderCart);
 
   if (
     orderCart.some(
@@ -143,54 +267,23 @@ export async function POST(event) {
     );
   }
 
-  const form = new URLSearchParams();
+  const orderGroups = groupCartByShop(orderCart);
+  const placedOrders: PlacedOrder[] = [];
 
-  form.set("cart", JSON.stringify(orderCart));
-  form.set("grandTotal", String(grandTotal));
-  form.set("paymentStatus", "Payment Not Made");
-  form.set("userid", username);
+  for (const group of orderGroups) {
+    const placedOrder = await placeEatRightOrder(cookieHeader, username, group);
 
-  const response = await fetch(
-    `${BASE_URL}/ajax/placeOrder.jsp`,
-    {
-      method: "POST",
-      headers: eatRightHeaders(cookieHeader),
-      body: form.toString(),
-    },
-  );
+    if (!placedOrder.ok) {
+      return json(
+        {
+          error: placedOrder.error,
+          response: placedOrder.response,
+        },
+        { status: placedOrder.status },
+      );
+    }
 
-  const text = await response.text();
-
-  if (!response.ok) {
-    return json(
-      {
-        error: "Failed to place EatRight order",
-        response: text,
-      },
-      { status: response.status },
-    );
-  }
-
-  const placeOrderPayload = parseJsonText(text);
-  if (!placeOrderPayload) {
-    return json(
-      {
-        error: "EatRight returned an invalid place order response",
-        response: text,
-      },
-      { status: 502 },
-    );
-  }
-
-  const placedOrders = normalizePlacedOrders(placeOrderPayload, orderCart);
-  if (placedOrders.length === 0) {
-    return json(
-      {
-        error: "EatRight did not return an order number",
-        response: placeOrderPayload,
-      },
-      { status: 502 },
-    );
+    placedOrders.push(...placedOrder.orders);
   }
 
   const paymentForm = new URLSearchParams();
@@ -230,12 +323,27 @@ export async function POST(event) {
   }
 
   clearEatRightDataCache(cookieHeader);
+  const isRecorded = await waitForOrdersToAppear(cookieHeader, placedOrders);
+
+  if (!isRecorded) {
+    return json(
+      {
+        error: "EatRight accepted payment but did not record the order in history.",
+        errorCode: "order_not_recorded",
+        orders: placedOrders,
+        grandTotal,
+        payment,
+      },
+      { status: 502 },
+    );
+  }
 
   return json({
     success: true,
     orders: placedOrders,
     grandTotal,
     payment,
+    isRecorded,
     redirectUrl: `/view/confirmation?${placedOrders
       .map((order) => `order_no=${encodeURIComponent(order.order_no)}&outletid=${encodeURIComponent(order.outletid)}`)
       .join("&")}`,

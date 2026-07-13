@@ -36,15 +36,15 @@
     let displayBalance = $derived(splitPrice(walletBalance));
 
     const TRANSACTION_THEMES: Record<string, string> = {
-        CREDIT: "text-emerald-600 font-bold",
-        DEBIT: "text-red-600 font-bold",
-        ABORTED: "text-neutral-400 line-through font-medium",
+        CREDIT: "text-success font-bold",
+        DEBIT: "text-danger font-bold",
+        ABORTED: "text-ink-faint line-through font-medium",
     };
 
     function transactionStyle(type: string) {
         return (
             TRANSACTION_THEMES[type.toUpperCase()] ??
-            "text-neutral-500 font-medium"
+            "text-ink-muted font-medium"
         );
     }
 
@@ -331,47 +331,34 @@
     });
 </script>
 
-<div class="min-h-screen bg-[#F4F5F7] text-neutral-900 antialiased">
-    <div
-        class="sticky top-0 z-20 bg-[#F4F5F7]/80 backdrop-blur-md border-b border-neutral-200/30"
-    >
+<div class="min-h-screen text-ink antialiased">
+    <div class="page-header">
         <div
             class="safe-top-offset flex items-center gap-4 px-6 py-4 max-w-md mx-auto"
         >
             <button
                 onclick={() => history.back()}
-                class="flex h-10 w-10 items-center justify-center rounded-full bg-white border border-neutral-200/80 shadow-sm active:scale-95 transition-transform"
+                class="icon-btn"
                 aria-label="Go back"
             >
-                <ArrowLeftIcon class="h-4 w-4 text-neutral-700" />
+                <ArrowLeftIcon class="h-4 w-4" />
             </button>
 
             <div>
-                <h1 class="text-lg font-bold tracking-tight text-neutral-900">
+                <h1 class="text-lg font-bold tracking-tight text-ink">
                     Manage Wallet
                 </h1>
             </div>
         </div>
     </div>
 
-    <div class="px-4 pb-12 max-w-md mx-auto space-y-5 pt-4">
+    <div class="px-4 pb-nav max-w-md mx-auto space-y-5 pt-4">
         <section
-            class="group relative overflow-hidden rounded-[32px] border border-white/5 bg-linear-to-br from-neutral-950 via-neutral-900 to-neutral-800 p-6 text-white shadow-[0_24px_50px_rgba(0,0,0,0.25)] h-34"
+            class="group relative overflow-hidden rounded-[28px] bg-primary p-6 text-white shadow-card h-34"
         >
             <!-- Mesh Background -->
             <div
-                class="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(255,255,255,0.08),transparent_30%),radial-gradient(circle_at_90%_0%,rgba(255,255,255,0.05),transparent_30%),radial-gradient(circle_at_100%_100%,rgba(255,255,255,0.04),transparent_40%)]"
-            ></div>
-
-            <!-- Grid Texture -->
-            <div
-                class="absolute inset-0 opacity-[0.025]"
-                style="
-            background-image:
-                linear-gradient(to right, white 1px, transparent 1px),
-                linear-gradient(to bottom, white 1px, transparent 1px);
-            background-size: 28px 28px;
-        "
+                class="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(255,255,255,0.1),transparent_35%),radial-gradient(circle_at_90%_0%,rgba(255,255,255,0.06),transparent_30%),radial-gradient(circle_at_100%_100%,rgba(255,255,255,0.05),transparent_40%)]"
             ></div>
 
             <div class="relative z-10">
@@ -379,7 +366,7 @@
                 <div class="flex items-start justify-between">
                     <div>
                         <p
-                            class="text-[10px] font-bold uppercase tracking-[0.24em] text-neutral-400"
+                            class="text-[10px] font-bold uppercase tracking-[0.24em] text-white/60"
                         >
                             Available Balance
                         </p>
@@ -390,13 +377,12 @@
                 <div class="mt-4">
                     {#if isLoading}
                         <div
-                            class="h-14 w-48 animate-pulse rounded-xl bg-white/10"
+                            class="h-14 w-48 animate-pulse rounded-xl bg-white/15"
                         ></div>
                     {:else}
                         <div
                             class="flex items-baseline justify-start tabular-nums tracking-wide!"
                         >
-                            <!-- Adjusted sizing and alignment scales -->
                             <span
                                 class="text-3xl font-light text-white/60 mr-1.5 select-none"
                             >
@@ -420,19 +406,13 @@
             </div>
         </section>
 
-        <section
-            class="rounded-3xl border border-neutral-200/50 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)]"
-        >
-            <h2
-                class="text-sm font-bold pl-1 text-neutral-400 uppercase tracking-wider"
-            >
-                Recharge Wallet
-            </h2>
+        <section class="card p-6">
+            <h2 class="section-label pl-1">Recharge Wallet</h2>
 
             <div class="mt-4 space-y-3">
                 <div class="relative flex items-center">
                     <span
-                        class="absolute left-4 text-lg font-bold text-neutral-400"
+                        class="absolute left-4 text-lg font-bold text-ink-faint"
                         >₹</span
                     >
                     <input
@@ -444,7 +424,7 @@
                         inputmode="decimal"
                         bind:value={amount}
                         disabled={isSubmitting || isPolling}
-                        class="w-full rounded-2xl border border-neutral-200 bg-neutral-50 pl-9 pr-4 py-3.5 text-base font-bold outline-none focus:border-neutral-900 focus:bg-white transition-all tracking-wide disabled:opacity-50"
+                        class="w-full rounded-2xl border border-line bg-canvas pl-9 pr-4 py-3.5 text-base font-bold outline-none focus:border-primary focus:bg-surface focus:ring-2 focus:ring-primary/15 transition-all tracking-wide disabled:opacity-50"
                         placeholder="0.00"
                     />
                 </div>
@@ -458,8 +438,8 @@
                             class={`flex-1 rounded-xl border text-xs font-bold transition-all duration-200 active:scale-95 disabled:opacity-50 h-9
                             ${
                                 Number(amount) === value
-                                    ? "border-neutral-900 bg-neutral-900 text-white shadow-xs"
-                                    : "border-neutral-200/80 bg-white text-neutral-600 hover:bg-neutral-50 hover:border-neutral-300"
+                                    ? "border-primary bg-primary text-white shadow-xs"
+                                    : "border-line bg-surface text-ink-muted hover:bg-primary-soft hover:border-primary/30 hover:text-primary"
                             }`}
                         >
                             + ₹{value}
@@ -471,7 +451,7 @@
             <div class="flex flex-col gap-2 mt-5">
                 <button
                     type="button"
-                    class="w-full rounded-2xl bg-neutral-900 hover:bg-neutral-800 font-bold text-sm text-white shadow-xs transition-all duration-200 disabled:opacity-50 disabled:hover:bg-neutral-900 active:scale-[0.98] h-12 flex items-center justify-center gap-2.5"
+                    class="btn-primary w-full text-sm h-12"
                     onclick={rechargeWallet}
                     disabled={isSubmitting || isPolling}
                 >
@@ -493,7 +473,7 @@
                 {#if isSubmitting || isPolling}
                     <button
                         onclick={cancelPayment}
-                        class="w-full flex items-center justify-center gap-2 rounded-2xl bg-rose-50 border border-rose-200/60 py-3 text-sm font-semibold text-rose-600 hover:bg-rose-100/80 transition active:scale-[0.99]"
+                        class="w-full flex items-center justify-center gap-2 rounded-2xl bg-danger-soft border border-danger/15 py-3 text-sm font-semibold text-danger hover:bg-danger/10 transition active:scale-[0.99]"
                     >
                         <XCircleIcon class="h-4 w-4" />
                         Cancel Transaction
@@ -503,7 +483,7 @@
 
             {#if error || message}
                 <div
-                    class={`mt-4 rounded-xl px-4 py-3 text-xs font-semibold leading-relaxed border ${error ? "bg-rose-50 border-rose-500/10 text-rose-700" : "bg-emerald-50 border-emerald-500/10 text-emerald-700"}`}
+                    class={`mt-4 rounded-xl px-4 py-3 text-xs font-semibold leading-relaxed border ${error ? "bg-danger-soft border-danger/10 text-danger" : "bg-success-soft border-success/10 text-success"}`}
                 >
                     {error || message}
                 </div>
@@ -511,56 +491,48 @@
         </section>
 
         <section class="space-y-3">
-            <h2
-                class="text-sm font-bold pl-5 text-neutral-400 uppercase tracking-wider"
-            >
-                Transaction History
-            </h2>
+            <h2 class="section-label pl-5">Transaction History</h2>
 
             {#if isLoading}
                 <div class="space-y-3">
                     {#each Array(3) as _}
-                        <div
-                            class="rounded-2xl border border-neutral-200/50 bg-white p-5 shadow-sm space-y-2"
-                        >
+                        <div class="card rounded-2xl p-5 space-y-2">
                             <div
-                                class="h-4 w-2/3 animate-pulse rounded bg-neutral-100"
+                                class="h-4 w-2/3 animate-pulse rounded bg-canvas"
                             ></div>
                             <div
-                                class="h-3 w-1/3 animate-pulse rounded bg-neutral-100"
+                                class="h-3 w-1/3 animate-pulse rounded bg-canvas"
                             ></div>
                         </div>
                     {/each}
                 </div>
             {:else if transactions.length === 0}
                 <div
-                    class="rounded-2xl border border-neutral-200/50 bg-white p-8 text-center text-xs font-medium text-neutral-400 shadow-sm"
+                    class="card rounded-2xl p-8 text-center text-xs font-medium text-ink-faint"
                 >
                     No transactions recorded yet.
                 </div>
             {:else}
-                <div
-                    class="rounded-3xl border border-neutral-200/50 bg-white overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] divide-y divide-neutral-100"
-                >
+                <div class="card overflow-hidden divide-y divide-line/70">
                     {#each transactions as tx}
                         {@const parsedAmount = splitPrice(tx.amount)}
                         {@const parsedBalance = splitPrice(tx.balance)}
                         <article
-                            class="p-5 flex items-start justify-between gap-4 bg-white hover:bg-neutral-50/50 transition"
+                            class="p-5 flex items-start justify-between gap-4 bg-surface hover:bg-canvas/50 transition"
                         >
                             <div class="min-w-0 space-y-0.5">
                                 <h3
-                                    class="font-semibold text-neutral-900 text-sm leading-snug wrap-break-word"
+                                    class="font-semibold text-ink text-sm leading-snug wrap-break-word"
                                 >
                                     {tx.remarks}
                                 </h3>
                                 <p
-                                    class="text-[11px] text-neutral-400 font-medium"
+                                    class="text-[11px] text-ink-faint font-medium"
                                 >
                                     {tx.date}
                                 </p>
                                 <p
-                                    class="text-[10px] text-neutral-400 font-mono pt-1"
+                                    class="text-[10px] text-ink-faint font-mono pt-1"
                                 >
                                     Bal: ₹{parsedBalance.main}.<span
                                         class="text-[9px]"
@@ -589,14 +561,3 @@
     </div>
 </div>
 
-<style>
-    :global(body) {
-        background: #f5f5f7;
-    }
-
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-</style>

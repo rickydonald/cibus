@@ -1,5 +1,4 @@
 <script lang="ts">
-    import LoyolaLogo from "$lib/assets/logos/loyola-logo.webp";
     import { Constants } from "$lib/constants";
     import RegistrationSwitch from "$lib/components/custom/RegistrationSwitch.svelte";
 
@@ -27,32 +26,38 @@
     });
 </script>
 
-<div class="flex flex-col items-center justify-center-safe min-h-[80vh] px-8 pt-16">
-    <div class="text-left w-full! flex flex-col self-center">
-        <!-- <img
-            src={LoyolaLogo}
-            alt="Loyola College Logo"
-            class="self-center!"
-            width="60"
-        /> -->
-        <h1 class="text-xl font-medium mb-5 text-neutral-800">
-            {Constants._SITE.NAME}.
-        </h1>
-        <p class="text-2xl text-neutral-800 font-bold">Create an Account</p>
-        <!-- Segmented Switch -->
-        <div class="mt-5">
-            <RegistrationSwitch
-                value={userType}
-                onChange={(value) => (userType = value)}
-            />
+<div
+    class="flex min-h-screen flex-col items-center justify-center px-6 py-16 antialiased"
+>
+    <div class="w-full max-w-md">
+        <!-- Brand -->
+        <div class="mb-8">
+            <div
+                class="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-xl font-black text-white"
+            >
+                {Constants._SITE.NAME.charAt(0)}
+            </div>
+            <h1 class="text-3xl font-bold tracking-tight text-ink">
+                Create an Account
+            </h1>
+            <p class="mt-1 text-base text-ink-muted">
+                Join {Constants._SITE.NAME} to order from the food court
+            </p>
         </div>
+
+        <!-- Segmented Switch -->
+        <RegistrationSwitch
+            value={userType}
+            onChange={(value) => (userType = value)}
+        />
+
         <!-- Register Form -->
-        <div class="flex flex-col items-center justify-center gap-4 mt-5">
+        <div class="mt-6 flex flex-col gap-4">
             {#if userType === "guest"}
-                <div
-                    class="flex flex-col items-start justify-center gap-1 w-full"
-                >
-                    <label for="guest-name" class="text-sm text-gray-600"
+                <div class="flex w-full flex-col gap-1.5">
+                    <label
+                        for="guest-name"
+                        class="pl-1 text-sm font-medium text-ink-muted"
                         >Name</label
                     >
                     <input
@@ -60,14 +65,14 @@
                         placeholder="e.g. Ricky Donald"
                         id="guest-name"
                         required
-                        class="register-form-input"
+                        class="field-input"
                     />
                 </div>
             {:else if userType === "staff"}
-                <div
-                    class="flex flex-col items-start justify-center gap-1 w-full"
-                >
-                    <label for="staff-id" class="text-sm text-gray-600"
+                <div class="flex w-full flex-col gap-1.5">
+                    <label
+                        for="staff-id"
+                        class="pl-1 text-sm font-medium text-ink-muted"
                         >Faculty/Staff ID</label
                     >
                     <input
@@ -75,14 +80,14 @@
                         placeholder="e.g. 25-PCS-018"
                         id="staff-id"
                         required
-                        class="register-form-input"
+                        class="field-input"
                     />
                 </div>
             {:else}
-                <div
-                    class="flex flex-col items-start justify-center gap-1 w-full"
-                >
-                    <label for="dept-no" class="text-sm text-gray-600"
+                <div class="flex w-full flex-col gap-1.5">
+                    <label
+                        for="dept-no"
+                        class="pl-1 text-sm font-medium text-ink-muted"
                         >Department Number</label
                     >
                     <input
@@ -90,12 +95,14 @@
                         placeholder="e.g. 25-PCS-018"
                         id="dept-no"
                         required
-                        class="register-form-input uppercase"
+                        class="field-input uppercase"
                     />
                 </div>
             {/if}
-            <div class="flex flex-col items-start justify-center gap-1 w-full">
-                <label for="mobile" class="text-sm text-gray-600"
+            <div class="flex w-full flex-col gap-1.5">
+                <label
+                    for="mobile"
+                    class="pl-1 text-sm font-medium text-ink-muted"
                     >Mobile Number</label
                 >
                 <input
@@ -104,17 +111,20 @@
                     id="mobile"
                     bind:value={mobileNumber}
                     required
-                    class="register-form-input"
+                    class="field-input"
                 />
             </div>
             <button
                 onclick={handleregister}
-                class="w-full bg-blue-500 text-white p-2.5 mt-1 rounded-[12px]"
-                >Continue</button
+                class="btn-primary mt-1 h-12 w-full text-sm"
             >
-            <a href="/login" class="text-sm text-gray-500 mt-3">
+                Continue
+            </button>
+            <a href="/login" class="mt-3 pl-1 text-sm text-ink-muted">
                 Already Registered?
-                <span class="text-blue-500 underline underline-offset-5">
+                <span
+                    class="font-semibold text-primary underline underline-offset-4"
+                >
                     Sign in
                 </span>
             </a>
@@ -123,39 +133,3 @@
 </div>
 
 <!-- OTP Verification Bottom Sheet -->
-
-<style>
-    .register-page {
-        background: radial-gradient(
-            circle at top right,
-            #ffffff 0%,
-            #f0efef 40%
-        );
-    }
-
-    label {
-        padding-left: 12px;
-    }
-    .register-form-input {
-        background-color: #ffffff;
-        border: 1px solid #e0e0e0;
-        border-radius: 16px;
-        padding: 26px 12px;
-        width: 100%;
-        height: 40px;
-        font-size: 16px;
-        font-weight: 500;
-        color: #000000;
-        outline: none;
-        transition: all 0.3s ease;
-        &:focus {
-            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
-            outline: none;
-        }
-        &::placeholder {
-            font-size: 13px;
-            color: rgb(170, 170, 170);
-            text-transform: none;
-        }
-    }
-</style>

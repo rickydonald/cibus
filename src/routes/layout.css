@@ -8,8 +8,67 @@
     --safe-area-inset-right: env(safe-area-inset-right, 0px);
 }
 
+/*
+ * Eat Right design tokens
+ * Cool porcelain neutrals on a soft canvas, one deep oxford-navy primary,
+ * muted semantic tones. Every page pulls from this palette only.
+ */
+@theme {
+    --color-canvas: #f5f6f8;
+    --color-surface: #ffffff;
+    --color-line: #e6e8ed;
+    --color-line-strong: #d4d8e0;
+
+    --color-ink: #1a1e26;
+    --color-ink-muted: #626a78;
+    --color-ink-faint: #979fad;
+
+    --color-primary: #24466b;
+    --color-primary-strong: #1a3452;
+    --color-primary-soft: #e9eef5;
+
+    --color-success: #2c7a55;
+    --color-success-soft: #eaf3ee;
+    --color-warning: #94660e;
+    --color-warning-soft: #f7f0dc;
+    --color-danger: #b0413e;
+    --color-danger-soft: #f9edeb;
+
+    --shadow-card: 0 1px 2px rgb(26 30 38 / 0.04), 0 8px 24px rgb(26 30 38 / 0.04);
+    --shadow-float: 0 18px 44px rgb(26 30 38 / 0.24);
+
+    --font-sans: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
 @theme inline {
     --font-geist-mono: "Geist Mono", monospace;
+}
+
+@layer components {
+    .card {
+        @apply rounded-3xl border border-line bg-surface shadow-card;
+    }
+    .icon-btn {
+        @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-ink transition-all active:scale-95;
+    }
+    .btn-primary {
+        @apply flex items-center justify-center gap-2 rounded-2xl bg-primary font-semibold text-white transition-all hover:bg-primary-strong active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45;
+    }
+    .btn-quiet {
+        @apply flex items-center justify-center gap-2 rounded-2xl border border-line bg-surface font-semibold text-ink transition-all hover:bg-canvas active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45;
+    }
+    .field-input {
+        @apply w-full rounded-2xl border border-line bg-surface px-4 py-3.5 text-base font-medium text-ink outline-none transition-all placeholder:text-sm placeholder:normal-case placeholder:text-ink-faint focus:border-primary focus:ring-2 focus:ring-primary/15;
+    }
+    .section-label {
+        @apply text-[11px] font-bold uppercase tracking-[0.14em] text-ink-faint;
+    }
+    .page-header {
+        @apply sticky top-0 z-30 border-b border-line/70 bg-canvas/85 backdrop-blur-xl;
+    }
+    .chip {
+        @apply rounded-lg border px-2 py-1 text-[10px] font-bold uppercase tracking-wider;
+    }
 }
 
 @layer utilities {
@@ -23,9 +82,56 @@
     .safe-top-offset {
         padding-top: calc(env(safe-area-inset-top, 0px) + 1rem);
     }
+    /* Clears the bottom tab bar plus device safe area */
+    .pb-nav {
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6.5rem);
+    }
+    /* Clears the tab bar plus the floating cart bar stacked above it */
+    .pb-nav-float {
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 11rem);
+    }
+}
+
+html {
+    background: var(--color-canvas);
 }
 
 body {
-    font-family: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-family: var(--font-sans);
+    background: var(--color-canvas);
+    color: var(--color-ink);
     touch-action: manipulation;
+    -webkit-font-smoothing: antialiased;
+}
+
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Soft crossfade between page navigations */
+@media (prefers-reduced-motion: no-preference) {
+    ::view-transition-old(root) {
+        animation: 150ms ease both vt-fade-out;
+    }
+    ::view-transition-new(root) {
+        animation: 200ms ease both vt-fade-in;
+    }
+}
+
+@keyframes vt-fade-out {
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes vt-fade-in {
+    from {
+        opacity: 0;
+    }
 }

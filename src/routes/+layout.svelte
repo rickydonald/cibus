@@ -3,6 +3,7 @@
 	import favicon from "$lib/assets/logos/icon.png";
 	import { Toaster } from "svelte-sonner";
 	import { onMount } from "svelte";
+	import { onNavigate } from "$app/navigation";
 
 	let { children } = $props();
 
@@ -10,6 +11,17 @@
 		if ("serviceWorker" in navigator) {
 			navigator.serviceWorker.register("/service-worker.js");
 		}
+	});
+
+	onNavigate((navigation) => {
+		if (!document.startViewTransition) return;
+
+		return new Promise((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+		});
 	});
 </script>
 
@@ -30,7 +42,7 @@
 	/>
 	<link rel="icon" href={favicon} />
 	<link rel="manifest" href="/manifest.json" />
-	<meta name="theme-color" content="#f5f5f7" />
+	<meta name="theme-color" content="#f5f6f8" />
 	<meta
 		name="viewport"
 		content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no"

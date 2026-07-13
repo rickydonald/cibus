@@ -41,7 +41,7 @@
         display: flex;
         width: 100%;
         padding: 0.375rem;
-        background: rgb(229 229 229);
+        background: var(--color-line);
         border-radius: 1.75rem;
         box-sizing: border-box;
         overflow: hidden;
@@ -55,7 +55,7 @@
 
         width: calc((100% - 0.75rem) / 3);
 
-        background: rgb(46 46 46);
+        background: var(--color-primary);
         border-radius: 1.4rem;
 
         box-shadow:
@@ -80,7 +80,7 @@
         font-size: 1.125rem;
         font-weight: 500;
 
-        color: rgb(64 64 64);
+        color: var(--color-ink-muted);
         cursor: pointer;
 
         position: relative;

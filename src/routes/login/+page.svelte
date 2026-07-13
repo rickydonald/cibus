@@ -1,9 +1,9 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { page } from "$app/state";
-    import LoyolaLogo from "$lib/assets/logos/loyola-logo.webp";
     import { Constants } from "$lib/constants";
     import { clearCachedEatRightProfile } from "$lib/client/eatright-profile";
+    import Spinner from "$lib/components/custom/Spinner.svelte";
 
     let showPassword: boolean = $state(false);
     let redirectTo = $derived(page.url.searchParams.get("redirect") ?? "");
@@ -17,7 +17,7 @@
 
     $effect(() => {
         if (userId.length <= 0 || password.length <= 0) {
-            error = "User ID and Password is required!";
+            error = "";
             isLoginLoading = false;
             isLoginButtonDisabled = true;
             return;
@@ -56,26 +56,38 @@
 </script>
 
 <div
-    class="flex flex-col items-center justify-center-safe min-h-[80vh] px-8 pt-16"
+    class="flex min-h-screen flex-col items-center justify-center px-6 py-16 antialiased"
 >
-    <div class="text-left w-full! flex flex-col">
-        <!-- <img
-            src={LoyolaLogo}
-            alt="Loyola College Logo"
-            width="88"
-            class="pl-[12px]!"
-        /> -->
-        <h1 class="text-4xl font-bold mb-2 text-neutral-800 pl-[12px]!">
-            {Constants._SITE.NAME}.
-        </h1>
-        <p class="text-base text-gray-500 pl-[12px]!">
-            Sign in to your account
-        </p>
+    <div class="w-full max-w-md">
+        <!-- Brand -->
+        <div class="mb-8">
+            <div
+                class="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-xl font-black text-white"
+            >
+                {Constants._SITE.NAME.charAt(0)}
+            </div>
+            <h1 class="text-3xl font-bold tracking-tight text-ink">
+                {Constants._SITE.NAME}
+            </h1>
+            <p class="mt-1 text-base text-ink-muted">
+                Sign in to order from the food court
+            </p>
+        </div>
+
         <!-- Login Form -->
-        <div class="flex flex-col gap-4 mt-5">
+        <form
+            class="flex flex-col gap-4"
+            onsubmit={(e) => {
+                e.preventDefault();
+                if (!isLoginButtonDisabled && !isLoginLoading) handleLogin();
+            }}
+        >
             <!-- Login Form: User ID Input -->
-            <div class="flex flex-col items-start justify-center gap-1 w-full">
-                <label for="user-id" class="text-sm text-gray-600">
+            <div class="flex w-full flex-col gap-1.5">
+                <label
+                    for="user-id"
+                    class="pl-1 text-sm font-medium text-ink-muted"
+                >
                     User ID
                 </label>
                 <input
@@ -84,14 +96,16 @@
                     placeholder="Department Number/Faculty ID/Staff ID"
                     id="user-id"
                     required
-                    class="login-form-input uppercase"
+                    class="field-input uppercase"
                 />
             </div>
+
             <!-- Login Form: Password Input -->
-            <div
-                class="flex flex-col items-start justify-center gap-1 w-full relative"
-            >
-                <label for="password" class="text-sm text-gray-600">
+            <div class="relative flex w-full flex-col gap-1.5">
+                <label
+                    for="password"
+                    class="pl-1 text-sm font-medium text-ink-muted"
+                >
                     Password
                 </label>
                 <input
@@ -100,69 +114,49 @@
                     placeholder="Enter your Password"
                     id="password"
                     required
-                    class="login-form-input"
+                    class="field-input pr-16"
                 />
                 <!-- Login Form: Password Visibility Button -->
                 <button
+                    type="button"
                     onclick={() => (showPassword = !showPassword)}
-                    class="absolute right-2 bottom-2 text-neutral-500 text-[13px] font-medium p-2 disabled:opacity-60"
+                    class="absolute bottom-3.5 right-3 rounded-lg px-2 py-1 text-[13px] font-semibold text-primary"
                 >
                     {showPassword ? "Hide" : "Show"}
                 </button>
             </div>
+
+            {#if error}
+                <div
+                    class="rounded-xl border border-danger/10 bg-danger-soft px-4 py-3 text-sm font-medium text-danger"
+                >
+                    {error}
+                </div>
+            {/if}
+
             <!-- Login Form: Submit Button -->
             <button
-                onclick={handleLogin}
-                class="w-full bg-blue-500 text-white p-2.5 mt-1 rounded-[12px] disabled:opacity-60"
+                type="submit"
+                class="btn-primary mt-1 h-12 w-full text-sm"
                 disabled={isLoginButtonDisabled || isLoginLoading}
             >
-                {isLoginLoading ? "Signing in..." : "Sign in"}
+                {#if isLoginLoading}
+                    <Spinner />
+                {/if}
+                <span>{isLoginLoading ? "Signing in..." : "Sign in"}</span>
             </button>
-            <!-- <a href="/forgot-password" class="text-sm text-gray-500"
-                >Forgot password?</a
-            > -->
-            <a href="/register" class="text-sm text-gray-500 mt-3 pl-[12px]!">
+
+            <a
+                href="/register"
+                class="mt-3 pl-1 text-sm text-ink-muted"
+            >
                 Don't have an account?
-                <span class="text-blue-500 underline underline-offset-5">
+                <span
+                    class="font-semibold text-primary underline underline-offset-4"
+                >
                     Register Now
                 </span>
             </a>
-        </div>
+        </form>
     </div>
 </div>
-
-<style>
-    .login-page {
-        background: radial-gradient(
-            circle at top right,
-            #ffffff 0%,
-            #f0efef 40%
-        );
-    }
-
-    label {
-        padding-left: 12px;
-    }
-    .login-form-input {
-        background-color: #ffffff;
-        border: 1px solid #e0e0e0;
-        border-radius: 16px;
-        padding: 26px 12px;
-        width: 100%;
-        height: 40px;
-        font-size: 16px;
-        font-weight: 500;
-        color: #000000;
-        outline: none;
-        transition: all 0.3s ease;
-        &:focus {
-            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
-            outline: none;
-        }
-        &::placeholder {
-            font-size: 13px;
-            color: rgb(170, 170, 170);
-            text-transform: none;
-        }
-    }
-</style>

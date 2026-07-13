@@ -2,6 +2,18 @@ import { json } from "@sveltejs/kit";
 import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
 import { DEV_MODE } from "$lib/server/dev";
 
+function normalizeOrders(payload: unknown) {
+  if (Array.isArray(payload)) return payload;
+
+  if (payload && typeof payload === "object") {
+    const value = payload as Record<string, unknown>;
+    if (Array.isArray(value.orders)) return value.orders;
+    if (Array.isArray(value.data)) return value.data;
+  }
+
+  return [];
+}
+
 export async function GET(event) {
   if (DEV_MODE) {
     return json({
@@ -51,7 +63,15 @@ export async function GET(event) {
   }
 
   try {
-    return json(JSON.parse(text.trim()));
+    const data = JSON.parse(text.trim());
+    return json(
+      { orders: normalizeOrders(data) },
+      {
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      },
+    );
   } catch {
     return json(
       {
