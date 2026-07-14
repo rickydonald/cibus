@@ -7,15 +7,17 @@
         ShoppingCart01Icon,
     } from "@untitled-theme/icons-svelte";
 
-    // Sit above the bottom tab bar on hub pages, hug the bottom elsewhere
+    // Sit above the bottom tab bar on hub pages, hug the bottom elsewhere.
     const bottomOffset = $derived(
-        isHubRoute(page.url.pathname) ? "5rem" : "1rem",
+        isHubRoute(page.url.pathname)
+            ? "calc(var(--bottom-nav-height) + 1rem)"
+            : "calc(var(--safe-area-inset-bottom) + 1rem)",
     );
 </script>
 
 <div
     class="fixed left-0 right-0 z-50 px-5"
-    style="bottom: calc(env(safe-area-inset-bottom, 0px) + {bottomOffset})"
+    style="bottom: {bottomOffset}"
 >
     <a
         href="/view/cart"

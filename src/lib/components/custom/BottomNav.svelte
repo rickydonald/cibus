@@ -18,8 +18,8 @@
 </script>
 
 <nav
-    class="fixed bottom-0 left-0 right-0 z-40 border-t border-line bg-surface/90 backdrop-blur-xl"
-    style="padding-bottom: env(safe-area-inset-bottom, 0px)"
+    class="fixed bottom-0 left-0 right-0 z-40 border-t border-line bg-surface shadow-[0_-8px_24px_rgba(26,30,38,0.04)]"
+    style="padding-right: var(--safe-area-inset-right); padding-bottom: var(--safe-area-inset-bottom); padding-left: var(--safe-area-inset-left);"
     aria-label="Main navigation"
 >
     <div class="mx-auto flex h-16 max-w-md items-stretch justify-around px-2">

@@ -230,7 +230,10 @@
 
                 <!-- Outlets Card -->
                 <div
-                    class="mt-3 grid grid-cols-1 gap-3 px-5 pb-nav-float max-w-md mx-auto"
+                    class="mt-3 grid grid-cols-1 gap-3 px-5 max-w-md mx-auto"
+                    class:pb-cart-float={cart.totalItems > 0 &&
+                        !allOutletsClosed &&
+                        !isAccountLoading}
                 >
                     {#if accountDetails}
                         {#each accountDetails.outlets as outlet}

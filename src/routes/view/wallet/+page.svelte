@@ -363,65 +363,66 @@
 </script>
 
 <div class="min-h-screen text-ink antialiased">
-    <div class="px-4 pb-nav max-w-md mx-auto pt-4">
-        <!-- Balance card: campus food-court card -->
+    <div class="px-4 max-w-md mx-auto pt-4">
+        <!-- Balance hero -->
         <section
-            class="relative aspect-[1.586/1] overflow-hidden rounded-[24px] bg-gradient-to-br from-[#25415f] via-[#1a3452] to-[#101d2e] text-white shadow-float"
+            class="relative overflow-hidden rounded-[28px] bg-[#1c212b] text-white shadow-float"
         >
             <div
-                class="absolute inset-0 bg-[radial-gradient(circle_at_20%_-25%,rgba(255,255,255,0.12),transparent_55%)]"
+                class="absolute inset-0 bg-[radial-gradient(85%_70%_at_50%_-15%,rgba(96,146,204,0.28),transparent_70%)]"
+            ></div>
+            <div
+                class="pointer-events-none absolute inset-0 rounded-[28px] ring-1 ring-inset ring-white/10"
             ></div>
 
-            <div class="relative z-10 flex h-full flex-col p-6">
-                <div>
-                    <p
-                        class="text-[15px] font-bold leading-tight tracking-tight"
-                    >
-                        Eat Right
-                    </p>
-                    <p
-                        class="mt-0.5 text-[9px] font-bold uppercase tracking-[0.22em] text-white/50"
-                    >
-                        Campus Food Court
-                    </p>
-                </div>
+            <div
+                class="relative z-10 flex flex-col items-center px-6 py-9 text-center"
+            >
+                <p
+                    class="text-[10px] font-bold uppercase tracking-[0.24em] text-white/45"
+                >
+                    Total Balance
+                </p>
 
-                <div class="mt-auto">
-                    {#if isLoading}
-                        <div
-                            class="h-10 w-40 animate-pulse rounded-xl bg-white/15"
-                        ></div>
-                    {:else}
-                        <p
-                            class="text-[9px] font-bold uppercase tracking-[0.22em] text-white/50"
-                        >
-                            Balance
-                        </p>
-                        <div class="mt-1 flex items-baseline tabular-nums">
-                            <span class="mr-1 text-xl font-medium text-white/60"
-                                >₹</span
-                            >
-                            <h1
-                                class="text-4xl font-bold leading-none tracking-tight"
-                            >
-                                {formatMain(displayBalance.main)}
-                            </h1>
-                            <span class="text-lg font-medium text-white/50"
-                                >.{displayBalance.decimal}</span
-                            >
-                        </div>
-                    {/if}
-
+                {#if isLoading}
                     <div
-                        class="mt-4 flex items-baseline justify-between gap-3 font-geist-mono text-[10px] tracking-[0.18em] text-white/55 uppercase"
-                    >
-                        <span class="truncate"
-                            >{profile?.name ?? "Loyola College"}</span
+                        class="mt-3 h-13 w-44 animate-pulse rounded-2xl bg-white/10"
+                    ></div>
+                {:else}
+                    <div class="mt-3 flex items-baseline tabular-nums">
+                        <span class="mr-1.5 text-2xl font-medium text-white/50"
+                            >₹</span
                         >
-                        {#if profile?.deptNo}
-                            <span class="shrink-0">{profile.deptNo}</span>
-                        {/if}
+                        <h1
+                            class="text-[52px] font-bold leading-none tracking-tight"
+                        >
+                            {formatMain(displayBalance.main)}
+                        </h1>
+                        <span class="text-xl font-medium text-white/40"
+                            >.{displayBalance.decimal}</span
+                        >
                     </div>
+                {/if}
+
+                <div
+                    class="mt-5 flex max-w-full min-w-0 items-center gap-2 rounded-full bg-white/8 px-4 py-1.5 ring-1 ring-inset ring-white/10 font-mono!"
+                >
+                    <span
+                        class="min-w-0 flex-1 truncate text-xs font-semibold text-white/85 tracking-widest"
+                        title={profile?.name ?? "Eat Right user"}
+                    >
+                        {profile?.name ?? "Eat Right user"}
+                    </span>
+                    {#if profile?.deptNo}
+                        <span
+                            class="h-1 w-1 shrink-0 rounded-full bg-white/30"
+                        ></span>
+                        <span
+                            class="shrink-0 text-xs font-medium text-white/55 tabular-nums tracking-widest"
+                        >
+                            {profile.deptNo}
+                        </span>
+                    {/if}
                 </div>
             </div>
         </section>
@@ -593,4 +594,3 @@
         </section>
     </div>
 </div>
-

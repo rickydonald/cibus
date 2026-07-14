@@ -78,7 +78,7 @@
 </script>
 
 <div class="min-h-screen text-ink antialiased">
-    <div class="px-4 pb-nav max-w-md mx-auto">
+    <div class="px-4 max-w-md mx-auto">
         {#if isLoading}
             <div class="space-y-4 pt-4">
                 {#each Array(4) as _}

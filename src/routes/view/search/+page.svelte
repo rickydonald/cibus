@@ -101,7 +101,10 @@
     </div>
 
     <!-- Results -->
-    <div class="px-5 pt-3 pb-nav-float max-w-md mx-auto">
+    <div
+        class="px-5 pt-3 max-w-md mx-auto"
+        class:pb-cart-float={cart.totalItems > 0}
+    >
         {#if results.length > 0}
             {#each results as item (item.id + "-" + item.outletid)}
                 {@const cartItem = cart.items.find(

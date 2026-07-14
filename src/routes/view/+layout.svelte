@@ -8,8 +8,11 @@
     const showBottomNav = $derived(isHubRoute(page.url.pathname));
 </script>
 
-{@render children()}
-
 {#if showBottomNav}
+    <div class="hub-page-shell">
+        {@render children()}
+    </div>
     <BottomNav />
+{:else}
+    {@render children()}
 {/if}
