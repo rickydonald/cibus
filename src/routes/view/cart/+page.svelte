@@ -11,6 +11,7 @@
         CheckCircleIcon,
         AlertCircleIcon,
         RefreshCw01Icon,
+        ReceiptCheckIcon,
     } from "@untitled-theme/icons-svelte";
     import { cart, MAX_QTY } from "$lib/stores/cart.svelte";
     import { onDestroy, onMount } from "svelte";
@@ -39,22 +40,30 @@
     const hasInsufficientBalance = $derived(
         walletBalance !== null && cart.totalAmount > walletBalance,
     );
-    const balanceAfterOrder = $derived(
-        walletBalance === null ? null : walletBalance - cart.totalAmount,
-    );
     const rechargeShortfall = $derived(
         walletBalance === null
             ? 0
             : Number(Math.max(cart.totalAmount - walletBalance, 0).toFixed(2)),
     );
-
-    // How much of the wallet the order will consume, for the balance bar (0-100, capped)
-    const balanceUsagePercent = $derived(
-        walletBalance === null || walletBalance <= 0
-            ? 100
+    const balanceAfterOrder = $derived(
+        walletBalance === null
+            ? null
+            : Number(Math.max(walletBalance - cart.totalAmount, 0).toFixed(2)),
+    );
+    const walletCoveragePercent = $derived(
+        walletBalance === null || cart.totalAmount <= 0
+            ? 0
             : Math.min(
                   100,
-                  Math.round((cart.totalAmount / walletBalance) * 100),
+                  Math.max(0, (walletBalance / cart.totalAmount) * 100),
+              ),
+    );
+    const walletSpendPercent = $derived(
+        walletBalance === null || walletBalance <= 0
+            ? 0
+            : Math.min(
+                  100,
+                  Math.max(0, (cart.totalAmount / walletBalance) * 100),
               ),
     );
 
@@ -423,9 +432,7 @@
             </button>
 
             <div class="flex-1">
-                <h1 class="text-2xl font-bold tracking-tight text-ink">
-                    Cart
-                </h1>
+                <h1 class="text-2xl font-bold tracking-tight text-ink">Cart</h1>
                 <p
                     class="text-xs text-ink-muted font-medium uppercase tracking-wider mt-0.5"
                 >
@@ -484,9 +491,7 @@
                 <h2 class="text-lg font-semibold tracking-tight text-ink">
                     Your cart is empty
                 </h2>
-                <p
-                    class="mt-1 max-w-xs text-sm text-ink-muted leading-relaxed"
-                >
+                <p class="mt-1 max-w-xs text-sm text-ink-muted leading-relaxed">
                     Browse the available food counters to fill your tray.
                 </p>
                 <a href="/view/home" class="btn-primary mt-5 px-5 py-3 text-sm">
@@ -663,9 +668,10 @@
     <!-- Order Confirmation Sheet -->
     {#if isConfirmOpen}
         <div
-            class="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-xs"
+            class="fixed inset-0 z-50 flex items-end justify-center bg-ink/45 backdrop-blur-sm sm:items-center sm:p-5"
             role="dialog"
             aria-modal="true"
+            aria-labelledby="confirm-order-title"
             in:fade={{ duration: 150 }}
             out:fade={{ duration: 150 }}
         >
@@ -678,91 +684,121 @@
             ></button>
 
             <div
-                class="relative w-full max-w-md rounded-t-[32px] sm:rounded-[32px] bg-surface shadow-2xl border border-line max-h-[88vh] flex flex-col"
+                class="relative flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden rounded-t-[32px] border border-line bg-surface shadow-float sm:rounded-[32px]"
                 in:fly={{ duration: 220, y: 80 }}
                 out:fly={{ duration: 160, y: 80 }}
             >
-                <!-- Grab handle -->
                 <div class="flex justify-center pt-3 sm:hidden">
                     <div class="h-1 w-10 rounded-full bg-line"></div>
                 </div>
 
-                <div class="px-6 pt-4 pb-2 shrink-0">
-                    <h2 class="text-xl font-bold tracking-tight text-ink">
-                        Confirm your order
-                    </h2>
-                </div>
-
-                <!-- Scrollable body -->
-                <div class="overflow-y-auto px-6 pb-2">
-                    <!-- Total -->
-                    <div class="mt-3 flex items-center justify-between px-1">
-                        <span class="text-sm font-semibold text-ink"
-                            >Order total</span
-                        >
-                        <span class="text-lg font-bold text-ink tabular-nums">
-                            ₹{cart.totalAmount}
-                        </span>
+                <div
+                    class="overflow-y-auto px-6 pb-5 pt-5 text-center sm:px-8 sm:pt-8"
+                >
+                    <div
+                        class="mx-auto flex h-13 w-13 items-center justify-center rounded-2xl {hasInsufficientBalance
+                            ? 'bg-warning-soft text-warning'
+                            : 'bg-primary-soft text-primary'}"
+                    >
+                        {#if hasInsufficientBalance}
+                            <Wallet02Icon class="h-5 w-5" />
+                        {:else}
+                            <ReceiptCheckIcon class="h-5 w-5" />
+                        {/if}
                     </div>
 
-                    <!-- Wallet balance visualization -->
-                    <div class="mt-4 rounded-2xl border border-line p-4">
-                        <div class="flex items-center gap-2 mb-3">
-                            <Wallet02Icon class="h-4 w-4 text-primary" />
-                            <span
-                                class="text-xs font-semibold uppercase tracking-wider text-ink-muted"
-                            >
-                                Wallet balance
-                            </span>
-                        </div>
-
-                        <div
-                            class="flex items-center justify-between text-sm mb-2"
+                    <div class="mt-4">
+                        <h2
+                            id="confirm-order-title"
+                            class="text-2xl font-bold tracking-[-0.03em] text-ink"
                         >
-                            <span class="text-ink-muted font-medium"
-                                >Current</span
-                            >
-                            <span class="font-semibold text-ink tabular-nums">
-                                ₹{formatAmount(walletBalance)}
-                            </span>
-                        </div>
+                            {hasInsufficientBalance
+                                ? "Add money to place order"
+                                : "Review your payment"}
+                        </h2>
+                    </div>
 
-                        <div
-                            class="flex items-center justify-between text-sm mt-3"
-                        >
-                            <span class="text-ink-muted font-medium">
+                    <div
+                        class="mt-6 overflow-hidden rounded-3xl border border-line bg-canvas/65 text-left"
+                    >
+                        <div class="px-5 pb-5 pt-5 text-center">
+                            <p
+                                class="text-[10px] font-bold uppercase tracking-[0.18em] {hasInsufficientBalance
+                                    ? 'text-warning'
+                                    : 'text-primary'}"
+                            >
                                 {hasInsufficientBalance
-                                    ? "Balance needed"
-                                    : "Balance after order"}
-                            </span>
-                            <span
-                                class={`font-bold tabular-nums ${hasInsufficientBalance ? "text-danger" : "text-success"}`}
+                                    ? "Amount Short"
+                                    : "Order total"}
+                            </p>
+                            <p
+                                class="mt-1 font-mono text-[42px] font-semibold leading-none tracking-[-0.06em] text-ink tabular-nums"
                             >
-                                {#if hasInsufficientBalance}
-                                    ₹{formatAmount(rechargeShortfall)} short
-                                {:else}
-                                    ₹{formatAmount(balanceAfterOrder)}
-                                {/if}
-                            </span>
+                                ₹{formatAmount(
+                                    hasInsufficientBalance
+                                        ? rechargeShortfall
+                                        : cart.totalAmount,
+                                )}
+                            </p>
+                        </div>
+
+                        <div class="border-t border-line bg-surface px-5 py-4">
+                            <div class="divide-y divide-line/80">
+                                <div
+                                    class="flex items-center justify-between py-2"
+                                >
+                                    <span
+                                        class="text-xs font-medium text-ink-muted"
+                                        >Wallet balance</span
+                                    >
+                                    <span
+                                        class="font-mono text-sm font-semibold tracking-tight text-ink tabular-nums"
+                                    >
+                                        ₹{formatAmount(walletBalance)}
+                                    </span>
+                                </div>
+                                <div
+                                    class="flex items-center justify-between py-2"
+                                >
+                                    <span
+                                        class="text-xs font-medium text-ink-muted"
+                                        >Order total</span
+                                    >
+                                    <span
+                                        class="font-mono text-sm font-semibold tracking-tight text-ink tabular-nums"
+                                    >
+                                        − ₹{formatAmount(cart.totalAmount)}
+                                    </span>
+                                </div>
+                                <div
+                                    class="flex items-center justify-between pt-3"
+                                >
+                                    <span class="text-sm font-bold text-ink">
+                                        {hasInsufficientBalance
+                                            ? "Still needed"
+                                            : "Balance left"}
+                                    </span>
+                                    <span
+                                        class="font-mono text-base font-semibold tracking-tight tabular-nums {hasInsufficientBalance
+                                            ? 'text-warning'
+                                            : 'text-success'}"
+                                    >
+                                        {hasInsufficientBalance
+                                            ? "+ "
+                                            : ""}₹{formatAmount(
+                                            hasInsufficientBalance
+                                                ? rechargeShortfall
+                                                : balanceAfterOrder,
+                                        )}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-
-                    {#if hasInsufficientBalance}
-                        <div
-                            class="mt-3 flex items-start gap-2.5 rounded-2xl bg-warning-soft border border-warning/10 px-4 py-3 text-xs font-medium text-warning leading-relaxed"
-                        >
-                            <AlertCircleIcon class="h-4 w-4 mt-0.5 shrink-0" />
-                            <span>
-                                Add ₹{formatAmount(rechargeShortfall)} to your wallet
-                                and this order will be placed automatically once
-                                the recharge succeeds.
-                            </span>
-                        </div>
-                    {/if}
 
                     {#if paymentMessage}
                         <div
-                            class="mt-3 flex items-center gap-2.5 rounded-2xl bg-success-soft border border-success/10 px-4 py-3 text-xs font-medium text-success leading-relaxed"
+                            class="mt-4 flex items-center gap-2.5 rounded-2xl border border-success/10 bg-success-soft px-4 py-3 text-left text-xs font-medium leading-relaxed text-success"
                         >
                             {#if isPollingRecharge}
                                 <RefreshCw01Icon
@@ -777,7 +813,7 @@
 
                     {#if error}
                         <div
-                            class="mt-3 flex items-start gap-2.5 rounded-2xl bg-danger-soft border border-danger/10 px-4 py-3 text-xs font-medium text-danger leading-relaxed"
+                            class="mt-4 flex items-start gap-2.5 rounded-2xl border border-danger/10 bg-danger-soft px-4 py-3 text-left text-xs font-medium leading-relaxed text-danger"
                         >
                             <AlertCircleIcon class="h-4 w-4 mt-0.5 shrink-0" />
                             <span>{error}</span>
@@ -785,60 +821,57 @@
                     {/if}
                 </div>
 
-                <!-- Actions -->
                 <div
-                    class="px-6 pt-4 pb-6 mt-1 border-t border-line shrink-0"
+                    class="shrink-0 border-t border-line bg-surface px-6 pt-4"
                     style="padding-bottom: max(env(safe-area-inset-bottom), 24px)"
                 >
-                    <div class="grid grid-cols-2 gap-3">
+                    {#if hasInsufficientBalance}
                         <button
-                            class="btn-quiet rounded-xl py-3 px-4 text-sm font-medium text-ink-muted"
-                            onclick={() => {
-                                if (isPollingRecharge) {
-                                    cleanUpRechargeCycle();
-                                    clearPendingCheckoutRecharge();
-                                }
-                                isConfirmOpen = false;
-                            }}
+                            class="btn-primary h-13 w-full rounded-2xl px-4 text-sm shadow-sm"
+                            onclick={startCheckoutRecharge}
+                            disabled={isRecharging ||
+                                isPollingRecharge ||
+                                rechargeShortfall > 1000}
+                        >
+                            {#if isPollingRecharge}
+                                <RefreshCw01Icon class="h-4 w-4 animate-spin" />
+                                Waiting for recharge…
+                            {:else if isRecharging}
+                                Opening payment…
+                            {:else}
+                                Add ₹{formatAmount(rechargeShortfall)} & place order
+                            {/if}
+                        </button>
+                    {:else}
+                        <button
+                            class="btn-primary h-13 w-full rounded-2xl px-4 text-sm shadow-sm"
+                            onclick={() => placeOrder()}
                             disabled={isPlacingOrder}
                         >
-                            Cancel
+                            {#if isPlacingOrder}
+                                <RefreshCw01Icon class="h-4 w-4 animate-spin" />
+                                Placing order…
+                            {:else}
+                                Pay ₹{formatAmount(cart.totalAmount)} & place order
+                            {/if}
                         </button>
+                    {/if}
 
-                        {#if hasInsufficientBalance}
-                            <button
-                                class="btn-primary rounded-xl py-3 px-4 text-sm shadow-sm"
-                                onclick={startCheckoutRecharge}
-                                disabled={isRecharging ||
-                                    isPollingRecharge ||
-                                    rechargeShortfall > 1000}
-                            >
-                                {#if isPollingRecharge}
-                                    <RefreshCw01Icon
-                                        class="h-4 w-4 animate-spin"
-                                    />
-                                    Waiting...
-                                {:else if isRecharging}
-                                    Opening...
-                                {:else}
-                                    Add ₹{formatAmount(rechargeShortfall)}
-                                {/if}
-                            </button>
-                        {:else}
-                            <button
-                                class="btn-primary rounded-xl py-3 px-4 text-sm shadow-sm"
-                                onclick={() => placeOrder()}
-                                disabled={isPlacingOrder}
-                            >
-                                {isPlacingOrder
-                                    ? "Ordering..."
-                                    : "Confirm & pay"}
-                            </button>
-                        {/if}
-                    </div>
+                    <button
+                        class="mt-2 h-10 w-full text-sm font-semibold text-ink-muted transition-colors hover:text-ink disabled:opacity-40"
+                        onclick={() => {
+                            if (isPollingRecharge) {
+                                cleanUpRechargeCycle();
+                                clearPendingCheckoutRecharge();
+                            }
+                            isConfirmOpen = false;
+                        }}
+                        disabled={isPlacingOrder}
+                    >
+                        Go back
+                    </button>
                 </div>
             </div>
         </div>
     {/if}
 </div>
-

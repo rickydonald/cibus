@@ -42,9 +42,9 @@
 
         <div class="flex shrink-0 items-center gap-2">
             <p
-                class="rounded-full bg-white px-3.5 py-2 text-sm font-black tracking-tight text-primary tabular-nums"
+                class="rounded-full bg-white px-3.5 py-2 text-sm font-bold text-primary tabular-nums"
             >
-                ₹{cart.totalAmount}
+                ₹ {cart.totalAmount}
             </p>
             <div
                 class="flex h-9 w-9 items-center justify-center rounded-full bg-white/12"

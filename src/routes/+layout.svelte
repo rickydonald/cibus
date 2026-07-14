@@ -33,9 +33,10 @@
 		crossorigin="anonymous"
 	/>
 	<link
-		href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"
+		href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap"
 		rel="stylesheet"
 	/>
+
 	<link
 		href="https://fonts.googleapis.com/css2?family=Red+Hat+Mono:wght@300..700&display=swap"
 		rel="stylesheet"

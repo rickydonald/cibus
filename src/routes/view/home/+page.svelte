@@ -170,7 +170,7 @@
                             <div class="mt-2 h-12 flex items-center">
                                 {#if accountDetails}
                                     <h2
-                                        class="flex items-baseline text-5xl font-bold tracking-wide tabular-nums"
+                                        class="flex items-baseline text-5xl font-bold tabular-nums"
                                     >
                                         <span
                                             class="text-white/50 text-4xl mr-1 font-normal"
