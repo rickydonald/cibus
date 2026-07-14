@@ -260,7 +260,7 @@ export function setEatRightSessionCookie(cookies: Cookies, session: EatRightSess
     cookies.set(SESSION_COOKIE_NAME, encoded, {
         path: "/",
         httpOnly: true,
-        secure: import.meta.env.PROD ? true : false,
+        secure: false,
         sameSite: "lax",
         maxAge: 60 * 60 * 24 * 30,
     });
