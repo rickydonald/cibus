@@ -361,9 +361,6 @@
                             {profile?.deptNo || "--"}
                         </p>
                     </div>
-                    <button onclick={() => goto("/view/confirmation?order_no=ORD-20260713-4-027&outletid=5")}>
-                        Confirmation
-                    </button>
                     <button
                         class="bg-danger text-white w-full rounded-xl mt-3 p-3 flex items-center justify-center gap-2 transition-all hover:bg-danger/90 active:scale-[0.99]"
                         onclick={disconnectEatRight}
