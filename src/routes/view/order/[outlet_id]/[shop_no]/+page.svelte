@@ -139,7 +139,7 @@
                 : "translate-y-0"
         }`}
     >
-        <div class="max-w-md mx-auto">
+        <div class="max-w-md mx-auto lg:max-w-2xl">
             <div>
                 <header
                     class="safe-top-offset flex items-center justify-between px-5 pt-4 pb-3"
@@ -208,9 +208,9 @@
         </div>
     </div>
 
-    <main class="max-w-md mx-auto px-5 mt-5">
+    <main class="max-w-md mx-auto px-5 mt-5 lg:max-w-2xl">
         {#if isLoading}
-            <div class="space-y-3">
+            <div class="space-y-3 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
                 {#each Array(4) as _}
                     <div class="card p-4.5 space-y-4 animate-pulse">
                         <div class="flex justify-between items-start">
@@ -245,7 +245,7 @@
                 </p>
             </div>
         {:else}
-            <div class="space-y-3">
+            <div class="space-y-3 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
                 {#each filteredItems as item}
                     {@const cartItem = cart.items.find(
                         (entry) =>

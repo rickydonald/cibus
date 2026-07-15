@@ -130,26 +130,8 @@
 </script>
 
 <div class="min-h-screen text-ink antialiased">
-    <!-- Header -->
-    <div class="page-header">
-        <div
-            class="safe-top-offset flex items-center gap-4 px-6 py-4 max-w-md mx-auto"
-        >
-            <button
-                onclick={() => history.back()}
-                class="icon-btn"
-                aria-label="Go back"
-            >
-                <ArrowLeftIcon class="h-4 w-4" />
-            </button>
-            <h1 class="text-lg font-bold tracking-tight text-ink">
-                Search Food
-            </h1>
-        </div>
-    </div>
-
     <!-- Search Input -->
-    <div class="px-5 pt-5 max-w-md mx-auto">
+    <div class="px-5 pt-5 max-w-md mx-auto lg:max-w-2xl">
         <div
             class="flex items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-3 shadow-card transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15"
         >
@@ -171,11 +153,11 @@
 
     <!-- Results -->
     <div
-        class="px-5 pt-4 max-w-md mx-auto"
+        class="px-5 pt-4 max-w-md mx-auto lg:max-w-2xl"
         class:pb-cart-float={cart.totalItems > 0}
     >
         {#if results.length > 0}
-            <div class="space-y-3">
+            <div class="space-y-3 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
                 {#each results as item (item.id + "-" + item.outletid)}
                     {@const cartItem = cart.items.find(
                         (entry) =>
@@ -236,10 +218,7 @@
                                     <button
                                         class="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 text-white transition-all active:scale-90"
                                         onclick={() =>
-                                            cart.remove(
-                                                item.id,
-                                                item.outletid,
-                                            )}
+                                            cart.remove(item.id, item.outletid)}
                                         aria-label="Remove item"
                                     >
                                         <MinusIcon

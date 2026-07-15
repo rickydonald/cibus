@@ -211,15 +211,15 @@
         // A recharge was started but the gateway never redirected back to
         // this app (e.g. local dev) — resume verification on the callback
         // page instead.
-        if (!payment && !orderId) {
-            const pending = getPendingPayment();
-            if (pending) {
-                await goto(
-                    `/view/wallet/callback?order_id=${encodeURIComponent(pending.orderId)}&return=${encodeURIComponent(pending.returnPath)}`,
-                );
-                return;
-            }
-        }
+        // if (!payment && !orderId) {
+        //     const pending = getPendingPayment();
+        //     if (pending) {
+        //         await goto(
+        //             `/view/wallet/callback?order_id=${encodeURIComponent(pending.orderId)}&return=${encodeURIComponent(pending.returnPath)}`,
+        //         );
+        //         return;
+        //     }
+        // }
 
         let verifiedStatus: string | null = null;
         if (orderId) {
@@ -255,7 +255,7 @@
 </script>
 
 <div class="min-h-screen text-ink antialiased">
-    <div class="px-4 max-w-md mx-auto pt-4">
+    <div class="px-4 max-w-md mx-auto pt-4 lg:max-w-lg">
         <!-- Balance hero -->
         <section
             class="relative overflow-hidden rounded-[28px] bg-[#1c212b] text-white shadow-float"

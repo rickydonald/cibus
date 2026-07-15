@@ -18,6 +18,7 @@
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
 		"@tailwindcss/vite": "^4.3.0",
 		"@types/jsonwebtoken": "^9.0.10",
+		"@types/luxon": "^3.7.2",
 		"svelte": "^5.56.1",
 		"svelte-check": "^4.6.0",
 		"tailwindcss": "^4.3.0",
@@ -25,11 +26,10 @@
 		"vite": "^8.0.16"
 	},
 	"dependencies": {
-		"@devantic/diaper": "^2.2.2",
 		"@lucide/svelte": "^1.21.0",
 		"@untitled-theme/icons-svelte": "^0.14.2",
 		"jsonwebtoken": "^9.0.3",
-		"phosphor-svelte": "^3.1.0",
+		"luxon": "^3.7.2",
 		"svelte-bottom-sheet": "^2.3.0",
 		"svelte-sonner": "^1.1.1",
 		"tailwindcss-corner-shape": "^1.4.6",

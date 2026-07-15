@@ -345,7 +345,7 @@
     <!-- Header Bar -->
     <div class="page-header">
         <div
-            class="safe-top-offset flex items-center gap-3 px-5 py-4 max-w-md mx-auto"
+            class="safe-top-offset flex items-center gap-3 px-5 py-4 max-w-md mx-auto lg:max-w-lg"
         >
             <button
                 onclick={() => history.back()}
@@ -390,7 +390,7 @@
 
     <!-- Scroll Container -->
     <div
-        class="px-5 pt-4 max-w-md mx-auto"
+        class="px-5 pt-4 max-w-md mx-auto lg:max-w-lg"
         style="padding-bottom: max(env(safe-area-inset-bottom), 160px)"
     >
         {#if error}
@@ -548,11 +548,11 @@
     <!-- Order Bar Summary Footer -->
     {#if cart.items.length > 0}
         <div
-            class="fixed bottom-0 left-0 right-0 z-40 border-t border-line bg-surface shadow-[0_-8px_24px_rgba(26,30,38,0.04)]"
+            class="fixed bottom-0 left-0 right-0 z-40 border-t border-line bg-surface shadow-[0_-8px_24px_rgba(26,30,38,0.04)] lg:left-64"
             style="padding-right: var(--safe-area-inset-right); padding-bottom: var(--safe-area-inset-bottom); padding-left: var(--safe-area-inset-left);"
         >
             <div
-                class="bg-surface p-5 pb-8 shadow-[0_-8px_32px_rgba(33,32,28,0.08)] border-t border-line max-w-md mx-auto sm:rounded-t-4xl"
+                class="bg-surface p-5 pb-8 shadow-[0_-8px_32px_rgba(33,32,28,0.08)] border-t border-line max-w-md mx-auto sm:rounded-t-4xl lg:max-w-lg"
             >
                 <div class="flex items-center justify-between gap-4">
                     <div class="shrink-0 mr-3">

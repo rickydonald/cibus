@@ -125,17 +125,17 @@
         class="flex min-h-screen items-center justify-center px-5 py-[max(2rem,var(--safe-area-inset-top))] sm:px-10 lg:px-12"
     >
         <div class="w-full max-w-md">
-            <div class="mb-10 flex items-center justify-between lg:hidden">
+            <div class="mb-3 flex items-center justify-between lg:hidden">
                 <div class="flex items-center gap-3">
                     <img
                         src={LoyolaCollegeLogo}
                         alt="Loyola College"
-                        class="h-15 w-auto object-contain"
+                        class="h-30 w-auto object-contain"
                     />
-                    <div class="h-7 w-px bg-line-strong"></div>
-                    <span class="text-lg font-bold tracking-tight text-primary">
+                    <!-- <div class="h-7 w-px bg-line-strong"></div> -->
+                    <!-- <span class="text-lg font-bold tracking-tight text-primary">
                         Eat Right
-                    </span>
+                    </span> -->
                 </div>
             </div>
 
@@ -144,11 +144,11 @@
                 <h2
                     class="text-[2rem] font-bold leading-tight tracking-[-0.035em] text-ink sm:text-4xl"
                 >
-                    Sign in to Eat Right
+                    Sign in to <span class="text-primary">Eat Right.</span>
                 </h2>
-                <p class="mt-2.5 text-[15px] leading-6 text-ink-muted">
+                <!-- <p class="mt-2.5 text-[15px] leading-6 text-ink-muted">
                     Use the same details you use for your campus food court account.
-                </p>
+                </p> -->
             </div>
 
             <form

@@ -18,21 +18,14 @@
     } from "$lib/utils/eatright-client";
     import {
         cacheEatRightProfile,
-        clearCachedEatRightProfile,
         getCachedEatRightProfile,
         type CachedEatRightProfile,
     } from "$lib/client/eatright-profile";
 
     import { cart } from "$lib/store/cart.svelte";
 
-    async function disconnectEatRight() {
-        await fetch("/api/v1/disconnect", { method: "POST" });
-        clearCachedEatRightProfile();
-        await goto("/login");
-    }
-
     import FloatingCartBar from "$lib/components/custom/FloatingCartBar.svelte";
-    import { ReceiptIndianRupeeIcon } from "@lucide/svelte";
+    import { Settings } from "@lucide/svelte";
     import helpers from "$lib/helpers";
 
     type Outlet = {
@@ -111,9 +104,9 @@
     );
 
     const profile = $derived(cachedProfile);
-    const walletOwnerName = $derived(
-        profile?.name ? profile.name.split(" ")[0] : "",
-    );
+    const walletOwnerName = $derived.by(() => {
+        return profile?.name.split(" ")[0];
+    });
 </script>
 
 <MainContainer>
@@ -122,14 +115,14 @@
             <ContentWrapper>
                 <!-- Greeting Header -->
                 <div
-                    class="flex items-center justify-between px-5 pt-1 max-w-md mx-auto"
+                    class="flex items-center justify-between px-5 pt-1 max-w-md mx-auto lg:max-w-2xl"
                 >
                     <div class="min-w-0">
                         <h1
                             class="text-xl font-bold tracking-tight text-ink truncate"
                         >
                             {#if walletOwnerName}
-                                Hi, {walletOwnerName}
+                                Hello, {walletOwnerName}
                             {:else}
                                 Welcome
                             {/if}
@@ -138,22 +131,21 @@
                             What are you eating today?
                         </p>
                     </div>
-                    <button
+                    <a
+                        href="/view/settings"
                         aria-label="Open Account Settings"
                         class="icon-btn"
-                        onclick={() =>
-                            (isAccountSheetOpen = !isAccountSheetOpen)}
                     >
-                        <UserCircleIcon
+                        <Settings
                             width="22"
                             height="22"
                             class="text-ink-muted"
                         />
-                    </button>
+                    </a>
                 </div>
 
                 <!-- Wallet Hero Card -->
-                <div class="mt-5 px-5 max-w-md mx-auto">
+                <div class="mt-5 px-5 max-w-md mx-auto lg:max-w-2xl">
                     <div
                         class="relative overflow-hidden rounded-[28px] bg-primary p-6 text-white shadow-card"
                     >
@@ -198,18 +190,6 @@
 
                             <div class="mt-6 flex items-center gap-3">
                                 <button
-                                    onclick={() => goto("/view/history")}
-                                    class="flex-1 h-11 rounded-full bg-white/12 border border-white/15 px-3 text-sm flex items-center justify-center gap-2 font-semibold text-white hover:bg-white/20 active:scale-98 transition whitespace-nowrap"
-                                    aria-label="View Order History"
-                                >
-                                    <ReceiptIndianRupeeIcon
-                                        size="16"
-                                        class="shrink-0"
-                                    />
-                                    <span>View Orders</span>
-                                </button>
-
-                                <button
                                     onclick={() => goto("/view/wallet")}
                                     class="flex-1 h-11 rounded-full bg-white px-3 text-sm text-primary flex items-center justify-center gap-2 font-bold hover:bg-primary-soft active:scale-98 transition whitespace-nowrap"
                                     aria-label="Add Money to Wallet"
@@ -223,7 +203,7 @@
                 </div>
 
                 <!-- Section Subheader -->
-                <div class="mt-8 px-6 max-w-md mx-auto">
+                <div class="mt-8 px-6 max-w-md mx-auto lg:max-w-2xl">
                     <h2 class="text-xl font-bold tracking-tight text-ink">
                         Food Counters
                     </h2>
@@ -231,7 +211,7 @@
 
                 <!-- Outlets Card -->
                 <div
-                    class="mt-3 grid grid-cols-1 gap-3 px-5 max-w-md mx-auto"
+                    class="mt-3 grid grid-cols-1 gap-3 px-5 max-w-md mx-auto lg:max-w-2xl lg:grid-cols-2"
                     class:pb-cart-float={cart.totalItems > 0 &&
                         !allOutletsClosed &&
                         !isAccountLoading}
@@ -335,42 +315,3 @@
         {/if}
     </div>
 </MainContainer>
-
-<BottomSheet
-    bind:isSheetOpen={isAccountSheetOpen}
-    settings={{ maxHeight: 0.5 }}
->
-    <BottomSheet.Overlay>
-        <BottomSheet.Sheet>
-            <BottomSheet.Handle />
-            <BottomSheet.Content class="w-full!">
-                <div class="w-full">
-                    <h1 class="text-ink text-xl font-bold pl-3">Account</h1>
-                    <div
-                        class="border-t border-x border-line relative rounded-t-xl p-3 mt-5 bg-canvas"
-                    >
-                        <p class="section-label">Name</p>
-                        <p class="text-lg font-semibold text-ink">
-                            {profile?.name ?? "--"}
-                        </p>
-                    </div>
-                    <div
-                        class="border-x border-b border-line relative rounded-b-xl border-t p-3 bg-canvas"
-                    >
-                        <p class="section-label">User ID</p>
-                        <p class="text-lg font-semibold text-ink">
-                            {profile?.userid || "--"}
-                        </p>
-                    </div>
-                    <button
-                        class="bg-danger text-white w-full rounded-xl mt-3 p-3 flex items-center justify-center gap-2 transition-all hover:bg-danger/90 active:scale-[0.99]"
-                        onclick={disconnectEatRight}
-                    >
-                        <LogOut01Icon class="h-5 w-5" />
-                        <span class="font-semibold">Logout</span>
-                    </button>
-                </div>
-            </BottomSheet.Content>
-        </BottomSheet.Sheet>
-    </BottomSheet.Overlay>
-</BottomSheet>

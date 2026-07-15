@@ -16,7 +16,7 @@
 </script>
 
 <div
-    class="fixed left-0 right-0 z-50 px-5"
+    class="fixed left-0 right-0 z-50 px-5 lg:hidden"
     style="bottom: {bottomOffset}"
 >
     <a

@@ -78,9 +78,9 @@
 </script>
 
 <div class="min-h-screen text-ink antialiased">
-    <div class="px-4 max-w-md mx-auto">
+    <div class="px-4 max-w-md mx-auto lg:max-w-2xl">
         {#if isLoading}
-            <div class="space-y-4 pt-4">
+            <div class="space-y-4 pt-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
                 {#each Array(4) as _}
                     <div class="card p-5 space-y-4">
                         <div class="flex justify-between items-start">
@@ -134,7 +134,7 @@
                 </p>
             </div>
         {:else}
-            <div class="space-y-4 pt-4">
+            <div class="space-y-4 pt-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
                 {#each orders as order}
                     {@const price = splitPrice(order.grand_total)}
                     <button

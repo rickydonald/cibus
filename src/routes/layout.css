@@ -120,6 +120,20 @@
     .pb-cart-float {
         padding-bottom: 5.5rem;
     }
+    /* Desktop swaps the tab bar and cart tray for the sidebar — nothing to clear */
+    @media (min-width: 64rem) {
+        .hub-page-shell,
+        .pb-nav {
+            padding-bottom: 3rem;
+            scroll-padding-bottom: 3rem;
+        }
+        .pb-nav-float {
+            padding-bottom: 3rem;
+        }
+        .pb-cart-float {
+            padding-bottom: 0.5rem;
+        }
+    }
 }
 
 html {
