@@ -1,9 +1,5 @@
-import * as cheerio from "cheerio";
 import { TtlCache, hashCacheKey } from "./cache";
-
-const BASE_URL = "https://eatright.loyolacollege.edu";
-const PAGE_CONTROLLER_URL = `${BASE_URL}/pagecontroller.jsp`;
-const USER_AGENT = "Mozilla/5.0";
+import { foodcourtApiRequest } from "./foodcourt-api";
 
 export type Outlet = {
   id: number;
@@ -14,8 +10,18 @@ export type Outlet = {
 
 export type AccountSummary = {
   user: string;
+  userid: string;
   walletBalance: string;
   outlets: Outlet[];
+};
+
+export type WalletTransaction = {
+  date: string;
+  amount: number;
+  balance: number;
+  type: string;
+  remarks: string;
+  sort_time?: number;
 };
 
 export type MenuItem = {
@@ -28,90 +34,83 @@ export type MenuItem = {
   outletid: number;
 };
 
+type UserResponse = {
+  success: boolean;
+  name?: string;
+  uid?: string;
+  userid?: string;
+  walletBalance?: number | string;
+};
+
+type OutletResponse = {
+  id: number | string;
+  outlet_name: string;
+  shopno: number | string;
+  is_available: boolean;
+};
+
 const accountCache = new TtlCache<AccountSummary>(20 * 1000);
 const menuCache = new TtlCache<MenuItem[]>(20 * 1000);
 
-function sessionKey(cookieHeader: string) {
-  return hashCacheKey(cookieHeader);
+function sessionKey(accessToken: string) {
+  return hashCacheKey(accessToken);
 }
 
-function parseAccountSummary(html: string): AccountSummary {
-  const $ = cheerio.load(html);
+export async function getAccountSummary(accessToken: string): Promise<AccountSummary> {
+  return accountCache.getOrSet(sessionKey(accessToken), async () => {
+    const [user, outletPayload] = await Promise.all([
+      foodcourtApiRequest<UserResponse>("/ajax/getUser.jsp", { accessToken }),
+      foodcourtApiRequest<OutletResponse[]>("/ajax/getOutlets.jsp", { accessToken }),
+    ]);
+    const outlets = (Array.isArray(outletPayload) ? outletPayload : []).map((outlet) => ({
+      id: Number(outlet.id),
+      name: String(outlet.outlet_name ?? ""),
+      shopNo: Number(outlet.shopno),
+      isClosed: outlet.is_available === false,
+    }));
 
-  const outlets = $(".outlet-card")
-    .map((_, el) => ({
-      id: Number($(el).attr("data-id") ?? 0),
-      name: $(el).attr("data-name") ?? "",
-      shopNo: Number($(el).attr("data-outletno") ?? 0),
-      isClosed: $(el).hasClass("disabled-outlet"),
-    }))
-    .get()
-    .filter((outlet) => outlet.id && outlet.shopNo);
-
-  const walletBalance = parseFloat(
-    $("h5.text-success")
-      .text()
-      .match(/₹\s*([\d]+(?:\.\d+)?)/)?.[1] ?? "0",
-  ).toFixed(2);
-
-  const user = $("#navmenu li:first-child a").text().trim();
-
-  return { user, walletBalance, outlets };
-}
-
-export async function getAccountSummary(cookieHeader: string): Promise<AccountSummary> {
-  return accountCache.getOrSet(sessionKey(cookieHeader), async () => {
-    const response = await fetch(PAGE_CONTROLLER_URL, {
-      headers: {
-        "User-Agent": USER_AGENT,
-        Cookie: cookieHeader,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`EatRight account returned HTTP ${response.status}`);
-    }
-
-    return parseAccountSummary(await response.text());
+    return {
+      user: user.name || "User",
+      userid: user.uid ?? user.userid ?? "",
+      walletBalance: Number(user.walletBalance ?? 0).toFixed(2),
+      outlets,
+    };
   });
 }
 
+export async function getWalletTransactions(accessToken: string): Promise<WalletTransaction[]> {
+  const payload = await foodcourtApiRequest<unknown>("/ajax/walletTransactions.jsp", {
+    accessToken,
+  });
+  if (Array.isArray(payload)) return payload as WalletTransaction[];
+  if (payload && typeof payload === "object") {
+    const transactions = (payload as Record<string, unknown>).transactions;
+    if (Array.isArray(transactions)) return transactions as WalletTransaction[];
+  }
+  return [];
+}
+
 export async function getMenuItems(input: {
-  cookieHeader: string;
+  accessToken: string;
   outletId: number | string;
   shopNo: number | string;
 }): Promise<MenuItem[]> {
   const outletId = Number(input.outletId);
   const shopNo = Number(input.shopNo);
+  if (!Number.isFinite(outletId) || !Number.isFinite(shopNo)) return [];
 
-  if (!Number.isFinite(outletId) || !Number.isFinite(shopNo)) {
-    return [];
-  }
-
-  const key = `${sessionKey(input.cookieHeader)}:${outletId}:${shopNo}`;
-
+  const key = `${sessionKey(input.accessToken)}:${outletId}:${shopNo}`;
   return menuCache.getOrSet(key, async () => {
-    const response = await fetch(
-      `${BASE_URL}/ajax/getItemsByOutlet.jsp?outletId=${outletId}&shopno=${shopNo}`,
-      {
-        headers: {
-          "User-Agent": USER_AGENT,
-          Cookie: input.cookieHeader,
-        },
-      },
+    const payload = await foodcourtApiRequest<MenuItem[]>(
+      `/ajax/getItemsByOutlet.jsp?outletId=${encodeURIComponent(outletId)}&shopno=${encodeURIComponent(shopNo)}`,
+      { accessToken: input.accessToken },
     );
-
-    if (!response.ok) {
-      throw new Error(`EatRight menu returned HTTP ${response.status}`);
-    }
-
-    const data: unknown = await response.json();
-    return Array.isArray(data) ? data as MenuItem[] : [];
+    return Array.isArray(payload) ? payload : [];
   });
 }
 
-export function clearEatRightDataCache(cookieHeader: string) {
-  const key = sessionKey(cookieHeader);
+export function clearEatRightDataCache(accessToken: string) {
+  const key = sessionKey(accessToken);
   accountCache.delete(key);
   menuCache.deletePrefix(`${key}:`);
 }

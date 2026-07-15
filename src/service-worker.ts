@@ -5,7 +5,7 @@ import { cleanupOutdatedCaches, precacheAndRoute } from "workbox-precaching";
 import { registerRoute } from "workbox-routing";
 import {
     CacheFirst,
-    NetworkFirst,
+    NetworkOnly,
     StaleWhileRevalidate
 } from "workbox-strategies";
 
@@ -31,18 +31,16 @@ self.addEventListener("message", (event) => {
     }
 });
 
+// API responses contain authenticated, user-specific data and must never be
+// shared or replayed from a runtime cache. Remove the previous cache as soon
+// as this service worker activates.
+self.addEventListener("activate", (event) => {
+    event.waitUntil(caches.delete("api-cache"));
+});
+
 registerRoute(
     ({ url }) => url.pathname.startsWith("/api/"),
-    new NetworkFirst({
-        cacheName: "api-cache",
-        networkTimeoutSeconds: 5,
-        plugins: [
-            new ExpirationPlugin({
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60
-            })
-        ]
-    })
+    new NetworkOnly()
 );
 
 registerRoute(

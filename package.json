@@ -28,7 +28,6 @@
 		"@devantic/diaper": "^2.2.2",
 		"@lucide/svelte": "^1.21.0",
 		"@untitled-theme/icons-svelte": "^0.14.2",
-		"cheerio": "^1.2.0",
 		"jsonwebtoken": "^9.0.3",
 		"phosphor-svelte": "^3.1.0",
 		"svelte-bottom-sheet": "^2.3.0",

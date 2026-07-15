@@ -4,23 +4,8 @@ const PROFILE_STORAGE_KEY = "kairos:eatright:profile";
 
 export type CachedEatRightProfile = {
   name: string;
-  deptNo: string;
+  userid: string;
 };
-
-export function parseEatRightProfile(user: string | undefined): CachedEatRightProfile | null {
-  if (!user) return null;
-
-  const match = user.match(/^(.*?)\((.*?)\)$/);
-  if (!match) {
-    const name = user.trim();
-    return name ? { name, deptNo: "" } : null;
-  }
-
-  return {
-    name: match[1].trim(),
-    deptNo: match[2].trim(),
-  };
-}
 
 export function getCachedEatRightProfile(): CachedEatRightProfile | null {
   if (!browser) return null;
@@ -34,7 +19,7 @@ export function getCachedEatRightProfile(): CachedEatRightProfile | null {
 
     return {
       name: profile.name,
-      deptNo: profile.deptNo ?? "",
+      userid: profile.userid ?? "",
     };
   } catch {
     localStorage.removeItem(PROFILE_STORAGE_KEY);
@@ -42,13 +27,21 @@ export function getCachedEatRightProfile(): CachedEatRightProfile | null {
   }
 }
 
-export function cacheEatRightProfileFromUser(
-  user: string | undefined,
+export function cacheEatRightProfile(
+  name: string | undefined,
+  userid: string | undefined,
 ): CachedEatRightProfile | null {
-  const profile = parseEatRightProfile(user);
-  if (!browser || !profile) return profile;
+  const trimmedName = name?.trim();
+  if (!trimmedName) return null;
 
-  localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+  const profile: CachedEatRightProfile = {
+    name: trimmedName,
+    userid: userid?.trim() ?? "",
+  };
+
+  if (browser) {
+    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+  }
   return profile;
 }
 

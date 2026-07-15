@@ -17,7 +17,7 @@
         redirectIfEatRightConnectRequired,
     } from "$lib/utils/eatright-client";
     import {
-        cacheEatRightProfileFromUser,
+        cacheEatRightProfile,
         clearCachedEatRightProfile,
         getCachedEatRightProfile,
         type CachedEatRightProfile,
@@ -44,6 +44,7 @@
 
     type EatRightAccountDetails = {
         user: string;
+        userid: string;
         walletBalance: string;
         outlets: Outlet[];
     };
@@ -85,7 +86,7 @@
             }
 
             accountDetails = data;
-            cachedProfile = cacheEatRightProfileFromUser(data.user);
+            cachedProfile = cacheEatRightProfile(data.user, data.userid);
         } catch (error) {
             console.error(error);
         } finally {
@@ -356,9 +357,9 @@
                     <div
                         class="border-x border-b border-line relative rounded-b-xl border-t p-3 bg-canvas"
                     >
-                        <p class="section-label">Department Number/Staff ID</p>
+                        <p class="section-label">User ID</p>
                         <p class="text-lg font-semibold text-ink">
-                            {profile?.deptNo || "--"}
+                            {profile?.userid || "--"}
                         </p>
                     </div>
                     <button

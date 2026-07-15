@@ -14,13 +14,11 @@ export async function GET(event) {
   const session = await resolveEatRightSessionFromEvent(event);
   if (!session.ok) return session.response;
 
-  const { cookieHeader } = session;
-
   try {
-    const { outlets } = await getAccountSummary(cookieHeader);
+    const { outlets } = await getAccountSummary(session.accessToken);
     return json(outlets);
   } catch (error) {
     console.error(error);
-    return json({ error: "Failed to scrape page" }, { status: 500 });
+    return json({ error: "Failed to load outlets from the Foodcourt API" }, { status: 502 });
   }
 }

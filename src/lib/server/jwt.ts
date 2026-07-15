@@ -23,7 +23,7 @@ export function signAccessToken(session: EatRightSession): string {
 
 export function signRefreshToken(session: EatRightSession): string {
     return jwt.sign(
-        { type: "refresh", username: session.creds.username, session } satisfies JwtRefreshPayload,
+        { type: "refresh", username: getOfficialUsername(session), session } satisfies JwtRefreshPayload,
         SECRET,
         { expiresIn: REFRESH_EXPIRY },
     );
@@ -32,7 +32,7 @@ export function signRefreshToken(session: EatRightSession): string {
 export function verifyAccessToken(token: string): JwtAccessPayload | null {
     try {
         const decoded = jwt.verify(token, SECRET) as JwtAccessPayload;
-        if (decoded.type !== "access" || !decoded.session?.creds?.username || !decoded.session?.cookies) {
+        if (decoded.type !== "access" || !decoded.session?.access_token) {
             return null;
         }
         return decoded;
@@ -44,9 +44,21 @@ export function verifyAccessToken(token: string): JwtAccessPayload | null {
 export function verifyRefreshToken(token: string): JwtRefreshPayload | null {
     try {
         const decoded = jwt.verify(token, SECRET) as JwtRefreshPayload;
-        if (decoded.type !== "refresh" || !decoded.username || !decoded.session?.creds?.username) return null;
+        if (decoded.type !== "refresh" || !decoded.username || !decoded.session?.access_token) return null;
         return decoded;
     } catch {
         return null;
+    }
+}
+
+function getOfficialUsername(session: EatRightSession): string {
+    try {
+        const payload = session.access_token.split(".")[1];
+        if (!payload) return "unknown";
+        const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+        const decoded = JSON.parse(atob(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=")));
+        return typeof decoded.sub === "string" ? decoded.sub : "unknown";
+    } catch {
+        return "unknown";
     }
 }

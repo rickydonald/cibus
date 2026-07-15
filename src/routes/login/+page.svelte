@@ -117,8 +117,7 @@
         </div>
 
         <div class="relative flex items-center gap-3 text-sm text-white/60">
-            <ShieldCheckIcon size="18" strokeWidth="1.8" />
-            <span>Secure access through your Eat Right account</span>
+            <span>Designed by RDR28</span>
         </div>
     </section>
 

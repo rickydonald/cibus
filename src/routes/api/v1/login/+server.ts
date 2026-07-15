@@ -1,10 +1,6 @@
 import { json, type RequestHandler } from "@sveltejs/kit";
-import {
-    performEatRightLogin,
-    markEatRightSessionValid,
-    scrapeEatRightCaptcha,
-    setEatRightSessionCookie,
-} from "$lib/server/eatright";
+import { setEatRightSessionCookie, type EatRightSession } from "$lib/server/eatright";
+import { foodcourtApiRequest, FoodcourtApiError } from "$lib/server/foodcourt-api";
 import { signAccessToken, signRefreshToken } from "$lib/server/jwt";
 
 export const POST: RequestHandler = async ({ request, cookies }) => {
@@ -15,40 +11,37 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
         return json({ error: "Invalid JSON body" }, { status: 400 });
     }
 
-    const { userId, password } = body;
+    const userId = body.userId?.trim();
+    const password = body.password;
     if (!userId || !password) {
         return json({ error: "userId and password are required" }, { status: 400 });
     }
 
-    const loginResult = await performEatRightLogin({ userId, password });
-    if (!loginResult.success) {
-        return json(
-            { error: loginResult.error },
-            { status: 401 },
-        );
-    }
-
-    const session = {
-        creds: { username: userId, password },
-        cookies: loginResult.cookieHeader,
-    };
-
-    setEatRightSessionCookie(cookies, session);
-    markEatRightSessionValid(loginResult.cookieHeader);
-
-    return json({
-        success: true,
-        redirectUrl: "/view/home",
-        accessToken: signAccessToken(session),
-        refreshToken: signRefreshToken(session),
-    });
-};
-
-export const GET: RequestHandler = async () => {
     try {
-        const captcha = await scrapeEatRightCaptcha();
-        return json({ captcha });
+        const session = await foodcourtApiRequest<EatRightSession>("/ajax/apiLogin.jsp", {
+            method: "POST",
+            body: new URLSearchParams({ erpuserId: userId, erpuserPwd: password }),
+        });
+
+        if (!session.success || !session.access_token) {
+            return json({ error: "Invalid user ID or password" }, { status: 401 });
+        }
+
+        setEatRightSessionCookie(cookies, session);
+        return json({
+            success: true,
+            accessToken: signAccessToken(session),
+            refreshToken: signRefreshToken(session),
+            redirectUrl: "/view/home",
+        });
     } catch (error) {
-        return json({ error: String(error) }, { status: 502 });
+        if (error instanceof FoodcourtApiError) {
+            return json(
+                { error: error.message, errorCode: "foodcourt_login_failed" },
+                { status: error.status },
+            );
+        }
+        console.error(error);
+        return json({ error: "Unable to reach the Foodcourt API" }, { status: 502 });
     }
 };

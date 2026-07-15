@@ -14,7 +14,11 @@
         ReceiptCheckIcon,
     } from "@untitled-theme/icons-svelte";
     import { cart, MAX_QTY } from "$lib/stores/cart.svelte";
-    import { onDestroy, onMount } from "svelte";
+    import {
+        getPendingPayment,
+        setPendingPayment,
+    } from "$lib/client/pending-payment";
+    import { onMount } from "svelte";
     import { browser } from "$app/environment";
     import helpers from "$lib/helpers";
     import { fly, fade } from "svelte/transition";
@@ -24,18 +28,12 @@
 
     let isPlacingOrder = $state(false);
     let isRecharging = $state(false);
-    let isPollingRecharge = $state(false);
     let isWalletLoading = $state(true);
     let isConfirmOpen = $state(false);
     let error = $state("");
     let success = $state("");
     let paymentMessage = $state("");
     let walletBalance = $state<number | null>(null);
-    let paymentTabRef: Window | null = null;
-    let pollTimeoutId: ReturnType<typeof setTimeout> | null = null;
-    let absoluteTimeoutId: ReturnType<typeof setTimeout> | null = null;
-    let currentPollDelay = 2500;
-    let isBalanceCheckActive = false;
 
     const hasInsufficientBalance = $derived(
         walletBalance !== null && cart.totalAmount > walletBalance,
@@ -104,12 +102,46 @@
     }
 
     onMount(async () => {
-        const balance = await getWalletBalance();
-        await resumePendingCheckout(balance);
-    });
+        const params = new URLSearchParams(window.location.search);
+        const payment = params.get("payment");
+        const callbackMessage = params.get("payment_message");
+        const orderId = params.get("order_id");
 
-    onDestroy(() => {
-        cleanUpRechargeCycle({ closePopup: false });
+        // A recharge was started but the gateway never redirected back to
+        // this app (e.g. local dev) — resume verification on the callback
+        // page instead.
+        if (!payment && !orderId) {
+            const pending = getPendingPayment();
+            if (pending && pending.returnPath === "/view/cart") {
+                await goto(
+                    `/view/wallet/callback?order_id=${encodeURIComponent(pending.orderId)}&return=${encodeURIComponent(pending.returnPath)}`,
+                );
+                return;
+            }
+        }
+        let verifiedStatus: string | null = null;
+        if (orderId) {
+            try {
+                const response = await fetchEatRight(
+                    `/api/v1/wallet/payment-status?order_id=${encodeURIComponent(orderId)}`,
+                );
+                const data = await response.json();
+                if (response.ok) verifiedStatus = data.status;
+            } catch {
+                error = "Unable to verify the returned payment.";
+            }
+        }
+        const balance = await getWalletBalance();
+        if (payment === "success" && verifiedStatus === "SUCCESS") {
+            await resumePendingCheckout(balance);
+        } else if (payment) {
+            clearPendingCheckoutRecharge();
+            error = callbackMessage || "Wallet recharge failed or was cancelled.";
+            toast.error(error);
+        }
+        if (payment) {
+            history.replaceState({}, "", window.location.pathname);
+        }
     });
 
     function openOrderConfirmation() {
@@ -200,105 +232,6 @@
         localStorage.removeItem(PENDING_CHECKOUT_RECHARGE_KEY);
     }
 
-    function cleanUpRechargeCycle(options: { closePopup?: boolean } = {}) {
-        if (pollTimeoutId) clearTimeout(pollTimeoutId);
-        if (absoluteTimeoutId) clearTimeout(absoluteTimeoutId);
-
-        pollTimeoutId = null;
-        absoluteTimeoutId = null;
-        isPollingRecharge = false;
-        isRecharging = false;
-        isBalanceCheckActive = false;
-        currentPollDelay = 2500;
-
-        if (browser) {
-            document.removeEventListener(
-                "visibilitychange",
-                handleVisibilityCheck,
-            );
-
-            if (options.closePopup !== false) {
-                try {
-                    if (paymentTabRef && !paymentTabRef.closed) {
-                        paymentTabRef.close();
-                    }
-                } catch {
-                    // Ignore cross-origin popup access errors.
-                }
-            }
-        }
-
-        paymentTabRef = null;
-    }
-
-    async function checkRechargeAndPlaceOrder() {
-        if (!isPollingRecharge || isBalanceCheckActive) return;
-
-        isBalanceCheckActive = true;
-        try {
-            const balance = await getWalletBalance();
-
-            if (
-                balance !== null &&
-                cart.items.length > 0 &&
-                balance >= cart.totalAmount
-            ) {
-                cleanUpRechargeCycle();
-                clearPendingCheckoutRecharge();
-                walletBalance = balance;
-                paymentMessage = "Wallet recharged. Placing your order...";
-                toast.success("Wallet recharged. Placing order...");
-                await placeOrder({ skipBalanceCheck: true });
-                return;
-            }
-        } finally {
-            isBalanceCheckActive = false;
-        }
-
-        if (isPollingRecharge) {
-            currentPollDelay = Math.min(currentPollDelay + 1000, 6000);
-            pollTimeoutId = setTimeout(
-                checkRechargeAndPlaceOrder,
-                currentPollDelay,
-            );
-        }
-    }
-
-    function handleVisibilityCheck() {
-        if (document.visibilityState === "visible" && isPollingRecharge) {
-            if (pollTimeoutId) clearTimeout(pollTimeoutId);
-            checkRechargeAndPlaceOrder();
-        }
-    }
-
-    function startRechargePolling() {
-        if (pollTimeoutId) clearTimeout(pollTimeoutId);
-        if (absoluteTimeoutId) clearTimeout(absoluteTimeoutId);
-
-        isPollingRecharge = true;
-        currentPollDelay = 2500;
-        paymentMessage =
-            "Complete the wallet recharge. Your order will be placed automatically.";
-
-        if (browser) {
-            document.addEventListener(
-                "visibilitychange",
-                handleVisibilityCheck,
-            );
-        }
-
-        pollTimeoutId = setTimeout(
-            checkRechargeAndPlaceOrder,
-            currentPollDelay,
-        );
-        absoluteTimeoutId = setTimeout(() => {
-            if (!isPollingRecharge) return;
-            cleanUpRechargeCycle();
-            error =
-                "Recharge timed out. Please check your wallet balance and try placing the order again.";
-        }, 120000);
-    }
-
     async function startCheckoutRecharge() {
         const amount = getRechargeAmount();
         const currentBalance = Number(walletBalance ?? 0);
@@ -320,8 +253,6 @@
 
         isRecharging = true;
         savePendingCheckoutRecharge(amount, currentBalance);
-        paymentTabRef = window.open("", "tpsl_payment");
-
         try {
             const response = await fetchEatRight("/api/v1/wallet", {
                 method: "POST",
@@ -329,12 +260,12 @@
                 body: JSON.stringify({
                     amount,
                     confirmAmount: amount,
+                    returnPath: "/view/cart",
                 }),
             });
             const data = await response.json();
 
             if (!response.ok || data.error) {
-                paymentTabRef?.close();
                 if (await redirectIfEatRightConnectRequired(data.errorCode))
                     return;
 
@@ -346,16 +277,12 @@
             }
 
             if (data.status === "redirect" && data.url) {
-                if (paymentTabRef) {
-                    paymentTabRef.location.href = data.url;
-                    startRechargePolling();
-                } else {
-                    window.location.href = data.url;
+                if (data.orderId) {
+                    setPendingPayment(data.orderId, "/view/cart");
                 }
+                window.location.assign(data.url);
                 return;
             }
-
-            paymentTabRef?.close();
 
             if (data.status === "success") {
                 paymentMessage = "Wallet recharged. Placing your order...";
@@ -370,7 +297,6 @@
             error = data.message ?? "Unable to start recharge.";
             isRecharging = false;
         } catch {
-            paymentTabRef?.close();
             clearPendingCheckoutRecharge();
             error = "Unable to reach EatRight wallet.";
             isRecharging = false;
@@ -406,11 +332,9 @@
                 return;
             }
 
-            if (typeof saved.cartTotal === "number") {
-                isConfirmOpen = true;
-                paymentMessage = "Waiting for wallet recharge to complete.";
-                startRechargePolling();
-            }
+            clearPendingCheckoutRecharge();
+            isConfirmOpen = true;
+            error = "The gateway reported success, but the wallet balance was not updated.";
         } catch {
             clearPendingCheckoutRecharge();
         }
@@ -654,7 +578,7 @@
                     >
                         {#if isPlacingOrder}
                             Placing Order...
-                        {:else if isRecharging || isPollingRecharge}
+                        {:else if isRecharging}
                             Processing...
                         {:else}
                             Review Order
@@ -678,7 +602,7 @@
             <button
                 class="absolute inset-0 cursor-default"
                 onclick={() => {
-                    if (!isPollingRecharge) isConfirmOpen = false;
+                    isConfirmOpen = false;
                 }}
                 aria-label="Dismiss modal"
             ></button>
@@ -800,13 +724,7 @@
                         <div
                             class="mt-4 flex items-center gap-2.5 rounded-2xl border border-success/10 bg-success-soft px-4 py-3 text-left text-xs font-medium leading-relaxed text-success"
                         >
-                            {#if isPollingRecharge}
-                                <RefreshCw01Icon
-                                    class="h-4 w-4 shrink-0 animate-spin"
-                                />
-                            {:else}
-                                <CheckCircleIcon class="h-4 w-4 shrink-0" />
-                            {/if}
+                            <CheckCircleIcon class="h-4 w-4 shrink-0" />
                             <span>{paymentMessage}</span>
                         </div>
                     {/if}
@@ -829,14 +747,9 @@
                         <button
                             class="btn-primary h-13 w-full rounded-2xl px-4 text-sm shadow-sm"
                             onclick={startCheckoutRecharge}
-                            disabled={isRecharging ||
-                                isPollingRecharge ||
-                                rechargeShortfall > 1000}
+                            disabled={isRecharging || rechargeShortfall > 1000}
                         >
-                            {#if isPollingRecharge}
-                                <RefreshCw01Icon class="h-4 w-4 animate-spin" />
-                                Waiting for recharge…
-                            {:else if isRecharging}
+                            {#if isRecharging}
                                 Opening payment…
                             {:else}
                                 Add ₹{formatAmount(rechargeShortfall)} & place order
@@ -860,10 +773,6 @@
                     <button
                         class="mt-2 h-10 w-full text-sm font-semibold text-ink-muted transition-colors hover:text-ink disabled:opacity-40"
                         onclick={() => {
-                            if (isPollingRecharge) {
-                                cleanUpRechargeCycle();
-                                clearPendingCheckoutRecharge();
-                            }
                             isConfirmOpen = false;
                         }}
                         disabled={isPlacingOrder}

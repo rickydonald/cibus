@@ -2,11 +2,7 @@ import { json } from "@sveltejs/kit";
 import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
 import { clearEatRightDataCache } from "$lib/server/eatright-data";
 import { DEV_MODE } from "$lib/server/dev";
-
-const BASE_URL = "https://eatright.loyolacollege.edu";
-const REFERER = `${BASE_URL}/pagecontroller.jsp`;
-const USER_AGENT =
-  "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1";
+import { officialApiUrl } from "$lib/server/foodcourt-api";
 
 type OrderItem = {
   id: number;
@@ -25,15 +21,11 @@ type PlacedOrder = {
 
 type EatRightCartItem = ReturnType<typeof toEatRightCartPayload>[number];
 
-function eatRightHeaders(cookieHeader: string) {
+function foodcourtHeaders(accessToken: string) {
   return {
-    Accept: "application/json, text/javascript, */*; q=0.01",
+    Accept: "application/json",
     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-    Origin: BASE_URL,
-    Referer: REFERER,
-    "User-Agent": USER_AGENT,
-    "X-Requested-With": "XMLHttpRequest",
-    Cookie: cookieHeader,
+    Authorization: `Bearer ${accessToken}`,
   };
 }
 
@@ -121,17 +113,14 @@ function normalizeOrderList(payload: unknown): Array<Record<string, unknown>> {
   return [];
 }
 
-async function waitForOrdersToAppear(cookieHeader: string, placedOrders: PlacedOrder[]) {
+async function waitForOrdersToAppear(accessToken: string, placedOrders: PlacedOrder[]) {
   const expected = new Set(placedOrders.map((order) => order.order_no));
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const response = await fetch(`${BASE_URL}/ajax/getUserOrders.jsp`, {
+    const response = await fetch(officialApiUrl("/ajax/getUserOrders.jsp"), {
       headers: {
-        Accept: "application/json, text/javascript, */*; q=0.01",
-        Referer: REFERER,
-        "User-Agent": USER_AGENT,
-        "X-Requested-With": "XMLHttpRequest",
-        Cookie: cookieHeader,
+        Accept: "application/json",
+        Authorization: `Bearer ${accessToken}`,
       },
     });
 
@@ -153,7 +142,7 @@ async function waitForOrdersToAppear(cookieHeader: string, placedOrders: PlacedO
 }
 
 async function placeEatRightOrder(
-  cookieHeader: string,
+  accessToken: string,
   username: string,
   cart: EatRightCartItem[],
 ) {
@@ -164,9 +153,9 @@ async function placeEatRightOrder(
   form.set("paymentStatus", "Payment Not Made");
   form.set("userid", username);
 
-  const response = await fetch(`${BASE_URL}/ajax/placeOrder.jsp`, {
+  const response = await fetch(officialApiUrl("/ajax/placeOrder.jsp"), {
     method: "POST",
-    headers: eatRightHeaders(cookieHeader),
+    headers: foodcourtHeaders(accessToken),
     body: form.toString(),
   });
   const text = await response.text();
@@ -231,7 +220,7 @@ export async function POST(event) {
     return session.response;
   }
 
-  const { cookieHeader, username } = session;
+  const { accessToken, username } = session;
 
   if (!Array.isArray(cart) || cart.length === 0) {
     return json(
@@ -271,7 +260,7 @@ export async function POST(event) {
   const placedOrders: PlacedOrder[] = [];
 
   for (const group of orderGroups) {
-    const placedOrder = await placeEatRightOrder(cookieHeader, username, group);
+    const placedOrder = await placeEatRightOrder(accessToken, username, group);
 
     if (!placedOrder.ok) {
       return json(
@@ -290,9 +279,9 @@ export async function POST(event) {
   paymentForm.set("order_nos", JSON.stringify(placedOrders.map((order) => order.order_no)));
   paymentForm.set("grand_total", String(grandTotal));
 
-  const paymentResponse = await fetch(`${BASE_URL}/ajax/makePayment.jsp`, {
+  const paymentResponse = await fetch(officialApiUrl("/ajax/makePayment.jsp"), {
     method: "POST",
-    headers: eatRightHeaders(cookieHeader),
+    headers: foodcourtHeaders(accessToken),
     body: paymentForm.toString(),
   });
   const paymentText = await paymentResponse.text();
@@ -322,8 +311,8 @@ export async function POST(event) {
     );
   }
 
-  clearEatRightDataCache(cookieHeader);
-  const isRecorded = await waitForOrdersToAppear(cookieHeader, placedOrders);
+  clearEatRightDataCache(accessToken);
+  const isRecorded = await waitForOrdersToAppear(accessToken, placedOrders);
 
   if (!isRecorded) {
     return json(

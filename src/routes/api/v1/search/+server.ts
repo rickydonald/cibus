@@ -32,15 +32,15 @@ export async function GET(event) {
   const session = await resolveEatRightSessionFromEvent(event);
   if (!session.ok) return session.response;
 
-  const { cookieHeader } = session;
+  const { accessToken } = session;
 
-  const { outlets } = await getAccountSummary(cookieHeader);
+  const { outlets } = await getAccountSummary(accessToken);
   const openOutlets = outlets.filter((outlet) => !outlet.isClosed);
 
   const menus = await Promise.all(
     openOutlets.map((outlet) =>
       getMenuItems({
-        cookieHeader,
+        accessToken,
         outletId: outlet.id,
         shopNo: outlet.shopNo,
       }).catch(() => []),

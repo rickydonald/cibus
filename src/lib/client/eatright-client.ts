@@ -23,5 +23,5 @@ export async function fetchEatRight(
     input: RequestInfo | URL,
     init?: RequestInit,
 ): Promise<Response> {
-    return fetch(input, init);
+    return fetch(input, { ...init, cache: "no-store" });
 }

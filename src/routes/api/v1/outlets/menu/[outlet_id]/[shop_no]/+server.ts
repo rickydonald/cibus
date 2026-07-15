@@ -55,10 +55,10 @@ export async function GET(event) {
     return session.response;
   }
 
-  const { cookieHeader } = session;
+  const { accessToken } = session;
 
   try {
-    return json(await getMenuItems({ cookieHeader, outletId: outlet_id, shopNo: shop_no }));
+    return json(await getMenuItems({ accessToken, outletId: outlet_id, shopNo: shop_no }));
   } catch (error) {
     console.error(error);
     return json({ error: "Failed to fetch items" }, { status: 502 });

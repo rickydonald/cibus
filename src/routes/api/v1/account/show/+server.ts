@@ -7,6 +7,7 @@ export async function GET(event) {
   if (DEV_MODE) {
     return json({
       user: "Dev User",
+      userid: "DEVUSER",
       walletBalance: "250.00",
       outlets: [
         { id: 1, name: "Momo's Kitchen", shopNo: 1, isClosed: false },
@@ -20,11 +21,11 @@ export async function GET(event) {
     return session.response;
   }
 
-  const { cookieHeader, reauthenticated } = session;
+  const { accessToken, reauthenticated } = session;
 
   try {
     return json({
-      ...(await getAccountSummary(cookieHeader)),
+      ...(await getAccountSummary(accessToken)),
       reauthenticated,
     });
   } catch (error) {
@@ -32,7 +33,7 @@ export async function GET(event) {
 
     return json(
       {
-        error: "Failed to scrape page",
+        error: "Failed to load account from the Foodcourt API",
       },
       {
         status: 500,
