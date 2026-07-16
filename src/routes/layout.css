@@ -48,12 +48,23 @@
     --font-mono: "Red Hat Mono", monospace;
 }
 
+/*
+ * True circle / pill. The squircle preset rewrites every rounded-* class
+ * (including rounded-full) to corner-shape: squircle, so genuinely circular
+ * elements — spinners, dots, avatars, icon chips, pills — must use this
+ * utility instead of rounded-full.
+ */
+@utility rounded-circle {
+    border-radius: 9999px;
+    corner-shape: round;
+}
+
 @layer components {
     .card {
         @apply rounded-3xl border border-line bg-surface shadow-card;
     }
     .icon-btn {
-        @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-ink transition-all active:scale-95;
+        @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-circle border border-line bg-surface text-ink transition-all active:scale-95;
     }
     .btn-primary {
         @apply flex items-center justify-center gap-2 rounded-2xl bg-primary font-semibold text-white transition-all hover:bg-primary-strong active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45;
@@ -72,23 +83,6 @@
     }
     .chip {
         @apply rounded-lg border px-2 py-1 text-[10px] font-bold uppercase tracking-wider;
-    }
-    /* Fake barcode for the order receipt; bars pick up currentColor */
-    .receipt-barcode {
-        height: 2.5rem;
-        background: repeating-linear-gradient(
-            90deg,
-            currentColor 0 2px,
-            transparent 2px 4px,
-            currentColor 4px 7px,
-            transparent 7px 9px,
-            currentColor 9px 10px,
-            transparent 10px 14px,
-            currentColor 14px 16px,
-            transparent 16px 17px,
-            currentColor 17px 18px,
-            transparent 18px 22px
-        );
     }
 }
 
@@ -120,6 +114,12 @@
     .pb-cart-float {
         padding-bottom: 5.5rem;
     }
+    .pb-current-order-float {
+        padding-bottom: 4.75rem;
+    }
+    .pb-cart-order-float {
+        padding-bottom: 10rem;
+    }
     /* Desktop swaps the tab bar and cart tray for the sidebar — nothing to clear */
     @media (min-width: 64rem) {
         .hub-page-shell,
@@ -131,6 +131,10 @@
             padding-bottom: 3rem;
         }
         .pb-cart-float {
+            padding-bottom: 0.5rem;
+        }
+        .pb-current-order-float,
+        .pb-cart-order-float {
             padding-bottom: 0.5rem;
         }
     }

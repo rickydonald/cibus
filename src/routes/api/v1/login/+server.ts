@@ -18,7 +18,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     }
 
     try {
-        const session = await foodcourtApiRequest<EatRightSession>("/ajax/apiLogin.jsp", {
+        const session = await foodcourtApiRequest<EatRightSession>("/ajax/api/userLogin.jsp", {
             method: "POST",
             body: new URLSearchParams({ erpuserId: userId, erpuserPwd: password }),
         });

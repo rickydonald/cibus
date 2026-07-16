@@ -4,43 +4,140 @@
         fetchEatRight,
         redirectIfEatRightConnectRequired,
     } from "$lib/utils/eatright-client";
-    import { ArrowLeftIcon } from "@untitled-theme/icons-svelte";
+    import {
+        CheckIcon,
+        ChevronRightIcon,
+        ClockIcon,
+        ReceiptIcon,
+        RefreshCw01Icon,
+        XCloseIcon,
+    } from "@untitled-theme/icons-svelte";
+    import Spinner from "$lib/components/custom/Spinner.svelte";
     import { onMount } from "svelte";
+    import {
+        confirmationUrl,
+        orderState,
+        orderTime,
+        parseOrderDate,
+        type EatRightOrder,
+    } from "$lib/utils/orders";
 
-    type EatRightOrder = {
-        order_no: string;
-        order_status: string;
-        created_on: string;
-        payment_status: string;
-        outletid: string;
-        delivered: string;
-        grand_total: number;
-        outletname: string;
-    };
+    type OrderFilter = "all" | "active" | "delivered" | "cancelled";
 
     let orders = $state<EatRightOrder[]>([]);
     let isLoading = $state(true);
     let error = $state("");
+    let activeFilter = $state<OrderFilter>("all");
 
-    const STATUS_THEMES: Record<string, string> = {
-        PLACED: "bg-primary-soft text-primary border-primary/10",
-        PAID: "bg-success-soft text-success border-success/10",
-        PENDING: "bg-warning-soft text-warning border-warning/10",
-        CANCELLED: "bg-danger-soft text-danger border-danger/10",
-    };
+    const FILTERS: { id: OrderFilter; label: string }[] = [
+        { id: "all", label: "All" },
+        { id: "active", label: "Active" },
+        { id: "delivered", label: "Delivered" },
+        { id: "cancelled", label: "Cancelled" },
+    ];
 
-    function getStatusStyle(status: string) {
-        return (
-            STATUS_THEMES[status.toUpperCase()] ??
-            "bg-canvas text-ink-muted border-line"
-        );
+    const STATE_VISUALS = {
+        cancelled: {
+            icon: XCloseIcon,
+            chip: "bg-danger-soft text-danger",
+            text: "text-danger",
+            label: "Cancelled",
+            filter: "cancelled",
+        },
+        delivered: {
+            icon: CheckIcon,
+            chip: "bg-success-soft text-success",
+            text: "text-success",
+            label: "Delivered",
+            filter: "delivered",
+        },
+        "payment-pending": {
+            icon: ClockIcon,
+            chip: "bg-warning-soft text-warning",
+            text: "text-warning",
+            label: "Payment pending",
+            filter: "active",
+        },
+        preparing: {
+            icon: ClockIcon,
+            chip: "bg-primary-soft text-primary",
+            text: "text-primary",
+            label: "Preparing",
+            filter: "active",
+        },
+    } as const;
+
+    function orderVisual(order: EatRightOrder) {
+        return STATE_VISUALS[orderState(order)];
     }
+
+    function dayLabel(date: Date): string {
+        const today = new Date();
+        const yesterday = new Date();
+        yesterday.setDate(today.getDate() - 1);
+
+        if (date.toDateString() === today.toDateString()) return "Today";
+        if (date.toDateString() === yesterday.toDateString())
+            return "Yesterday";
+
+        return new Intl.DateTimeFormat("en-IN", {
+            day: "numeric",
+            month: "short",
+            ...(date.getFullYear() !== today.getFullYear() && {
+                year: "numeric",
+            }),
+        }).format(date);
+    }
+
+    function orderMeta(order: EatRightOrder): string {
+        return [orderTime(order), order.order_no].filter(Boolean).join(" · ");
+    }
+
+    const filteredOrders = $derived(
+        activeFilter === "all"
+            ? orders
+            : orders.filter(
+                  (order) => orderVisual(order).filter === activeFilter,
+              ),
+    );
+
+    const orderGroups = $derived.by(() => {
+        const sorted = filteredOrders
+            .map((order, index) => ({
+                order,
+                index,
+                time: parseOrderDate(order.created_on)?.getTime() ?? null,
+            }))
+            .sort((a, b) => {
+                if (a.time === null && b.time === null) return a.index - b.index;
+                if (a.time === null) return 1;
+                if (b.time === null) return -1;
+                return b.time - a.time;
+            });
+
+        const groups: { label: string; orders: EatRightOrder[] }[] = [];
+        for (const entry of sorted) {
+            const date = parseOrderDate(entry.order.created_on);
+            const label = date ? dayLabel(date) : "Earlier";
+            const last = groups[groups.length - 1];
+            if (last?.label === label) {
+                last.orders.push(entry.order);
+            } else {
+                groups.push({ label, orders: [entry.order] });
+            }
+        }
+        return groups;
+    });
 
     function splitPrice(value: number | string | null) {
         const num = Number(value);
         if (!Number.isFinite(num)) return { main: "--", decimal: "00" };
         const [main, decimal] = num.toFixed(2).split(".");
         return { main, decimal };
+    }
+
+    function openOrder(order: EatRightOrder) {
+        goto(confirmationUrl(order));
     }
 
     async function getOrders() {
@@ -78,35 +175,78 @@
 </script>
 
 <div class="min-h-screen text-ink antialiased">
-    <div class="px-4 max-w-md mx-auto lg:max-w-2xl">
+    <div class="px-5 pt-5 max-w-md mx-auto lg:max-w-2xl">
+        <!-- Page header -->
+        <div class="flex items-center justify-between px-1">
+            <div class="min-w-0">
+                <h1 class="text-xl font-bold tracking-tight text-ink">
+                    Order History
+                </h1>
+                <p class="text-xs font-medium text-ink-muted mt-0.5">
+                    {#if isLoading}
+                        Fetching your past orders...
+                    {:else if orders.length > 0}
+                        {orders.length}
+                        {orders.length === 1 ? "order" : "orders"} placed so far
+                    {:else}
+                        Every order you place lands here
+                    {/if}
+                </p>
+            </div>
+            <button
+                class="icon-btn"
+                aria-label="Refresh order history"
+                onclick={getOrders}
+                disabled={isLoading}
+            >
+                {#if isLoading}
+                    <Spinner size={20} class="text-ink-muted" />
+                {:else}
+                    <RefreshCw01Icon class="h-5 w-5 text-ink-muted" />
+                {/if}
+            </button>
+        </div>
+
         {#if isLoading}
-            <div class="space-y-4 pt-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
-                {#each Array(4) as _}
-                    <div class="card p-5 space-y-4">
-                        <div class="flex justify-between items-start">
-                            <div class="space-y-2 w-2/3">
+            <!-- Skeleton mirrors the grouped list below -->
+            <div class="mt-6">
+                <div class="ml-4 h-3 w-20 animate-pulse rounded bg-line"></div>
+                <div class="card mt-2 overflow-hidden rounded-[22px]">
+                    {#each Array(4) as _, i}
+                        {#if i > 0}
+                            <div
+                                class="ml-[4.25rem] border-t border-line/60"
+                            ></div>
+                        {/if}
+                        <div class="flex items-center gap-3.5 p-4">
+                            <div
+                                class="h-10 w-10 shrink-0 animate-pulse rounded-circle bg-canvas"
+                            ></div>
+                            <div class="flex-1 space-y-2">
                                 <div
-                                    class="h-4 w-full animate-pulse rounded bg-canvas"
+                                    class="h-3.5 w-2/3 animate-pulse rounded bg-canvas"
                                 ></div>
                                 <div
-                                    class="h-3 w-1/2 animate-pulse rounded bg-canvas"
+                                    class="h-3 w-1/3 animate-pulse rounded bg-canvas"
                                 ></div>
                             </div>
                             <div
-                                class="h-6 w-16 animate-pulse rounded bg-canvas"
+                                class="h-4 w-14 animate-pulse rounded bg-canvas"
                             ></div>
                         </div>
-                        <div
-                            class="h-10 w-full animate-pulse rounded-xl bg-canvas"
-                        ></div>
-                    </div>
-                {/each}
+                    {/each}
+                </div>
             </div>
         {:else if error}
             <div
-                class="flex min-h-[60vh] flex-col items-center justify-center text-center px-4"
+                class="flex min-h-[55vh] flex-col items-center justify-center text-center px-4"
             >
-                <h2 class="text-base font-bold text-ink">
+                <div
+                    class="grid h-14 w-14 place-items-center rounded-circle bg-danger-soft text-danger"
+                >
+                    <XCloseIcon class="h-6 w-6" />
+                </div>
+                <h2 class="mt-4 text-base font-bold text-ink">
                     Could not load orders
                 </h2>
                 <p
@@ -115,7 +255,7 @@
                     {error}
                 </p>
                 <button
-                    class="btn-primary mt-5 rounded-xl px-5 py-2.5 text-xs"
+                    class="btn-primary mt-5 rounded-circle px-6 py-2.5 text-xs"
                     onclick={getOrders}
                 >
                     Try Again
@@ -123,100 +263,115 @@
             </div>
         {:else if orders.length === 0}
             <div
-                class="flex min-h-[60vh] flex-col items-center justify-center text-center px-4"
+                class="flex min-h-[55vh] flex-col items-center justify-center text-center px-4"
             >
-                <h2 class="text-base font-bold text-ink">No orders yet</h2>
+                <div
+                    class="grid h-14 w-14 place-items-center rounded-circle bg-primary-soft text-primary"
+                >
+                    <ReceiptIcon class="h-6 w-6" />
+                </div>
+                <h2 class="mt-4 text-base font-bold text-ink">No orders yet</h2>
                 <p
                     class="mt-1 max-w-xs text-xs font-medium text-ink-muted leading-relaxed"
                 >
                     Your EatRight orders will appear here automatically after
                     checkout.
                 </p>
+                <button
+                    class="btn-primary mt-5 rounded-circle px-6 py-2.5 text-xs"
+                    onclick={() => goto("/view/home")}
+                >
+                    Browse Outlets
+                </button>
             </div>
         {:else}
-            <div class="space-y-4 pt-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
-                {#each orders as order}
-                    {@const price = splitPrice(order.grand_total)}
+            <!-- Status filter -->
+            <div class="no-scrollbar mt-4 flex gap-2 overflow-x-auto px-1">
+                {#each FILTERS as filter}
                     <button
-                        class="card w-full p-5 text-left hover:border-line-strong transition-all duration-200 group block relative overflow-hidden"
-                        onclick={() =>
-                            goto(
-                                `/view/confirmation?order_no=${encodeURIComponent(order.order_no)}&outletid=${encodeURIComponent(order.outletid)}`,
-                            )}
+                        type="button"
+                        onclick={() => (activeFilter = filter.id)}
+                        class={`h-8 shrink-0 rounded-circle px-4 text-xs font-semibold transition-all active:scale-95 ${
+                            activeFilter === filter.id
+                                ? "bg-primary text-white"
+                                : "border border-line bg-surface text-ink-muted hover:bg-canvas"
+                        }`}
                     >
-                        <!-- Upper Section: Brand Metadata and Financial Total -->
-                        <div class="flex items-start justify-between gap-4">
-                            <div class="min-w-0">
-                                <h2
-                                    class="truncate text-lg font-bold tracking-tight text-ink"
-                                >
-                                    {order.outletname}
-                                </h2>
-                                <p
-                                    class="text-[11px] font-medium text-ink-faint mt-0.5"
-                                >
-                                    {order.created_on}
-                                </p>
-                            </div>
-
-                            <div class="text-right whitespace-nowrap shrink-0">
-                                <p
-                                    class="text-xl font-black tracking-tight text-ink tabular-nums"
-                                >
-                                    &#8377;{price.main}.<span
-                                        class="text-xs font-normal text-ink-muted"
-                                        >{price.decimal}</span
-                                    >
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Mid Section: Micro Badge Tokens -->
-                        <div class="mt-3.5 flex flex-wrap gap-1.5">
-                            <span
-                                class={`chip ${getStatusStyle(order.order_status)}`}
-                            >
-                                {order.order_status}
-                            </span>
-                            <span
-                                class={`chip ${getStatusStyle(order.payment_status)}`}
-                            >
-                                {order.payment_status}
-                            </span>
-                            <span
-                                class={`chip ${order.delivered === "Y" ? "bg-success-soft text-success border-success/10" : "bg-canvas text-ink-muted border-line"}`}
-                            >
-                                {order.delivered === "Y"
-                                    ? "Delivered"
-                                    : "Preparing"}
-                            </span>
-                        </div>
-
-                        <!-- Lower Tray: Order System Details and Action Trigger -->
-                        <div
-                            class="mt-4 rounded-2xl bg-canvas px-4 py-3 border border-line flex items-center justify-between gap-3 group-hover:bg-primary-soft/50 transition-colors"
-                        >
-                            <div class="min-w-0">
-                                <p
-                                    class="text-[9px] font-bold uppercase tracking-widest text-ink-faint"
-                                >
-                                    Order Reference
-                                </p>
-                                <p
-                                    class="mt-0.5 break-all font-mono text-xs text-ink-muted font-medium"
-                                >
-                                    {order.order_no}
-                                </p>
-                            </div>
-                            <span
-                                class="shrink-0 rounded-xl bg-primary px-3 py-1.5 text-[11px] font-bold text-white transition-colors group-hover:bg-primary-strong"
-                            >
-                                View
-                            </span>
-                        </div>
+                        {filter.label}
                     </button>
                 {/each}
             </div>
+
+            {#if filteredOrders.length === 0}
+                <div
+                    class="card mt-4 rounded-[22px] p-8 text-center text-xs font-medium text-ink-faint"
+                >
+                    No {activeFilter} orders yet.
+                </div>
+            {:else}
+                {#each orderGroups as group}
+                    <section class="mt-6">
+                        <h2 class="section-label pl-4">{group.label}</h2>
+
+                        <div class="card mt-2 overflow-hidden rounded-[22px]">
+                            {#each group.orders as order, i (order.order_no)}
+                                {@const price = splitPrice(order.grand_total)}
+                                {@const visual = orderVisual(order)}
+                                {#if i > 0}
+                                    <div
+                                        class="ml-[4.25rem] border-t border-line/60"
+                                    ></div>
+                                {/if}
+                                <button
+                                    class="flex w-full items-center gap-3.5 p-4 text-left transition-colors hover:bg-canvas/60 active:bg-canvas"
+                                    onclick={() => openOrder(order)}
+                                >
+                                    <span
+                                        class={`grid h-10 w-10 shrink-0 place-items-center rounded-circle ${visual.chip}`}
+                                    >
+                                        <visual.icon
+                                            class="h-[18px] w-[18px]"
+                                        />
+                                    </span>
+
+                                    <div class="min-w-0 flex-1">
+                                        <h3
+                                            class="truncate text-sm font-semibold leading-snug text-ink"
+                                        >
+                                            {order.outletname}
+                                        </h3>
+                                        <p
+                                            class="mt-0.5 truncate text-[11px] font-medium text-ink-faint"
+                                        >
+                                            {orderMeta(order)}
+                                        </p>
+                                    </div>
+
+                                    <div class="shrink-0 text-right">
+                                        <p
+                                            class="text-sm font-bold tabular-nums text-ink"
+                                        >
+                                            ₹{price.main}<span
+                                                class="font-normal text-ink-muted"
+                                                >.{price.decimal}</span
+                                            >
+                                        </p>
+                                        <p
+                                            class={`mt-0.5 text-[10px] font-bold uppercase tracking-wider ${visual.text}`}
+                                        >
+                                            {visual.label}
+                                        </p>
+                                    </div>
+
+                                    <ChevronRightIcon
+                                        class="h-4 w-4 shrink-0 text-ink-faint"
+                                    />
+                                </button>
+                            {/each}
+                        </div>
+                    </section>
+                {/each}
+            {/if}
         {/if}
     </div>
 </div>

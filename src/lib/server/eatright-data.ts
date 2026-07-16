@@ -59,7 +59,7 @@ function sessionKey(accessToken: string) {
 export async function getAccountSummary(accessToken: string): Promise<AccountSummary> {
   return accountCache.getOrSet(sessionKey(accessToken), async () => {
     const [user, outletPayload] = await Promise.all([
-      foodcourtApiRequest<UserResponse>("/ajax/getUser.jsp", { accessToken }),
+      foodcourtApiRequest<UserResponse>("/ajax/api/getUser.jsp", { accessToken }),
       foodcourtApiRequest<OutletResponse[]>("/ajax/getOutlets.jsp", { accessToken }),
     ]);
     const outlets = (Array.isArray(outletPayload) ? outletPayload : []).map((outlet) => ({
@@ -79,7 +79,7 @@ export async function getAccountSummary(accessToken: string): Promise<AccountSum
 }
 
 export async function getWalletTransactions(accessToken: string): Promise<WalletTransaction[]> {
-  const payload = await foodcourtApiRequest<unknown>("/ajax/walletTransactions.jsp", {
+  const payload = await foodcourtApiRequest<unknown>("/ajax/api/getUserWalletTransactions.jsp", {
     accessToken,
   });
   if (Array.isArray(payload)) return payload as WalletTransaction[];

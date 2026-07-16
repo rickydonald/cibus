@@ -73,10 +73,10 @@
             class="absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(255,255,255,0.13),transparent_30%),radial-gradient(circle_at_90%_85%,rgba(255,255,255,0.08),transparent_32%)]"
         ></div>
         <div
-            class="absolute -right-32 top-1/4 h-80 w-80 rounded-full border border-white/10"
+            class="absolute -right-32 top-1/4 h-80 w-80 rounded-circle border border-white/10"
         ></div>
         <div
-            class="absolute -right-20 top-1/3 h-52 w-52 rounded-full border border-white/10"
+            class="absolute -right-20 top-1/3 h-52 w-52 rounded-circle border border-white/10"
         ></div>
 
         <div class="relative flex items-center gap-3">

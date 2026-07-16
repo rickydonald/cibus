@@ -10,9 +10,9 @@
         ShoppingCart01Icon,
         CheckCircleIcon,
         AlertCircleIcon,
-        RefreshCw01Icon,
         ReceiptCheckIcon,
     } from "@untitled-theme/icons-svelte";
+    import Spinner from "$lib/components/custom/Spinner.svelte";
     import { cart, MAX_QTY } from "$lib/stores/cart.svelte";
     import {
         getPendingPayment,
@@ -368,13 +368,13 @@
             <div class="flex items-center gap-2">
                 {#if isWalletLoading}
                     <div
-                        class="h-9 w-24 animate-pulse rounded-full bg-line"
+                        class="h-9 w-24 animate-pulse rounded-circle bg-line"
                         aria-label="Verifying balance"
                     ></div>
                 {:else}
                     <a
                         href="/view/wallet"
-                        class="flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-surface border border-line shadow-card hover:border-primary/30 transition-all"
+                        class="flex items-center gap-1.5 rounded-circle px-3 py-1.5 bg-surface border border-line shadow-card hover:border-primary/30 transition-all"
                     >
                         <Wallet02Icon class="h-4 w-4 text-primary" />
                         <span
@@ -408,7 +408,7 @@
                 class="flex min-h-[60vh] flex-col items-center justify-center text-center"
             >
                 <div
-                    class="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-surface border border-line shadow-card"
+                    class="mb-4 flex h-20 w-20 items-center justify-center rounded-circle bg-surface border border-line shadow-card"
                 >
                     <ShoppingCart01Icon class="h-9 w-9 text-ink-faint" />
                 </div>
@@ -613,7 +613,7 @@
                 out:fly={{ duration: 160, y: 80 }}
             >
                 <div class="flex justify-center pt-3 sm:hidden">
-                    <div class="h-1 w-10 rounded-full bg-line"></div>
+                    <div class="h-1 w-10 rounded-circle bg-line"></div>
                 </div>
 
                 <div
@@ -750,6 +750,7 @@
                             disabled={isRecharging || rechargeShortfall > 1000}
                         >
                             {#if isRecharging}
+                                <Spinner />
                                 Opening payment…
                             {:else}
                                 Add ₹{formatAmount(rechargeShortfall)} & place order
@@ -762,10 +763,10 @@
                             disabled={isPlacingOrder}
                         >
                             {#if isPlacingOrder}
-                                <RefreshCw01Icon class="h-4 w-4 animate-spin" />
+                                <Spinner />
                                 Placing order…
                             {:else}
-                                Pay ₹{formatAmount(cart.totalAmount)} & place order
+                               Place Order
                             {/if}
                         </button>
                     {/if}

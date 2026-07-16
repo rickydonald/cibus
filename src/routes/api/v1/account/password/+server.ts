@@ -52,7 +52,7 @@ export const POST: RequestHandler = async (event) => {
 
     try {
         const payload = await foodcourtApiRequest<ChangePasswordResponse>(
-            "/ajax/changePassword.jsp",
+            "/ajax/api/changeUserPassword.jsp",
             {
                 method: "POST",
                 accessToken: session.accessToken,

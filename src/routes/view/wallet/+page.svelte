@@ -4,6 +4,7 @@
         ArrowUpRightIcon,
         MinusIcon,
     } from "@lucide/svelte";
+    import { XCloseIcon } from "@untitled-theme/icons-svelte";
     import {
         cacheEatRightProfile,
         getCachedEatRightProfile,
@@ -84,6 +85,35 @@
         amount = val.toString();
     }
 
+    const MIN_RECHARGE = 1;
+    const MAX_RECHARGE = 1000;
+
+    // Whole rupees only: strip non-digits, drop leading zeros, cap at
+    // 4 digits and clamp anything above the recharge ceiling.
+    function sanitizeAmount(raw: string) {
+        let digits = raw.replace(/\D/g, "").replace(/^0+/, "").slice(0, 4);
+        if (digits && Number(digits) > MAX_RECHARGE) {
+            digits = String(MAX_RECHARGE);
+        }
+        return digits;
+    }
+
+    function handleAmountInput(event: Event) {
+        const input = event.currentTarget as HTMLInputElement;
+        const clean = sanitizeAmount(input.value);
+        amount = clean;
+        // Keep the DOM in sync even when the sanitized value is unchanged
+        // (e.g. a rejected fifth digit would otherwise stay visible).
+        input.value = clean;
+    }
+
+    const amountValue = $derived(Number(amount));
+    const isAmountValid = $derived(
+        amount !== "" &&
+            amountValue >= MIN_RECHARGE &&
+            amountValue <= MAX_RECHARGE,
+    );
+
     async function loadWallet(options: { preserveError?: boolean } = {}) {
         isLoading = true;
         if (!options.preserveError) error = "";
@@ -146,11 +176,11 @@
         }
 
         if (
-            !Number.isFinite(depositAmount) ||
-            depositAmount < 1 ||
-            depositAmount > 1000
+            !Number.isInteger(depositAmount) ||
+            depositAmount < MIN_RECHARGE ||
+            depositAmount > MAX_RECHARGE
         ) {
-            error = "Recharge amount must be between ₹1 and ₹1000.";
+            error = `Recharge amount must be between ₹${MIN_RECHARGE} and ₹${MAX_RECHARGE}.`;
             return;
         }
 
@@ -297,7 +327,7 @@
                 {/if}
 
                 <div
-                    class="mt-5 flex max-w-full min-w-0 items-center gap-2 rounded-full bg-white/8 px-4 py-1.5 ring-1 ring-inset ring-white/10 font-mono!"
+                    class="mt-5 flex max-w-full min-w-0 items-center gap-2 rounded-circle bg-white/8 px-4 py-1.5 ring-1 ring-inset ring-white/10 font-mono!"
                 >
                     <span
                         class="min-w-0 flex-1 truncate text-xs font-semibold text-white/85 tracking-widest"
@@ -307,7 +337,7 @@
                     </span>
                     {#if profile?.userid}
                         <span
-                            class="h-1 w-1 shrink-0 rounded-full bg-white/30"
+                            class="h-1 w-1 shrink-0 rounded-circle bg-white/30"
                         ></span>
                         <span
                             class="shrink-0 text-xs font-medium text-white/55 tabular-nums tracking-widest"
@@ -324,32 +354,58 @@
             <h2 class="section-label pl-4">Add Money</h2>
 
             <div class="card mt-2 rounded-[22px] p-5">
-                <div class="flex items-baseline justify-center py-2">
-                    <span class="mr-0.5 text-3xl font-semibold text-ink-faint"
-                        >₹</span
+                <div class="flex items-center justify-between px-1">
+                    <label
+                        for="money_input"
+                        class="text-xs font-semibold text-ink-muted"
                     >
-                    <input
-                        id="money_input"
-                        type="number"
-                        min="1"
-                        max="1000"
-                        step="0.01"
-                        inputmode="decimal"
-                        bind:value={amount}
-                        disabled={isSubmitting}
-                        class="bg-transparent text-4xl font-bold tracking-tight text-ink outline-none tabular-nums placeholder:text-ink-faint/40 disabled:opacity-50"
-                        style={`width: ${Math.max(String(amount ?? "").length, 1) + 0.75}ch`}
-                        placeholder="0"
-                    />
+                        Enter amount
+                    </label>
+                    <span class="text-[11px] font-medium text-ink-faint">
+                        ₹{MIN_RECHARGE} – ₹{MAX_RECHARGE.toLocaleString(
+                            "en-IN",
+                        )}
+                    </span>
                 </div>
 
-                <div class="mt-3 flex justify-center gap-2">
-                    {#each [20, 50, 100] as value}
+                <label
+                    for="money_input"
+                    class="mt-2 flex cursor-text items-center gap-2 rounded-2xl border border-line bg-canvas px-4 py-3.5 transition-all focus-within:border-primary focus-within:bg-surface focus-within:ring-2 focus-within:ring-primary/15"
+                >
+                    <span class="text-2xl font-semibold text-ink-faint">₹</span>
+                    <input
+                        id="money_input"
+                        type="text"
+                        inputmode="numeric"
+                        autocomplete="off"
+                        maxlength="4"
+                        value={amount}
+                        oninput={handleAmountInput}
+                        disabled={isSubmitting}
+                        class="w-full bg-transparent text-2xl font-bold tracking-tight text-ink outline-none tabular-nums placeholder:text-ink-faint/50 disabled:opacity-50"
+                        placeholder="0"
+                    />
+                    {#if amount}
+                        <button
+                            type="button"
+                            aria-label="Clear amount"
+                            tabindex="-1"
+                            onclick={() => (amount = "")}
+                            disabled={isSubmitting}
+                            class="grid h-6 w-6 shrink-0 place-items-center rounded-circle bg-line/70 text-ink-muted transition-colors hover:bg-line-strong"
+                        >
+                            <XCloseIcon class="h-3.5 w-3.5" />
+                        </button>
+                    {/if}
+                </label>
+
+                <div class="mt-3 grid grid-cols-4 gap-2">
+                    {#each [20, 50, 100, 200] as value}
                         <button
                             type="button"
                             onclick={() => quickSelect(value)}
                             disabled={isSubmitting}
-                            class={`h-9 rounded-full px-5 text-[13px] font-semibold transition-all active:scale-95 disabled:opacity-50 ${
+                            class={`h-9 rounded-circle text-[13px] font-semibold transition-all active:scale-95 disabled:opacity-50 ${
                                 Number(amount) === value
                                     ? "bg-primary text-white"
                                     : "bg-primary-soft text-primary hover:bg-primary/15"
@@ -363,9 +419,9 @@
                 <div class="mt-5 flex flex-col gap-2">
                     <button
                         type="button"
-                        class="btn-primary h-12 w-full rounded-full text-sm"
+                        class="btn-primary h-12 w-full rounded-circle text-sm"
                         onclick={rechargeWallet}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || !isAmountValid}
                     >
                         {#if isSubmitting}
                             <Spinner />
@@ -374,12 +430,13 @@
                         <span>
                             {#if isSubmitting}
                                 Starting Payment...
+                            {:else if isAmountValid}
+                                Add ₹{amountValue.toLocaleString("en-IN")}
                             {:else}
                                 Add Money
                             {/if}
                         </span>
                     </button>
-
                 </div>
 
                 {#if error || message}
@@ -406,7 +463,7 @@
                         {/if}
                         <div class="flex items-center gap-3.5 p-4">
                             <div
-                                class="h-9 w-9 shrink-0 animate-pulse rounded-full bg-canvas"
+                                class="h-9 w-9 shrink-0 animate-pulse rounded-circle bg-canvas"
                             ></div>
                             <div class="flex-1 space-y-2">
                                 <div
@@ -438,7 +495,7 @@
                         {/if}
                         <article class="flex items-center gap-3.5 p-4">
                             <span
-                                class={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${visual.chip}`}
+                                class={`grid h-9 w-9 shrink-0 place-items-center rounded-circle ${visual.chip}`}
                             >
                                 <visual.icon size={16} strokeWidth={2.25} />
                             </span>

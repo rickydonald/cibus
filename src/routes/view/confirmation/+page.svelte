@@ -5,11 +5,20 @@
         redirectIfEatRightConnectRequired,
     } from "$lib/utils/eatright-client";
     import { page } from "$app/state";
-    import { ArrowLeftIcon } from "@untitled-theme/icons-svelte";
-    import { CheckIcon, ReceiptTextIcon } from "@lucide/svelte";
+    import {
+        CheckIcon,
+        ReceiptTextIcon,
+        RefreshCwIcon,
+        TimerOffIcon,
+    } from "@lucide/svelte";
     import { toast } from "svelte-sonner";
     import { fly, scale } from "svelte/transition";
     import { onMount } from "svelte";
+    import JsBarcode from "jsbarcode";
+    import {
+        createVisibilityPoller,
+        type VisibilityPoller,
+    } from "$lib/utils/visibility-poller";
 
     type OrderItem = {
         order_item_id: number;
@@ -23,6 +32,7 @@
 
     type OrderDetails = {
         order_no: string;
+        created_on?: string | null;
         delivereddate: string | null;
         orderid: number;
         payment_status: string;
@@ -33,14 +43,64 @@
         items: OrderItem[];
     };
 
+    type OrderHistoryEntry = {
+        order_no: string;
+        created_on?: string | null;
+        delivered?: string;
+    };
+
     let orders = $state<OrderDetails[]>([]);
     let isLoading = $state(true);
     let error = $state("");
     let copiedOrderNo = $state("");
+    let isStatusRefreshing = $state(false);
+    let lastStatusCheck = $state<Date | null>(null);
+    let liveStatusUnavailable = $state(false);
+    let statusPoller: VisibilityPoller | null = null;
 
     function pickupCode(orderNo: string) {
         const match = orderNo.match(/(\d{3})$/);
         return match?.[1] ?? orderNo.slice(-3);
+    }
+
+    function isDelivered(order: OrderDetails) {
+        return order.delivered?.toUpperCase() === "Y";
+    }
+
+    function formatOrderDate(value?: string | null) {
+        if (!value) return "Date unavailable";
+
+        const normalized = /^\d{4}-\d{2}-\d{2} /.test(value)
+            ? value.replace(" ", "T")
+            : value;
+        const date = new Date(normalized);
+
+        if (Number.isNaN(date.getTime())) return value;
+
+        return new Intl.DateTimeFormat("en-IN", {
+            dateStyle: "medium",
+            timeStyle: "short",
+        }).format(date);
+    }
+
+    function orderBarcode(node: SVGSVGElement, orderNo: string) {
+        function render(value: string) {
+            JsBarcode(node, value, {
+                format: "CODE128",
+                displayValue: false,
+                height: 40,
+                width: 1.5,
+                margin: 0,
+                background: "transparent",
+                lineColor: "currentColor",
+            });
+        }
+
+        render(orderNo);
+
+        return {
+            update: render,
+        };
     }
 
     function statusTextClass(status: string) {
@@ -83,7 +143,11 @@
     }
 
     const allDelivered = $derived(
-        orders.length > 0 && orders.every((o) => o.delivered === "Y"),
+        orders.length > 0 && orders.every(isDelivered),
+    );
+
+    const hasActiveOrders = $derived(
+        orders.length > 0 && orders.some((order) => !isDelivered(order)),
     );
 
     const totalPaid = $derived(
@@ -104,6 +168,16 @@
         }
 
         try {
+            const historyPromise = fetchEatRight("/api/v1/orders")
+                .then(async (response) => {
+                    if (!response.ok) return [];
+                    const data = await response.json();
+                    return Array.isArray(data.orders)
+                        ? (data.orders as OrderHistoryEntry[])
+                        : [];
+                })
+                .catch(() => [] as OrderHistoryEntry[]);
+
             const responses = await Promise.all(
                 orderNos.map(async (orderNo, index) => {
                     const outletId = outletIds[index] ?? outletIds[0];
@@ -131,7 +205,18 @@
                 }),
             );
 
-            orders = responses.flat();
+            const history = await historyPromise;
+            const orderDates = new Map(
+                history.map((order) => [order.order_no, order.created_on]),
+            );
+
+            orders = responses.flat().map((order) => ({
+                ...order,
+                created_on:
+                    order.created_on ?? orderDates.get(order.order_no) ?? null,
+            }));
+            lastStatusCheck = new Date();
+            liveStatusUnavailable = false;
         } catch (err) {
             error =
                 err instanceof Error
@@ -142,8 +227,170 @@
         }
     }
 
+    async function hydrateDeliveredOrders(orderNos: Set<string>) {
+        const hydrated = new Map<string, OrderDetails>();
+
+        await Promise.all(
+            orders
+                .filter((order) => orderNos.has(order.order_no))
+                .map(async (order) => {
+                    try {
+                        const response = await fetchEatRight(
+                            `/api/v1/order/details?order_no=${encodeURIComponent(order.order_no)}&outletid=${encodeURIComponent(order.outletid)}`,
+                        );
+                        if (!response.ok) return;
+                        const data = await response.json();
+                        const detail = Array.isArray(data.orders)
+                            ? (data.orders[0] as OrderDetails | undefined)
+                            : undefined;
+                        if (detail) hydrated.set(order.order_no, detail);
+                    } catch {
+                        // The delivered flag is already current. Its timestamp
+                        // can wait until the next full page load.
+                    }
+                }),
+        );
+
+        if (hydrated.size > 0) {
+            orders = orders.map((order) => {
+                const detail = hydrated.get(order.order_no);
+                return detail
+                    ? { ...detail, created_on: order.created_on }
+                    : order;
+            });
+        }
+    }
+
+    async function refreshOrderStatus() {
+        try {
+            // One small list request covers every counter in a multi-outlet
+            // order; full receipt data is not repeatedly downloaded.
+            const response = await fetchEatRight("/api/v1/orders");
+            const data = await response.json();
+            if (!response.ok || data.error) {
+                throw new Error(data.error ?? "Unable to refresh order status");
+            }
+
+            const latestOrders: OrderHistoryEntry[] = Array.isArray(data.orders)
+                ? data.orders
+                : Array.isArray(data)
+                  ? data
+                  : [];
+            const latestByOrderNo = new Map(
+                latestOrders.map((order) => [order.order_no, order]),
+            );
+            const newlyDelivered = new Set<string>();
+
+            orders = orders.map((order) => {
+                const latest = latestByOrderNo.get(order.order_no);
+                if (!latest?.delivered) return order;
+
+                const delivered = latest.delivered.toUpperCase();
+                if (!isDelivered(order) && delivered === "Y") {
+                    newlyDelivered.add(order.order_no);
+                }
+                return delivered === order.delivered?.toUpperCase()
+                    ? order
+                    : { ...order, delivered };
+            });
+
+            lastStatusCheck = new Date();
+            liveStatusUnavailable = false;
+
+            if (newlyDelivered.size > 0) {
+                // Fetch details just once at the transition so the delivery
+                // timestamp appears without polling the heavier endpoint.
+                await hydrateDeliveredOrders(newlyDelivered);
+                toast.success(
+                    newlyDelivered.size === 1
+                        ? "Your order has been delivered"
+                        : `${newlyDelivered.size} orders have been delivered`,
+                );
+            }
+        } catch (err) {
+            liveStatusUnavailable = true;
+            throw err;
+        }
+    }
+
+    async function manuallyRefreshStatus() {
+        if (isStatusRefreshing) return;
+        isStatusRefreshing = true;
+        try {
+            if (statusPoller) {
+                await statusPoller.refresh();
+            } else {
+                await refreshOrderStatus();
+            }
+            if (liveStatusUnavailable) {
+                toast.error("Could not refresh order status");
+            }
+        } finally {
+            isStatusRefreshing = false;
+        }
+    }
+
+    // Live proof for the counter staff: a screenshot freezes the clock
+    // and countdown, and a screen recording shows a stale time. The code
+    // is only shown during a 5-minute live window; after that the viewer
+    // must tap to restart it, so a code on screen is always fresh.
+    const PREVIEW_TTL_MS = 5 * 60 * 1000;
+
+    let now = $state(new Date());
+    let previewDeadline = $state(Date.now() + PREVIEW_TTL_MS);
+
+    const liveClock = $derived(
+        new Intl.DateTimeFormat("en-IN", {
+            hour: "numeric",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: true,
+        }).format(now),
+    );
+
+    const lastCheckedLabel = $derived.by(() => {
+        if (!lastStatusCheck) return "Checking status";
+        const seconds = Math.max(
+            0,
+            Math.floor((now.getTime() - lastStatusCheck.getTime()) / 1000),
+        );
+        if (seconds < 10) return "Checked just now";
+        if (seconds < 60) return `Checked ${seconds}s ago`;
+        return `Checked ${Math.floor(seconds / 60)}m ago`;
+    });
+
+    const previewRemainingMs = $derived(
+        Math.max(previewDeadline - now.getTime(), 0),
+    );
+    const isPreviewExpired = $derived(previewRemainingMs <= 0);
+    const isPreviewEnding = $derived(previewRemainingMs < 60_000);
+    const previewCountdown = $derived.by(() => {
+        const totalSeconds = Math.ceil(previewRemainingMs / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes}:${String(seconds).padStart(2, "0")}`;
+    });
+    const previewProgress = $derived(
+        (previewRemainingMs / PREVIEW_TTL_MS) * 100,
+    );
+
+    function restartPreview() {
+        previewDeadline = Date.now() + PREVIEW_TTL_MS;
+    }
+
     onMount(() => {
-        loadOrderDetails();
+        void loadOrderDetails();
+        statusPoller = createVisibilityPoller({
+            intervalMs: 30_000,
+            shouldPoll: () => !isLoading && hasActiveOrders,
+            poll: refreshOrderStatus,
+        });
+        const clockTimer = setInterval(() => (now = new Date()), 1000);
+        return () => {
+            clearInterval(clockTimer);
+            statusPoller?.stop();
+            statusPoller = null;
+        };
     });
 </script>
 
@@ -154,13 +401,13 @@
             <div class="space-y-5 pt-4">
                 <div class="flex flex-col items-center pt-4 pb-2">
                     <div
-                        class="h-14 w-14 animate-pulse rounded-full bg-line/60"
+                        class="h-14 w-14 animate-pulse rounded-circle bg-line/60"
                     ></div>
                     <div
-                        class="mt-4 h-5 w-40 animate-pulse rounded-full bg-line/60"
+                        class="mt-4 h-5 w-40 animate-pulse rounded-circle bg-line/60"
                     ></div>
                     <div
-                        class="mt-2 h-3 w-56 animate-pulse rounded-full bg-line/50"
+                        class="mt-2 h-3 w-56 animate-pulse rounded-circle bg-line/50"
                     ></div>
                 </div>
                 {#each Array(1) as _}
@@ -196,7 +443,7 @@
                 class="flex min-h-[60vh] flex-col items-center justify-center text-center px-4"
             >
                 <div
-                    class="h-12 w-12 rounded-full bg-danger-soft flex items-center justify-center text-danger mb-3"
+                    class="h-12 w-12 rounded-circle bg-danger-soft flex items-center justify-center text-danger mb-3"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -226,10 +473,64 @@
             </div>
         {:else}
             <div class="space-y-5 pt-2">
+                <!-- Lightweight live status: one list request every 30 seconds
+                     while an undelivered order is visible. -->
+                <!-- <div
+                    class={`flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-card transition-colors ${
+                        allDelivered
+                            ? "border-success/20 bg-success-soft"
+                            : liveStatusUnavailable
+                              ? "border-warning/20 bg-warning-soft"
+                              : "border-line bg-surface"
+                    }`}
+                    role="status"
+                >
+                    <div class="min-w-0 flex-1">
+                        <p
+                            class={`text-xs font-bold ${
+                                allDelivered
+                                    ? "text-success"
+                                    : liveStatusUnavailable
+                                      ? "text-warning"
+                                      : "text-ink"
+                            }`}
+                        >
+                            {allDelivered
+                                ? "Delivery confirmed"
+                                : liveStatusUnavailable
+                                  ? "Live updates paused"
+                                  : "Live order status"}
+                        </p>
+                        <p
+                            class="mt-0.5 truncate text-[10px] font-medium text-ink-muted"
+                        >
+                            {liveStatusUnavailable
+                                ? "Tap refresh to try again"
+                                : allDelivered
+                                  ? lastCheckedLabel
+                                  : `${lastCheckedLabel} · Auto every 30 sec`}
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="grid h-9 w-9 shrink-0 place-items-center rounded-circle border border-line bg-surface text-ink-muted shadow-sm transition-all hover:text-ink active:scale-95 disabled:opacity-60"
+                        onclick={manuallyRefreshStatus}
+                        disabled={isStatusRefreshing}
+                        aria-label="Refresh delivery status"
+                    >
+                        <RefreshCwIcon
+                            size={16}
+                            strokeWidth={2.4}
+                            class={isStatusRefreshing ? "animate-spin" : ""}
+                        />
+                    </button>
+                </div> -->
+
                 <!-- Receipts -->
                 {#each orders as order, i}
                     <article
-                        class="[filter:drop-shadow(0_1px_2px_rgb(26_30_38/0.05))_drop-shadow(0_14px_28px_rgb(26_30_38/0.10))]"
+                        class={`filter-[drop-shadow(0_1px_2px_rgb(26_30_38/0.05))_drop-shadow(0_14px_28px_rgb(26_30_38/0.10))] transition-opacity ${isDelivered(order) ? "opacity-75 grayscale" : ""}`}
                         in:fly={{ y: 24, duration: 380, delay: 120 + i * 90 }}
                     >
                         <div class="rounded-t-xl bg-surface px-6 pt-7 pb-6">
@@ -245,19 +546,33 @@
                                 >
                                     {order.outlet_name}
                                 </h2>
-                                {#if order.delivered === "Y"}
+                                <p
+                                    class="mt-1 font-geist-mono text-[11px] font-semibold text-ink-muted"
+                                >
+                                    Ordered {formatOrderDate(order.created_on)}
+                                </p>
+                                {#if isDelivered(order)}
                                     <span
-                                        class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-success-soft px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-success"
+                                        class="mt-2 inline-flex items-center gap-1.5 rounded-circle bg-line px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-ink-muted"
                                     >
                                         <CheckIcon size={12} strokeWidth={3} />
                                         Delivered
                                     </span>
+                                    {#if order.delivereddate}
+                                        <p
+                                            class="mt-1.5 text-[10px] font-medium text-ink-faint"
+                                        >
+                                            Delivered {formatOrderDate(
+                                                order.delivereddate,
+                                            )}
+                                        </p>
+                                    {/if}
                                 {:else}
                                     <span
-                                        class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-warning-soft px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-warning"
+                                        class="mt-2 inline-flex items-center gap-1.5 rounded-circle bg-warning-soft px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-warning"
                                     >
                                         <span
-                                            class="h-1.5 w-1.5 animate-pulse rounded-full bg-warning"
+                                            class="h-1.5 w-1.5 animate-pulse rounded-circle bg-warning"
                                         ></span>
                                         Preparing
                                     </span>
@@ -266,19 +581,144 @@
 
                             <!-- Pickup code -->
                             <div
-                                class="mt-5 rounded-2xl border-2 border-dashed border-line-strong px-4 py-4 text-center"
+                                class={`mt-5 overflow-hidden rounded-2xl border-2 border-dashed text-center ${isDelivered(order) ? "border-line bg-canvas px-4 py-4" : isPreviewExpired ? "border-line-strong bg-canvas px-4 py-5" : "border-line-strong bg-surface"}`}
                             >
-                                <p class="section-label">Pickup Code</p>
-                                <p
-                                    class="mt-1.5 font-geist-mono text-[44px] leading-none tracking-[0.16em] mr-[-0.16em] text-ink font-bold!"
-                                >
-                                    {pickupCode(order.order_no)}
-                                </p>
-                                <p
-                                    class="mt-2 text-[10px] font-medium uppercase tracking-[0.14em] text-ink-faint"
-                                >
-                                    Show this code at the counter
-                                </p>
+                                {#if isDelivered(order)}
+                                    <CheckIcon
+                                        class="mx-auto text-ink-faint"
+                                        size={28}
+                                        strokeWidth={2.5}
+                                    />
+                                    <p
+                                        class="mt-2 text-sm font-bold uppercase tracking-[0.12em] text-ink-muted"
+                                    >
+                                        Delivered
+                                    </p>
+                                    <p
+                                        class="mt-1 text-[10px] font-medium uppercase tracking-[0.14em] text-ink-faint"
+                                    >
+                                        This pickup code is no longer valid
+                                    </p>
+                                {:else if isPreviewExpired}
+                                    <div
+                                        role="status"
+                                        in:scale={{
+                                            duration: 180,
+                                            start: 0.97,
+                                        }}
+                                    >
+                                        <span
+                                            class="mx-auto flex h-11 w-11 items-center justify-center rounded-circle border border-line bg-surface text-ink-muted shadow-card"
+                                        >
+                                            <TimerOffIcon
+                                                size={20}
+                                                strokeWidth={2.25}
+                                            />
+                                        </span>
+                                        <p
+                                            class="mt-3 text-sm font-bold text-ink"
+                                        >
+                                            Live preview expired
+                                        </p>
+                                        <p
+                                            class="mx-auto mt-1 max-w-[16rem] text-[11px] font-medium leading-relaxed text-ink-muted"
+                                        >
+                                            Open a fresh preview when you are
+                                            ready to collect your order.
+                                        </p>
+                                        <button
+                                            class="btn-primary mx-auto mt-4 min-h-11 w-full max-w-[16rem] px-4 py-2.5 text-xs"
+                                            onclick={restartPreview}
+                                        >
+                                            <RefreshCwIcon
+                                                size={15}
+                                                strokeWidth={2.5}
+                                            />
+                                            Show code for another 5 minutes
+                                        </button>
+                                    </div>
+                                {:else}
+                                    <div class="px-4 pb-4 pt-5">
+                                        <p class="section-label">Pickup Code</p>
+                                        <p
+                                            class="mt-1.5 mr-[-0.16em] font-geist-mono text-[44px] font-bold! leading-none tracking-[0.16em] text-ink"
+                                        >
+                                            {pickupCode(order.order_no)}
+                                        </p>
+                                        <p
+                                            class="mt-2 text-[10px] font-medium uppercase tracking-[0.14em] text-ink-faint"
+                                        >
+                                            Show this live code at the counter
+                                        </p>
+                                    </div>
+
+                                    <!-- Live proof controls sit below the code so
+                                         the pickup number stays the primary focus. -->
+                                    <div
+                                        class="border-t border-dashed border-line bg-canvas px-4 pb-3 pt-3"
+                                    >
+                                        <div
+                                            class="flex items-center justify-between gap-3 text-left"
+                                        >
+                                            <div
+                                                class="flex min-w-0 items-center gap-2.5"
+                                            >
+                                                <span
+                                                    class="relative flex h-2 w-2 shrink-0"
+                                                >
+                                                    <span
+                                                        class={`absolute inset-0 animate-ping rounded-circle ${isPreviewEnding ? "bg-warning/60" : "bg-success/60"}`}
+                                                    ></span>
+                                                    <span
+                                                        class={`relative h-2 w-2 rounded-circle ${isPreviewEnding ? "bg-warning" : "bg-success"}`}
+                                                    ></span>
+                                                </span>
+                                                <div class="min-w-0">
+                                                    <p
+                                                        class={`text-[10px] font-bold uppercase tracking-[0.13em] ${isPreviewEnding ? "text-warning" : "text-success"}`}
+                                                    >
+                                                        Live Preview
+                                                    </p>
+                                                    <p
+                                                        class="mt-0.5 font-geist-mono text-[11px] font-bold text-ink-muted tabular-nums"
+                                                    >
+                                                        {liveClock}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div class="shrink-0 text-right">
+                                                <p
+                                                    class="text-[9px] font-bold uppercase tracking-[0.12em] text-ink-faint"
+                                                >
+                                                    Code hides in
+                                                </p>
+                                                <p
+                                                    class={`mt-0.5 font-geist-mono text-[26px] font-bold leading-none tracking-tight tabular-nums ${isPreviewEnding ? "text-warning" : "text-ink"}`}
+                                                    aria-label={`${previewCountdown} remaining`}
+                                                >
+                                                    {previewCountdown}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            class="mt-3 h-1 overflow-hidden rounded-circle bg-line"
+                                            role="progressbar"
+                                            aria-label="Live preview time remaining"
+                                            aria-valuemin="0"
+                                            aria-valuemax="300"
+                                            aria-valuenow={Math.ceil(
+                                                previewRemainingMs / 1000,
+                                            )}
+                                        >
+                                            <div
+                                                class={`h-full rounded-circle transition-[width] duration-1000 ease-linear ${isPreviewEnding ? "bg-warning" : "bg-success"}`}
+                                                style={`width: ${previewProgress}%`}
+                                            ></div>
+                                        </div>
+                                    </div>
+                                {/if}
                             </div>
 
                             <!-- Items -->
@@ -320,10 +760,10 @@
                                             >
                                                 ₹{Number(item.price).toFixed(2)}
                                                 each
-                                                <span
+                                                <!-- <span
                                                     class={`ml-1 text-[9px] font-bold uppercase tracking-wider ${statusTextClass(item.status)}`}
                                                     >{item.status}</span
-                                                >
+                                                > -->
                                             </p>
                                         </div>
                                     {/each}
@@ -360,20 +800,16 @@
                                 onclick={() => copyOrderNo(order.order_no)}
                                 aria-label="Copy order reference"
                             >
-                                <div
-                                    class="receipt-barcode mx-auto w-4/5 text-ink"
-                                ></div>
+                                <svg
+                                    use:orderBarcode={order.order_no}
+                                    class="mx-auto h-10 w-4/5 text-ink"
+                                    role="img"
+                                    aria-label={`Barcode for order ${order.order_no}`}
+                                ></svg>
                                 <p
-                                    class="mt-2 break-all font-geist-mono text-[11px] tracking-[0.2em] text-ink-muted"
+                                    class="mt-2 break-all font-geist-mono text-[11px] tracking-[0.2em] text-ink-muted font-semibold"
                                 >
                                     {order.order_no}
-                                </p>
-                                <p
-                                    class={`mt-1 text-[9px] font-bold uppercase tracking-[0.16em] ${copiedOrderNo === order.order_no ? "text-success" : "text-ink-faint"}`}
-                                >
-                                    {copiedOrderNo === order.order_no
-                                        ? "Copied to clipboard"
-                                        : "Tap to copy"}
                                 </p>
                             </button>
 

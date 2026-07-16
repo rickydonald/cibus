@@ -1,5 +1,6 @@
 <script lang="ts">
     import { cart, MAX_QTY } from "$lib/stores/cart.svelte";
+    import Fuse from "fuse.js";
     import { onMount } from "svelte";
     import {
         ArrowLeftIcon,
@@ -9,6 +10,7 @@
         Building02Icon,
     } from "@untitled-theme/icons-svelte";
     import FloatingCartBar from "$lib/components/custom/FloatingCartBar.svelte";
+    import Spinner from "$lib/components/custom/Spinner.svelte";
     import {
         fetchEatRight,
         redirectIfEatRightConnectRequired,
@@ -113,19 +115,38 @@
         loadAllItems();
     });
 
+    const searchDocuments = $derived(
+        allItems
+            .filter((item) => item.available_qty > 0)
+            .map((item) => ({
+                item,
+                name: cleanString(item.itemname),
+                category: cleanString(item.categoryname),
+                outlet: cleanString(item.outletname),
+            })),
+    );
+
+    const searchIndex = $derived.by(
+        () =>
+            new Fuse(searchDocuments, {
+                keys: [
+                    { name: "name", weight: 0.65 },
+                    { name: "category", weight: 0.2 },
+                    { name: "outlet", weight: 0.15 },
+                ],
+                threshold: 0.35,
+                distance: 100,
+                ignoreLocation: true,
+                minMatchCharLength: 2,
+                shouldSort: true,
+            }),
+    );
+
     const results = $derived.by(() => {
-        const q = query.trim().toLowerCase();
+        const q = query.trim();
         if (q.length < 2) return [];
 
-        return allItems
-            .filter(
-                (item) =>
-                    item.available_qty > 0 &&
-                    `${itemTitle(item.itemname)} ${cleanString(item.categoryname)} ${item.outletname}`
-                        .toLowerCase()
-                        .includes(q),
-            )
-            .slice(0, 30);
+        return searchIndex.search(q, { limit: 30 }).map(({ item }) => item.item);
     });
 </script>
 
@@ -144,9 +165,7 @@
             />
 
             {#if isLoading}
-                <div
-                    class="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-line border-t-primary"
-                ></div>
+                <Spinner size={20} class="shrink-0 text-primary" />
             {/if}
         </div>
     </div>
@@ -188,7 +207,7 @@
 
                             <div class="mt-2 flex items-center gap-2">
                                 <span
-                                    class="max-w-full rounded-full bg-primary-soft px-2 py-0.5 text-[10px] font-bold text-primary truncate"
+                                    class="max-w-full rounded-circle bg-primary-soft px-2 py-0.5 text-[10px] font-bold text-primary truncate"
                                 >
                                     {cleanString(item.categoryname)}
                                 </span>

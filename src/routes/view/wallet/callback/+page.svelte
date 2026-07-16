@@ -12,6 +12,7 @@
         redirectIfEatRightConnectRequired,
     } from "$lib/utils/eatright-client";
     import { clearPendingPayment } from "$lib/client/pending-payment";
+    import Spinner from "$lib/components/custom/Spinner.svelte";
 
     type VerifyState = "verifying" | "success" | "failed" | "pending";
 
@@ -20,10 +21,17 @@
     // before settling on "pending".
     const POLL_INTERVAL_MS = 4000;
     const MAX_AUTO_POLLS = 8;
+    const CONTINUE_DELAY_MS = 1200;
     let pollCount = 0;
     let pollTimer: ReturnType<typeof setTimeout> | null = null;
+    let continueTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const orderId = page.url.searchParams.get("order_id") ?? "";
+    // Responsepayload.jsp uses `orderid`; keep accepting `order_id` for
+    // callbacks and pending-payment links created by older app versions.
+    const orderId =
+        page.url.searchParams.get("orderid") ??
+        page.url.searchParams.get("order_id") ??
+        "";
     const gatewayStatus = page.url.searchParams.get("status") ?? "";
     const amount = page.url.searchParams.get("amount") ?? "";
     const returnPath =
@@ -35,6 +43,28 @@
     let balance = $state<string | null>(null);
     let message = $state<string | null>(null);
 
+    function continuationUrl() {
+        const params = new URLSearchParams({
+            payment: "success",
+            order_id: orderId,
+        });
+        if (amount) params.set("amount", amount);
+        return `${returnPath}?${params.toString()}`;
+    }
+
+    function continueAfterSuccess() {
+        if (continueTimer) clearTimeout(continueTimer);
+        return goto(continuationUrl());
+    }
+
+    function scheduleContinuation() {
+        if (continueTimer) return;
+        continueTimer = setTimeout(
+            () => void continueAfterSuccess(),
+            CONTINUE_DELAY_MS,
+        );
+    }
+
     function scheduleAutoPoll() {
         if (pollCount >= MAX_AUTO_POLLS) return;
         pollCount += 1;
@@ -43,8 +73,10 @@
 
     async function verifyPayment(isAutoPoll = false) {
         if (!orderId) {
-            verifyState = gatewayStatus === "SUCCESS" ? "success" : "failed";
-            clearPendingPayment();
+            // Query-string status is supplied by the browser redirect and is
+            // not sufficient proof that wallet crediting completed.
+            message = "The payment returned without an order ID, so it could not be verified.";
+            verifyState = "pending";
             return;
         }
 
@@ -75,6 +107,7 @@
             if (data.status === "SUCCESS") {
                 verifyState = "success";
                 clearPendingPayment();
+                scheduleContinuation();
             } else if (data.status === "FAILURE") {
                 verifyState = "failed";
                 clearPendingPayment();
@@ -98,6 +131,7 @@
         verifyPayment();
         return () => {
             if (pollTimer) clearTimeout(pollTimer);
+            if (continueTimer) clearTimeout(continueTimer);
         };
     });
 </script>
@@ -108,9 +142,7 @@
             <div
                 class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft border border-primary/10"
             >
-                <div
-                    class="h-6 w-6 animate-spin rounded-full border-2 border-line border-t-primary"
-                ></div>
+                <Spinner size={24} class="text-primary" />
             </div>
             <h1 class="mt-4 text-lg font-bold tracking-tight">
                 Verifying payment…
@@ -131,6 +163,9 @@
                 {#if amount}₹{amount} has been added to your wallet.{:else}Your
                     wallet has been recharged.{/if}
             </p>
+            <p class="mt-1 text-[11px] text-ink-faint">
+                Continuing automatically…
+            </p>
             {#if balance}
                 <p class="mt-3 text-sm font-semibold tabular-nums">
                     New balance: ₹{balance}
@@ -146,8 +181,7 @@
                 Payment failed
             </h1>
             <p class="mt-1 text-xs text-ink-muted">
-                Your money was not added. If it was deducted, it will be
-                refunded by the payment gateway.
+                Your money was not added. If it was deducted, please visit the Food Court Manager.
             </p>
         {:else}
             <div
@@ -182,9 +216,14 @@
         {#if verifyState !== "verifying"}
             <button
                 class="mt-5 w-full rounded-xl bg-primary p-3 text-sm font-semibold text-white transition-all hover:bg-primary/90 active:scale-[0.99]"
-                onclick={() => goto(returnPath)}
+                onclick={() =>
+                    verifyState === "success"
+                        ? continueAfterSuccess()
+                        : goto(returnPath)}
             >
-                {returnPath === "/view/cart"
+                {verifyState === "success"
+                    ? "Continue"
+                    : returnPath === "/view/cart"
                     ? "Back to Cart"
                     : "Go to Wallet"}
             </button>

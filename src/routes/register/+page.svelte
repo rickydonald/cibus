@@ -1,6 +1,7 @@
 <script lang="ts">
     import LoyolaCollegeLogo from "$lib/assets/logos/loyola-logo.webp";
     import RegistrationSwitch from "$lib/components/custom/RegistrationSwitch.svelte";
+    import Spinner from "$lib/components/custom/Spinner.svelte";
     import {
         ArrowLeftIcon,
         ArrowRightIcon,
@@ -202,7 +203,7 @@
                 </div>
                 <a
                     href="/login"
-                    class="flex h-10 items-center gap-2 rounded-full border border-line bg-surface px-3.5 text-xs font-semibold text-ink-muted transition-colors hover:text-primary lg:hidden"
+                    class="flex h-10 items-center gap-2 rounded-circle border border-line bg-surface px-3.5 text-xs font-semibold text-ink-muted transition-colors hover:text-primary lg:hidden"
                 >
                     <ArrowLeftIcon size="15" /> Sign in
                 </a>
@@ -331,8 +332,13 @@
                     disabled={isSubmitting}
                     class="btn-primary mt-1 h-14 w-full px-5 text-sm"
                 >
+                    {#if isSubmitting}
+                        <Spinner />
+                    {/if}
                     <span>{isSubmitting ? "Sending code…" : "Continue"}</span>
-                    <ArrowRightIcon size="18" strokeWidth="2" />
+                    {#if !isSubmitting}
+                        <ArrowRightIcon size="18" strokeWidth="2" />
+                    {/if}
                 </button>
             </form>
         </div>
@@ -345,15 +351,15 @@
             class="absolute inset-0 bg-[radial-gradient(circle_at_85%_10%,rgba(255,255,255,0.13),transparent_30%),radial-gradient(circle_at_10%_90%,rgba(255,255,255,0.08),transparent_32%)]"
         ></div>
         <div
-            class="absolute -left-28 top-1/4 h-72 w-72 rounded-full border border-white/10"
+            class="absolute -left-28 top-1/4 h-72 w-72 rounded-circle border border-white/10"
         ></div>
         <div
-            class="absolute -left-16 top-1/3 h-44 w-44 rounded-full border border-white/10"
+            class="absolute -left-16 top-1/3 h-44 w-44 rounded-circle border border-white/10"
         ></div>
 
         <a
             href="/login"
-            class="relative flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/8 px-4 py-2 text-xs font-semibold text-white/75 transition-colors hover:bg-white/12 hover:text-white"
+            class="relative flex w-fit items-center gap-2 rounded-circle border border-white/15 bg-white/8 px-4 py-2 text-xs font-semibold text-white/75 transition-colors hover:bg-white/12 hover:text-white"
         >
             <ArrowLeftIcon size="15" /> Back to sign in
         </a>
@@ -503,7 +509,10 @@
                     disabled={otp.length !== otpLength || isVerifying}
                     onclick={() => void verifyNumber()}
                 >
-                    {isVerifying ? "Verifying…" : "Verify number"}
+                    {#if isVerifying}
+                        <Spinner />
+                    {/if}
+                    <span>{isVerifying ? "Verifying…" : "Verify number"}</span>
                 </button>
                 <button
                     type="button"

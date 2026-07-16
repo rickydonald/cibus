@@ -42,12 +42,12 @@
 
         <div class="flex shrink-0 items-center gap-2">
             <p
-                class="rounded-full bg-white px-3.5 py-2 text-sm font-bold text-primary tabular-nums"
+                class="rounded-circle bg-white px-3.5 py-2 text-sm font-bold text-primary tabular-nums"
             >
                 ₹ {cart.totalAmount}
             </p>
             <div
-                class="flex h-9 w-9 items-center justify-center rounded-full bg-white/12"
+                class="flex h-9 w-9 items-center justify-center rounded-circle bg-white/12"
             >
                 <ChevronRightIcon class="h-4 w-4 text-white" />
             </div>

@@ -25,6 +25,7 @@
     import { cart } from "$lib/store/cart.svelte";
 
     import FloatingCartBar from "$lib/components/custom/FloatingCartBar.svelte";
+    import CurrentOrderBanner from "$lib/components/custom/CurrentOrderBanner.svelte";
     import { Settings } from "@lucide/svelte";
     import helpers from "$lib/helpers";
 
@@ -45,6 +46,7 @@
     let accountDetails = $state<EatRightAccountDetails | null>(null);
     let cachedProfile = $state<CachedEatRightProfile | null>(null);
     let isNavigateLoading = $state(false);
+    let hasCurrentOrder = $state(false);
 
     let isAccountSheetOpen: boolean = $state(false);
     let isAccountLoading: boolean = $state(false);
@@ -101,6 +103,9 @@
         accountDetails?.outlets && accountDetails.outlets.length > 0
             ? accountDetails.outlets.every((o) => o.isClosed)
             : false,
+    );
+    const hasFloatingCart = $derived(
+        cart.totalItems > 0 && !allOutletsClosed && !isAccountLoading,
     );
 
     const profile = $derived(cachedProfile);
@@ -183,7 +188,7 @@
                                     </h2>
                                 {:else}
                                     <div
-                                        class="h-10 w-40 animate-pulse rounded-full bg-white/15"
+                                        class="h-10 w-40 animate-pulse rounded-circle bg-white/15"
                                     ></div>
                                 {/if}
                             </div>
@@ -191,7 +196,7 @@
                             <div class="mt-6 flex items-center gap-3">
                                 <button
                                     onclick={() => goto("/view/wallet")}
-                                    class="flex-1 h-11 rounded-full bg-white px-3 text-sm text-primary flex items-center justify-center gap-2 font-bold hover:bg-primary-soft active:scale-98 transition whitespace-nowrap"
+                                    class="flex-1 h-11 rounded-circle bg-white px-3 text-sm text-primary flex items-center justify-center gap-2 font-bold hover:bg-primary-soft active:scale-98 transition whitespace-nowrap"
                                     aria-label="Add Money to Wallet"
                                 >
                                     <Wallet02Icon width="16" class="shrink-0" />
@@ -212,9 +217,11 @@
                 <!-- Outlets Card -->
                 <div
                     class="mt-3 grid grid-cols-1 gap-3 px-5 max-w-md mx-auto lg:max-w-2xl lg:grid-cols-2"
-                    class:pb-cart-float={cart.totalItems > 0 &&
-                        !allOutletsClosed &&
-                        !isAccountLoading}
+                    class:pb-cart-float={hasFloatingCart && !hasCurrentOrder}
+                    class:pb-current-order-float={hasCurrentOrder &&
+                        !hasFloatingCart}
+                    class:pb-cart-order-float={hasFloatingCart &&
+                        hasCurrentOrder}
                 >
                     {#if accountDetails}
                         {#each accountDetails.outlets as outlet}
@@ -259,7 +266,7 @@
                                     <div>
                                         {#if outlet.isClosed}
                                             <div
-                                                class="flex items-center gap-1 rounded-full bg-danger-soft border border-danger/10 px-2.5 py-1"
+                                                class="flex items-center gap-1 rounded-circle bg-danger-soft border border-danger/10 px-2.5 py-1"
                                             >
                                                 <span
                                                     class="text-[11px] font-semibold text-danger"
@@ -268,7 +275,7 @@
                                             </div>
                                         {:else}
                                             <div
-                                                class="flex h-7 w-7 items-center justify-center rounded-full bg-canvas border border-line group-hover:bg-primary-soft transition-colors"
+                                                class="flex h-7 w-7 items-center justify-center rounded-circle bg-canvas border border-line group-hover:bg-primary-soft transition-colors"
                                             >
                                                 <ChevronRightIcon
                                                     class="h-4 w-4 text-ink-faint transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
@@ -299,7 +306,7 @@
                                         </div>
                                     </div>
                                     <div
-                                        class="h-6 w-6 animate-pulse rounded-full bg-canvas"
+                                        class="h-6 w-6 animate-pulse rounded-circle bg-canvas"
                                     ></div>
                                 </div>
                             </div>
@@ -309,8 +316,13 @@
             </ContentWrapper>
         </div>
 
+        <CurrentOrderBanner
+            stacked={hasFloatingCart}
+            onActiveChange={(active) => (hasCurrentOrder = active)}
+        />
+
         <!-- Sticky Bottom Floating Action Overlay Tray -->
-        {#if cart.totalItems > 0 && !allOutletsClosed && !isAccountLoading}
+        {#if hasFloatingCart}
             <FloatingCartBar />
         {/if}
     </div>

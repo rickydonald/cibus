@@ -168,7 +168,7 @@
         <section class="card overflow-hidden">
             <div class="flex items-center gap-4 px-5 pt-5 pb-4">
                 <div
-                    class="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-primary-soft text-lg font-bold text-primary"
+                    class="grid h-14 w-14 shrink-0 place-items-center rounded-circle bg-primary-soft text-lg font-bold text-primary"
                 >
                     {initials}
                 </div>

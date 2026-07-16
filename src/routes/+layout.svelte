@@ -16,9 +16,15 @@
 
 		if ("serviceWorker" in navigator) {
 			if (dev) {
-				void navigator.serviceWorker.getRegistrations().then((registrations) =>
-					Promise.all(registrations.map((registration) => registration.unregister())),
-				);
+				void navigator.serviceWorker
+					.getRegistrations()
+					.then((registrations) =>
+						Promise.all(
+							registrations.map((registration) =>
+								registration.unregister(),
+							),
+						),
+					);
 				return;
 			}
 
@@ -29,22 +35,28 @@
 				window.location.reload();
 			});
 
-			void navigator.serviceWorker.register("/service-worker.js").then((registration) => {
-				const activate = (worker: ServiceWorker | null) => {
-					if (worker?.state === "installed") {
-						worker.postMessage({ type: "SKIP_WAITING" });
-					}
-				};
+			void navigator.serviceWorker
+				.register("/service-worker.js")
+				.then((registration) => {
+					const activate = (worker: ServiceWorker | null) => {
+						if (worker?.state === "installed") {
+							worker.postMessage({ type: "SKIP_WAITING" });
+						}
+					};
 
-				if (registration.waiting) {
-					registration.waiting.postMessage({ type: "SKIP_WAITING" });
-				}
-				registration.addEventListener("updatefound", () => {
-					const worker = registration.installing;
-					worker?.addEventListener("statechange", () => activate(worker));
+					if (registration.waiting) {
+						registration.waiting.postMessage({
+							type: "SKIP_WAITING",
+						});
+					}
+					registration.addEventListener("updatefound", () => {
+						const worker = registration.installing;
+						worker?.addEventListener("statechange", () =>
+							activate(worker),
+						);
+					});
+					void registration.update();
 				});
-				void registration.update();
-			});
 		}
 	});
 
@@ -94,7 +106,6 @@
 	position="top-center"
 	theme="light"
 	closeButton
-	expand
 	duration={3500}
 	gap={10}
 	visibleToasts={3}

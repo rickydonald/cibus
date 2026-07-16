@@ -33,7 +33,7 @@
                 aria-current={isActive ? "page" : undefined}
             >
                 <span
-                    class="flex h-8 w-14 items-center justify-center rounded-full transition-colors {isActive
+                    class="flex h-8 w-14 items-center justify-center rounded-circle transition-colors {isActive
                         ? 'bg-primary-soft'
                         : ''}"
                 >

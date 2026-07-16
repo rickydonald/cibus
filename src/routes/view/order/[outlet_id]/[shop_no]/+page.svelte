@@ -194,7 +194,7 @@
                     {#each categories as category}
                         <button
                             onclick={() => (selectedCategory = category)}
-                            class={`whitespace-nowrap rounded-full px-3.5 py-2 text-xs font-semibold transition-all shrink-0 ${
+                            class={`whitespace-nowrap rounded-circle px-3.5 py-2 text-xs font-semibold transition-all shrink-0 ${
                                 selectedCategory === category
                                     ? "bg-primary text-white shadow-sm"
                                     : "bg-canvas text-ink-muted hover:bg-primary-soft hover:text-primary"
@@ -216,11 +216,11 @@
                         <div class="flex justify-between items-start">
                             <div class="space-y-2 w-2/3">
                                 <div
-                                    class="h-3 bg-canvas rounded-full w-1/3"
+                                    class="h-3 bg-canvas rounded-circle w-1/3"
                                 ></div>
                                 <div class="h-5 bg-canvas rounded-lg w-4/5"></div>
                             </div>
-                            <div class="h-6 w-16 bg-canvas rounded-full"></div>
+                            <div class="h-6 w-16 bg-canvas rounded-circle"></div>
                         </div>
                         <div
                             class="h-9 w-20 bg-canvas rounded-xl self-end ml-auto"
@@ -259,7 +259,7 @@
                             <div class="min-w-0 flex-1">
                                 <div class="flex items-center gap-2">
                                     <span
-                                        class="max-w-full rounded-full bg-primary-soft px-2 py-1 text-[10px] font-bold text-primary truncate"
+                                        class="max-w-full rounded-circle bg-primary-soft px-2 py-1 text-[10px] font-bold text-primary truncate"
                                     >
                                         {cleanString(item.categoryname)}
                                     </span>

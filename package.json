@@ -17,6 +17,7 @@
 		"@sveltejs/kit": "^2.63.0",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
 		"@tailwindcss/vite": "^4.3.0",
+		"@types/jsbarcode": "^3.11.4",
 		"@types/jsonwebtoken": "^9.0.10",
 		"@types/luxon": "^3.7.2",
 		"svelte": "^5.56.1",
@@ -28,6 +29,8 @@
 	"dependencies": {
 		"@lucide/svelte": "^1.21.0",
 		"@untitled-theme/icons-svelte": "^0.14.2",
+		"fuse.js": "^7.5.0",
+		"jsbarcode": "^3.12.3",
 		"jsonwebtoken": "^9.0.3",
 		"luxon": "^3.7.2",
 		"svelte-bottom-sheet": "^2.3.0",

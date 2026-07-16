@@ -100,7 +100,7 @@
             <span class="flex-1">Cart</span>
             {#if cart.totalItems > 0}
                 <span
-                    class="rounded-full bg-primary px-2 py-0.5 text-[11px] font-bold text-white tabular-nums"
+                    class="rounded-circle bg-primary px-2 py-0.5 text-[11px] font-bold text-white tabular-nums"
                 >
                     {cart.totalItems}
                 </span>
