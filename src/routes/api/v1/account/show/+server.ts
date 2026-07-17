@@ -6,7 +6,7 @@ import { DEV_MODE } from "$lib/server/dev";
 export async function GET(event) {
   if (DEV_MODE) {
     return json({
-      user: "Dev User",
+      name: "Dev User",
       userid: "DEVUSER",
       walletBalance: "250.00",
       outlets: [
@@ -21,11 +21,11 @@ export async function GET(event) {
     return session.response;
   }
 
-  const { accessToken, reauthenticated } = session;
+  const { reauthenticated } = session;
 
   try {
     return json({
-      ...(await getAccountSummary(accessToken)),
+      ...(await getAccountSummary(session)),
       reauthenticated,
     });
   } catch (error) {

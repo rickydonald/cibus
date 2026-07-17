@@ -6,10 +6,12 @@ import {
     registrationStatusError,
     validateRegistrationInput,
 } from "$lib/server/registration";
+import { enforceRateLimits } from "$lib/server/rate-limit";
 
 const noStore = { "Cache-Control": "no-store" };
 
-export async function POST({ request, cookies }) {
+export async function POST(event) {
+    const { request, cookies } = event;
     let body: Record<string, unknown>;
     try {
         body = await request.json();
@@ -29,6 +31,17 @@ export async function POST({ request, cookies }) {
     if (otp.length !== expectedLength) {
         return json({ error: `Enter the ${expectedLength}-digit OTP` }, { status: 400, headers: noStore });
     }
+
+    const rateLimited = enforceRateLimits(event, [
+        { namespace: "register-verify:ip", limit: 30, windowMs: 10 * 60 * 1000 },
+        {
+            namespace: "register-verify:mobile",
+            identifier: input.mobile,
+            limit: 8,
+            windowMs: 10 * 60 * 1000,
+        },
+    ]);
+    if (rateLimited) return rateLimited;
 
     try {
         const isGuest = input.userType === "guest";

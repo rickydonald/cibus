@@ -23,7 +23,7 @@ export async function GET(event) {
   try {
     const [transactions, account] = await Promise.all([
       getWalletTransactions(session.accessToken),
-      getAccountSummary(session.accessToken),
+      getAccountSummary(session),
     ]);
     return json({ transactions, walletBalance: account.walletBalance });
   } catch (error) {
@@ -76,7 +76,7 @@ export async function POST(event) {
 
   let data: unknown;
   try {
-    data = await foodcourtApiRequest<unknown>("/ajax/DepositAjax.jsp", {
+    data = await foodcourtApiRequest<unknown>("/ajax/payment/fcmkpayment.jsp", {
       accessToken,
       method: "POST",
       body: form,

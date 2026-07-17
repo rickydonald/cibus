@@ -663,16 +663,6 @@
                                             <div
                                                 class="flex min-w-0 items-center gap-2.5"
                                             >
-                                                <span
-                                                    class="relative flex h-2 w-2 shrink-0"
-                                                >
-                                                    <span
-                                                        class={`absolute inset-0 animate-ping rounded-circle ${isPreviewEnding ? "bg-warning/60" : "bg-success/60"}`}
-                                                    ></span>
-                                                    <span
-                                                        class={`relative h-2 w-2 rounded-circle ${isPreviewEnding ? "bg-warning" : "bg-success"}`}
-                                                    ></span>
-                                                </span>
                                                 <div class="min-w-0">
                                                     <p
                                                         class={`text-[10px] font-bold uppercase tracking-[0.13em] ${isPreviewEnding ? "text-warning" : "text-success"}`}

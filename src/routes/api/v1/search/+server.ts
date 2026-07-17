@@ -34,7 +34,7 @@ export async function GET(event) {
 
   const { accessToken } = session;
 
-  const { outlets } = await getAccountSummary(accessToken);
+  const { outlets } = await getAccountSummary(session);
   const openOutlets = outlets.filter((outlet) => !outlet.isClosed);
 
   const menus = await Promise.all(

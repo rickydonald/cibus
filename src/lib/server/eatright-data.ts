@@ -1,4 +1,5 @@
 import { TtlCache, hashCacheKey } from "./cache";
+import type { EatRightAuthSession } from "./eatright";
 import { foodcourtApiRequest } from "./foodcourt-api";
 
 export type Outlet = {
@@ -9,7 +10,7 @@ export type Outlet = {
 };
 
 export type AccountSummary = {
-  user: string;
+  name: string;
   userid: string;
   walletBalance: string;
   outlets: Outlet[];
@@ -36,9 +37,6 @@ export type MenuItem = {
 
 type UserResponse = {
   success: boolean;
-  name?: string;
-  uid?: string;
-  userid?: string;
   walletBalance?: number | string;
 };
 
@@ -56,7 +54,8 @@ function sessionKey(accessToken: string) {
   return hashCacheKey(accessToken);
 }
 
-export async function getAccountSummary(accessToken: string): Promise<AccountSummary> {
+export async function getAccountSummary(auth: EatRightAuthSession): Promise<AccountSummary> {
+  const { accessToken, name, userid } = auth;
   return accountCache.getOrSet(sessionKey(accessToken), async () => {
     const [user, outletPayload] = await Promise.all([
       foodcourtApiRequest<UserResponse>("/ajax/api/getUser.jsp", { accessToken }),
@@ -70,8 +69,8 @@ export async function getAccountSummary(accessToken: string): Promise<AccountSum
     }));
 
     return {
-      user: user.name || "User",
-      userid: user.uid ?? user.userid ?? "",
+      name,
+      userid,
       walletBalance: Number(user.walletBalance ?? 0).toFixed(2),
       outlets,
     };

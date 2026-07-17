@@ -6,10 +6,12 @@ import {
     registrationStatusError,
     validateRegistrationInput,
 } from "$lib/server/registration";
+import { enforceRateLimits } from "$lib/server/rate-limit";
 
 const noStore = { "Cache-Control": "no-store" };
 
-export async function POST({ request, cookies, url }) {
+export async function POST(event) {
+    const { request, cookies } = event;
     let body: Record<string, unknown>;
     try {
         body = await request.json();
@@ -23,6 +25,17 @@ export async function POST({ request, cookies, url }) {
         mobile: body.mobile,
     });
     if (!input.ok) return json({ error: input.message }, { status: 400, headers: noStore });
+
+    const rateLimited = enforceRateLimits(event, [
+        { namespace: "register:ip", limit: 10, windowMs: 15 * 60 * 1000 },
+        {
+            namespace: "register:mobile",
+            identifier: input.mobile,
+            limit: 3,
+            windowMs: 10 * 60 * 1000,
+        },
+    ]);
+    if (rateLimited) return rateLimited;
 
     try {
         const isGuest = input.userType === "guest";
@@ -53,7 +66,6 @@ export async function POST({ request, cookies, url }) {
             cookies.set(REGISTRATION_SESSION_COOKIE, activeSession, {
                 path: "/api/v1/register",
                 httpOnly: true,
-                secure: url.protocol === "https:",
                 sameSite: "strict",
                 maxAge: 10 * 60,
             });

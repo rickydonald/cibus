@@ -143,7 +143,7 @@ async function waitForOrdersToAppear(accessToken: string, placedOrders: PlacedOr
 
 async function placeEatRightOrder(
   accessToken: string,
-  username: string,
+  userid: string,
   cart: EatRightCartItem[],
 ) {
   const form = new URLSearchParams();
@@ -151,7 +151,7 @@ async function placeEatRightOrder(
   form.set("cart", JSON.stringify(cart));
   form.set("grandTotal", String(getCartTotal(cart)));
   form.set("paymentStatus", "Payment Not Made");
-  form.set("userid", username);
+  form.set("userid", userid);
 
   const response = await fetch(officialApiUrl("/ajax/placeOrder.jsp"), {
     method: "POST",
@@ -220,7 +220,7 @@ export async function POST(event) {
     return session.response;
   }
 
-  const { accessToken, username } = session;
+  const { accessToken, userid } = session;
 
   if (!Array.isArray(cart) || cart.length === 0) {
     return json(
@@ -260,7 +260,7 @@ export async function POST(event) {
   const placedOrders: PlacedOrder[] = [];
 
   for (const group of orderGroups) {
-    const placedOrder = await placeEatRightOrder(accessToken, username, group);
+    const placedOrder = await placeEatRightOrder(accessToken, userid, group);
 
     if (!placedOrder.ok) {
       return json(

@@ -17,10 +17,7 @@
 
     const DISMISSED_ORDER_KEY = "eatright:dismissed-current-order";
 
-    let {
-        stacked = false,
-        onActiveChange,
-    } = $props<{
+    let { stacked = false, onActiveChange } = $props<{
         stacked?: boolean;
         onActiveChange?: (active: boolean) => void;
     }>();
@@ -58,8 +55,6 @@
     }
 
     async function loadActiveOrders(showDeliveredNotice = false) {
-        // Quiet by design: the banner simply stays hidden when the
-        // request fails — home should never surface an error for it.
         try {
             const response = await fetchEatRight("/api/v1/orders");
             const data = await response.json();
@@ -165,24 +160,22 @@
                     class="min-w-0 flex-1 truncate text-[13px] font-semibold tracking-tight"
                 >
                     {displayedOrder.outletname}
-                    <span
-                        class="font-medium {isDeliveredNotice
-                            ? 'text-[#7ad9a3]'
-                            : isPaymentPending
-                              ? 'text-[#e8bd66]'
-                              : 'text-white/50'}"
-                    >
-                        · {isDeliveredNotice
-                            ? "Delivered"
-                            : isPaymentPending
-                              ? "Payment pending"
-                              : "Preparing"}{!isDeliveredNotice && extraCount > 0
-                            ? ` · +${extraCount}`
-                            : ""}
-                    </span>
                 </p>
-
-                <ChevronRightIcon class="h-4 w-4 shrink-0 text-white/35" />
+                <span
+                    class="font-medium text-[13px] {isDeliveredNotice
+                        ? 'text-[#7ad9a3]'
+                        : isPaymentPending
+                          ? 'text-[#e8bd66]'
+                          : 'text-white/50'}"
+                >
+                    {isDeliveredNotice
+                        ? "Delivered"
+                        : isPaymentPending
+                          ? "Payment pending"
+                          : "Preparing"}{!isDeliveredNotice && extraCount > 0
+                        ? ` · +${extraCount}`
+                        : ""}
+                </span>
             </a>
 
             <button

@@ -151,7 +151,7 @@
             }
 
             walletBalance = accountData.walletBalance ?? "0.00";
-            profile = cacheEatRightProfile(accountData.user, accountData.userid) ?? profile;
+            profile = cacheEatRightProfile(accountData.name, accountData.userid) ?? profile;
             transactions = Array.isArray(walletData.transactions)
                 ? walletData.transactions.sort(
                       (a: any, b: any) =>

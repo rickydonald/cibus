@@ -15,7 +15,7 @@ export async function GET(event) {
   if (!session.ok) return session.response;
 
   try {
-    const { outlets } = await getAccountSummary(session.accessToken);
+    const { outlets } = await getAccountSummary(session);
     return json(outlets);
   } catch (error) {
     console.error(error);

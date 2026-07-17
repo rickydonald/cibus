@@ -37,7 +37,7 @@
     };
 
     type EatRightAccountDetails = {
-        user: string;
+        name: string;
         userid: string;
         walletBalance: string;
         outlets: Outlet[];
@@ -81,7 +81,7 @@
             }
 
             accountDetails = data;
-            cachedProfile = cacheEatRightProfile(data.user, data.userid);
+            cachedProfile = cacheEatRightProfile(data.name, data.userid);
         } catch (error) {
             console.error(error);
         } finally {
@@ -316,10 +316,10 @@
             </ContentWrapper>
         </div>
 
-        <CurrentOrderBanner
+        <!-- <CurrentOrderBanner
             stacked={hasFloatingCart}
             onActiveChange={(active) => (hasCurrentOrder = active)}
-        />
+        /> -->
 
         <!-- Sticky Bottom Floating Action Overlay Tray -->
         {#if hasFloatingCart}

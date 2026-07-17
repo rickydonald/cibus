@@ -2,6 +2,7 @@
     import { goto } from "$app/navigation";
     import { page } from "$app/state";
     import { clearCachedEatRightProfile } from "$lib/client/eatright-profile";
+    import { getSafeRedirectPath } from "$lib/auth-redirect";
     import LoyolaCollegeLogo from "$lib/assets/logos/loyola-logo.webp";
     import Spinner from "$lib/components/custom/Spinner.svelte";
     import {
@@ -12,7 +13,9 @@
     } from "@lucide/svelte";
 
     let showPassword = $state(false);
-    let redirectTo = $derived(page.url.searchParams.get("redirect") ?? "");
+    let redirectTo = $derived(
+        getSafeRedirectPath(page.url.searchParams.get("redirect"), ""),
+    );
 
     let userId = $state("");
     let password = $state("");
@@ -51,7 +54,7 @@
             return;
         }
 
-        await goto(redirectTo || res.redirectUrl);
+        await goto(redirectTo || getSafeRedirectPath(res.redirectUrl));
     }
 </script>
 

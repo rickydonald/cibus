@@ -1,8 +1,10 @@
 import { json, type Cookies, type RequestEvent } from "@sveltejs/kit";
-import { verifyAccessToken } from "./jwt";
+import {
+    EatRightAuthConfigurationError,
+    verifyEatRightJwt,
+} from "./eatright-jwt";
 
 const SESSION_COOKIE_NAME = "RioX5EatRightSession";
-const EXPIRY_SKEW_SECONDS = 30;
 
 export type EatRightSession = {
     access_token: string;
@@ -11,132 +13,132 @@ export type EatRightSession = {
     expires_in: number;
 };
 
-type OfficialTokenClaims = {
-    sub?: string;
-    exp?: number;
+export type EatRightIdentity = {
+    name: string;
+    userid: string;
 };
 
-export class EatRightSessionError extends Error {
-    constructor(
-        public errorCode: string,
-        message: string,
-        public status = 401,
-    ) {
-        super(message);
-        this.name = "EatRightSessionError";
-    }
-}
+export type EatRightAuthSession = EatRightIdentity & {
+    accessToken: string;
+    expiresAt: number;
+};
+
+export type EatRightAuthErrorCode =
+    | "token_invalid"
+    | "eatright_session_expired"
+    | "eatright_auth_unavailable";
+
+export type EatRightAuthState = {
+    session: EatRightAuthSession | null;
+    errorCode: EatRightAuthErrorCode | null;
+};
 
 export type EatRightSessionResolution =
-    | { ok: true; accessToken: string; reauthenticated: false; username: string }
+    | ({ ok: true; reauthenticated: false } & EatRightAuthSession)
     | { ok: false; response: ReturnType<typeof json> };
 
-function decodeTokenClaims(token: string): OfficialTokenClaims | null {
-    try {
-        const payload = token.split(".")[1];
-        if (!payload) return null;
-        const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
-        const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
-        return JSON.parse(atob(padded)) as OfficialTokenClaims;
-    } catch {
-        return null;
-    }
+export async function verifyEatRightAccessToken(
+    accessToken: string,
+): Promise<EatRightAuthSession | null> {
+    const identity = await verifyEatRightJwt(accessToken);
+    return identity ? { accessToken, ...identity } : null;
 }
 
-function isSessionValid(session: EatRightSession): boolean {
-    if (!session.success || !session.access_token) return false;
-    const claims = decodeTokenClaims(session.access_token);
-    return !!claims?.sub && typeof claims.exp === "number"
-        && claims.exp > Math.floor(Date.now() / 1000) + EXPIRY_SKEW_SECONDS;
-}
-
-export function setEatRightSessionCookie(cookies: Cookies, session: EatRightSession) {
-    cookies.set(SESSION_COOKIE_NAME, btoa(JSON.stringify(session)), {
+export function setEatRightSessionCookie(cookies: Cookies, session: EatRightAuthSession) {
+    const tokenLifetime = session.expiresAt - Math.floor(Date.now() / 1000);
+    cookies.set(SESSION_COOKIE_NAME, session.accessToken, {
         path: "/",
         httpOnly: true,
-        secure: false,
         sameSite: "lax",
-        maxAge: session.expires_in,
+        maxAge: Math.max(0, tokenLifetime),
     });
-}
-
-export function getEatRightSession(cookies: Cookies): EatRightSession | null {
-    const encoded = cookies.get(SESSION_COOKIE_NAME);
-    if (!encoded) return null;
-
-    try {
-        const session = JSON.parse(atob(encoded)) as EatRightSession;
-        return isSessionValid(session) ? session : null;
-    } catch {
-        return null;
-    }
 }
 
 export function clearEatRightSessionCookie(cookies: Cookies) {
     cookies.delete(SESSION_COOKIE_NAME, { path: "/" });
 }
 
-export function jsonEatRightSessionError(error: EatRightSessionError) {
-    return json(
-        { error: error.message, errorCode: error.errorCode },
-        { status: error.status },
-    );
-}
+export async function authenticateEatRightRequest(
+    event: RequestEvent,
+): Promise<EatRightAuthState> {
+    const authHeader = event.request.headers.get("authorization");
+    const bearerToken = authHeader?.match(/^Bearer\s+([^\s]+)$/i)?.[1];
+    const hasAuthorizationHeader = authHeader !== null;
+    const cookieToken = event.cookies.get(SESSION_COOKIE_NAME);
+    const accessToken = hasAuthorizationHeader ? bearerToken : cookieToken;
 
-export async function ensureValidEatRightSession(input: {
-    cookies?: Cookies;
-    session?: EatRightSession;
-}): Promise<{ accessToken: string; reauthenticated: false; username: string }> {
-    const session = input.session ?? (input.cookies ? getEatRightSession(input.cookies) : null);
-    if (!session || !isSessionValid(session)) {
-        if (input.cookies) clearEatRightSessionCookie(input.cookies);
-        throw new EatRightSessionError(
-            "eatright_session_expired",
-            "EatRight session is missing or expired. Please sign in again.",
-        );
+    if (!accessToken) {
+        return {
+            session: null,
+            errorCode: hasAuthorizationHeader ? "token_invalid" : null,
+        };
     }
 
-    const claims = decodeTokenClaims(session.access_token);
-    return {
-        accessToken: session.access_token,
-        reauthenticated: false,
-        username: claims?.sub ?? "",
-    };
-}
-
-export async function resolveEatRightSession(input: {
-    cookies?: Cookies;
-    session?: EatRightSession;
-}): Promise<EatRightSessionResolution> {
     try {
-        return { ok: true, ...(await ensureValidEatRightSession(input)) };
+        const session = await verifyEatRightAccessToken(accessToken);
+        if (session) return { session, errorCode: null };
+
+        if (!hasAuthorizationHeader) clearEatRightSessionCookie(event.cookies);
+        return {
+            session: null,
+            errorCode: hasAuthorizationHeader ? "token_invalid" : "eatright_session_expired",
+        };
     } catch (error) {
-        if (error instanceof EatRightSessionError) {
-            return { ok: false, response: jsonEatRightSessionError(error) };
+        if (error instanceof EatRightAuthConfigurationError) {
+            console.error(error.message);
+            return { session: null, errorCode: "eatright_auth_unavailable" };
         }
         throw error;
     }
 }
 
-export async function resolveEatRightSessionFromEvent(
+export function resolveEatRightSessionFromEvent(
     event: RequestEvent,
-): Promise<EatRightSessionResolution> {
-    const authHeader = event.request.headers.get("authorization");
-    const token = authHeader?.match(/^Bearer\s+(.+)$/i)?.[1]?.trim();
-
-    if (token) {
-        const payload = verifyAccessToken(token);
-        if (!payload) {
-            return {
-                ok: false,
-                response: json(
-                    { error: "Invalid or expired access token", errorCode: "token_invalid" },
-                    { status: 401 },
-                ),
-            };
-        }
-        return resolveEatRightSession({ session: payload.session });
+): EatRightSessionResolution {
+    if (event.locals.eatRightAuth) {
+        return {
+            ok: true,
+            reauthenticated: false,
+            ...event.locals.eatRightAuth,
+        };
     }
 
-    return resolveEatRightSession({ cookies: event.cookies });
+    if (event.locals.eatRightAuthError === "token_invalid") {
+        return {
+            ok: false,
+            response: json(
+                { error: "Invalid or expired access token", errorCode: "token_invalid" },
+                { status: 401 },
+            ),
+        };
+    }
+
+    if (event.locals.eatRightAuthError === "eatright_auth_unavailable") {
+        return {
+            ok: false,
+            response: json(
+                {
+                    error: "Authentication service is unavailable",
+                    errorCode: "eatright_auth_unavailable",
+                },
+                { status: 503 },
+            ),
+        };
+    }
+
+    const expired = event.locals.eatRightAuthError === "eatright_session_expired";
+    return {
+        ok: false,
+        response: json(
+            {
+                error: expired
+                    ? "EatRight session has expired. Please sign in again."
+                    : "EatRight session is missing. Please sign in.",
+                errorCode: expired
+                    ? "eatright_session_expired"
+                    : "eatright_session_missing",
+            },
+            { status: 401 },
+        ),
+    };
 }
