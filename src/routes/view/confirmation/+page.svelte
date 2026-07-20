@@ -670,7 +670,7 @@
                                                         Live Preview
                                                     </p>
                                                     <p
-                                                        class="mt-0.5 font-geist-mono text-[11px] font-bold text-ink-muted tabular-nums"
+                                                        class="mt-0.5 font-geist-mono text-[13px] font-bold text-ink-muted tabular-nums"
                                                     >
                                                         {liveClock}
                                                     </p>

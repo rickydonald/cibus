@@ -1,12 +1,8 @@
 <script lang="ts">
     import ContentWrapper from "$lib/components/ui/ContentWrapper.svelte";
     import MainContainer from "$lib/components/ui/MainContainer.svelte";
-
-    import { BottomSheet } from "svelte-bottom-sheet";
     import {
         ChevronRightIcon,
-        LogOut01Icon,
-        UserCircleIcon,
         Wallet02Icon,
     } from "@untitled-theme/icons-svelte";
 
@@ -25,9 +21,9 @@
     import { cart } from "$lib/store/cart.svelte";
 
     import FloatingCartBar from "$lib/components/custom/FloatingCartBar.svelte";
-    import CurrentOrderBanner from "$lib/components/custom/CurrentOrderBanner.svelte";
     import { Settings } from "@lucide/svelte";
     import helpers from "$lib/helpers";
+    import { greetingName } from "$lib/utils/person-name";
 
     type Outlet = {
         id: number;
@@ -48,7 +44,6 @@
     let isNavigateLoading = $state(false);
     let hasCurrentOrder = $state(false);
 
-    let isAccountSheetOpen: boolean = $state(false);
     let isAccountLoading: boolean = $state(false);
 
     function getBalanceMajor(balanceStr: string | undefined): string {
@@ -110,8 +105,28 @@
 
     const profile = $derived(cachedProfile);
     const walletOwnerName = $derived.by(() => {
-        return profile?.name.split(" ")[0];
+        return greetingName(profile?.name);
     });
+
+    const isStudent = $derived.by(() => {
+        return /^\d{2}-[A-Z]{3}-\d{3}$/.test(cachedProfile?.userid ?? "");
+    });
+    const isFrenchDept = $derived(
+        cachedProfile?.userid.split("-")[1].slice(1, 3) === "FR",
+    );
+    const isTamilDept = $derived(
+        cachedProfile?.userid.split("-")[1].slice(1, 3) === "TL",
+    );
+
+    function returnGreet(): string {
+        if (isStudent) {
+            if (isFrenchDept) return "Bonjour";
+            else if (isTamilDept) return "Vanakkam";
+            else return "Hello";
+        } else {
+            return "Hello";
+        }
+    }
 </script>
 
 <MainContainer>
@@ -127,7 +142,7 @@
                             class="text-xl font-bold tracking-tight text-ink truncate"
                         >
                             {#if walletOwnerName}
-                                Hello, {walletOwnerName}
+                                {returnGreet()}, {walletOwnerName}
                             {:else}
                                 Welcome
                             {/if}
@@ -158,14 +173,14 @@
                             class="absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(255,255,255,0.1),transparent_45%),radial-gradient(circle_at_100%_100%,rgba(255,255,255,0.06),transparent_40%)]"
                         ></div>
 
-                        <div class="relative z-10">
+                        <div class="relative z-10 text-center">
                             <p
                                 class="text-[10px] uppercase tracking-[0.16em] text-white/60 font-bold"
                             >
                                 Wallet Balance
                             </p>
 
-                            <div class="mt-2 h-12 flex items-center">
+                            <div class="mt-2 h-12 flex items-center justify-center-safe">
                                 {#if accountDetails}
                                     <h2
                                         class="flex items-baseline text-5xl font-bold tabular-nums"

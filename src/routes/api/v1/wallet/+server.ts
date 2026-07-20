@@ -3,6 +3,7 @@ import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
 import { clearEatRightDataCache, getAccountSummary, getWalletTransactions } from "$lib/server/eatright-data";
 import { DEV_MODE } from "$lib/server/dev";
 import { FOODCOURT_API_BASE_URL, foodcourtApiRequest, FoodcourtApiError } from "$lib/server/foodcourt-api";
+import { walletLimitMessage, wouldExceedWalletLimit } from "$lib/wallet";
 
 const DEV_TRANSACTIONS = [
   { date: "2026-06-22 10:30 AM", amount: 200, balance: 250, sort_time: 1719045000, type: "CREDIT", remarks: "Online Recharge" },
@@ -57,6 +58,12 @@ export async function POST(event) {
   }
 
   if (DEV_MODE) {
+    if (wouldExceedWalletLimit(250, depositAmount)) {
+      return json(
+        { error: walletLimitMessage(250), errorCode: "wallet_limit_exceeded" },
+        { status: 400 },
+      );
+    }
     return json({ status: "success", message: "Dev recharge successful" });
   }
 
@@ -66,6 +73,26 @@ export async function POST(event) {
   }
 
   const { accessToken } = session;
+
+  try {
+    const account = await getAccountSummary(session);
+    const currentBalance = Number(account.walletBalance);
+    if (wouldExceedWalletLimit(currentBalance, depositAmount)) {
+      return json(
+        {
+          error: walletLimitMessage(currentBalance),
+          errorCode: "wallet_limit_exceeded",
+        },
+        { status: 400 },
+      );
+    }
+  } catch (error) {
+    const status = error instanceof FoodcourtApiError ? error.status : 502;
+    const message = error instanceof FoodcourtApiError
+      ? error.message
+      : "Failed to verify wallet balance";
+    return json({ error: message }, { status });
+  }
 
   const form = new URLSearchParams({
     action: "insert",

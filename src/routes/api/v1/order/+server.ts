@@ -3,6 +3,7 @@ import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
 import { clearEatRightDataCache } from "$lib/server/eatright-data";
 import { DEV_MODE } from "$lib/server/dev";
 import { officialApiUrl } from "$lib/server/foodcourt-api";
+import { hasDuplicateItemIds } from "$lib/order-validation";
 
 type OrderItem = {
   id: number;
@@ -234,8 +235,10 @@ export async function POST(event) {
 
   const orderCart = toEatRightCartPayload(cart);
   const grandTotal = getCartTotal(orderCart);
+  const hasDuplicateItems = hasDuplicateItemIds(orderCart);
 
   if (
+    hasDuplicateItems ||
     orderCart.some(
       (item) =>
         !Number.isFinite(item.id) ||
@@ -249,8 +252,10 @@ export async function POST(event) {
   ) {
     return json(
       {
-        error: "Cart contains invalid items",
-        errorCode: "cart_invalid",
+        error: hasDuplicateItems
+          ? "Cart contains duplicate items"
+          : "Cart contains invalid items",
+        errorCode: hasDuplicateItems ? "cart_duplicate_item" : "cart_invalid",
       },
       { status: 400 },
     );

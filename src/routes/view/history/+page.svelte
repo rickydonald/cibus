@@ -274,7 +274,7 @@
                 <p
                     class="mt-1 max-w-xs text-xs font-medium text-ink-muted leading-relaxed"
                 >
-                    Your EatRight orders will appear here automatically after
+                    Your Eat Right orders will appear here automatically after
                     checkout.
                 </p>
                 <button

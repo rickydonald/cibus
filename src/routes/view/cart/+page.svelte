@@ -23,8 +23,26 @@
     import helpers from "$lib/helpers";
     import { fly, fade } from "svelte/transition";
     import { toast } from "svelte-sonner";
+    import {
+        MAX_WALLET_BALANCE,
+        walletLimitMessage,
+        wouldExceedWalletLimit,
+    } from "$lib/wallet";
+    import {
+        createCheckoutCartSnapshot,
+        matchesCheckoutCartSnapshot,
+    } from "$lib/checkout-cart-snapshot";
 
     const PENDING_CHECKOUT_RECHARGE_KEY = "eatright:pending_checkout_recharge";
+    const PENDING_CHECKOUT_MAX_AGE_MS = 10 * 60 * 1000;
+
+    type PendingCheckoutRecharge = {
+        amount: number;
+        baselineBalance: number;
+        cartSnapshot: string;
+        createdAt: number;
+        orderId?: string;
+    };
 
     let isPlacingOrder = $state(false);
     let isRecharging = $state(false);
@@ -42,6 +60,10 @@
         walletBalance === null
             ? 0
             : Number(Math.max(cart.totalAmount - walletBalance, 0).toFixed(2)),
+    );
+    const checkoutRechargeExceedsWalletLimit = $derived(
+        walletBalance !== null &&
+            wouldExceedWalletLimit(walletBalance, rechargeShortfall),
     );
     const balanceAfterOrder = $derived(
         walletBalance === null
@@ -133,7 +155,7 @@
         }
         const balance = await getWalletBalance();
         if (payment === "success" && verifiedStatus === "SUCCESS") {
-            await resumePendingCheckout(balance);
+            await resumePendingCheckout(balance, orderId);
         } else if (payment) {
             clearPendingCheckoutRecharge();
             error = callbackMessage || "Wallet recharge failed or was cancelled.";
@@ -213,18 +235,48 @@
     function savePendingCheckoutRecharge(
         amount: number,
         baselineBalance: number,
-    ) {
-        if (!browser) return;
+    ): string {
+        const cartSnapshot = createCheckoutCartSnapshot(cart.items);
+        if (!browser) return cartSnapshot;
 
         localStorage.setItem(
             PENDING_CHECKOUT_RECHARGE_KEY,
             JSON.stringify({
                 amount,
                 baselineBalance,
-                cartTotal: cart.totalAmount,
+                cartSnapshot,
                 createdAt: Date.now(),
-            }),
+            } satisfies PendingCheckoutRecharge),
         );
+
+        return cartSnapshot;
+    }
+
+    function bindPendingCheckoutRechargeToOrder(orderId: string): boolean {
+        if (!browser || !orderId) return false;
+
+        try {
+            const raw = localStorage.getItem(PENDING_CHECKOUT_RECHARGE_KEY);
+            if (!raw) return false;
+
+            const pending = JSON.parse(raw) as PendingCheckoutRecharge;
+            if (
+                typeof pending.cartSnapshot !== "string" ||
+                typeof pending.createdAt !== "number"
+            ) {
+                clearPendingCheckoutRecharge();
+                return false;
+            }
+
+            localStorage.setItem(
+                PENDING_CHECKOUT_RECHARGE_KEY,
+                JSON.stringify({ ...pending, orderId }),
+            );
+            return true;
+        } catch {
+            clearPendingCheckoutRecharge();
+            return false;
+        }
     }
 
     function clearPendingCheckoutRecharge() {
@@ -245,14 +297,16 @@
             return;
         }
 
-        if (amount > 1000) {
-            error =
-                "Remaining balance is above ₹1000. Please add money from the wallet page.";
+        if (wouldExceedWalletLimit(currentBalance, amount)) {
+            error = walletLimitMessage(currentBalance);
             return;
         }
 
         isRecharging = true;
-        savePendingCheckoutRecharge(amount, currentBalance);
+        const checkoutCartSnapshot = savePendingCheckoutRecharge(
+            amount,
+            currentBalance,
+        );
         try {
             const response = await fetchEatRight("/api/v1/wallet", {
                 method: "POST",
@@ -277,19 +331,41 @@
             }
 
             if (data.status === "redirect" && data.url) {
-                if (data.orderId) {
+                if (
+                    typeof data.orderId === "string" &&
+                    bindPendingCheckoutRechargeToOrder(data.orderId)
+                ) {
                     setPendingPayment(data.orderId, "/view/cart");
+                } else {
+                    // The recharge can continue, but without a verifiable
+                    // payment ID it must never auto-submit the cart.
+                    clearPendingCheckoutRecharge();
                 }
                 window.location.assign(data.url);
                 return;
             }
 
             if (data.status === "success") {
-                paymentMessage = "Wallet recharged. Placing your order...";
-                toast.success("Wallet recharged. Placing order...");
                 walletBalance = Number(walletBalance ?? 0) + amount;
                 clearPendingCheckoutRecharge();
-                await placeOrder({ skipBalanceCheck: true });
+                isRecharging = false;
+                if (
+                    matchesCheckoutCartSnapshot(
+                        checkoutCartSnapshot,
+                        cart.items,
+                    )
+                ) {
+                    paymentMessage = "Wallet recharged. Placing your order...";
+                    toast.success("Wallet recharged. Placing order...");
+                    await placeOrder({ skipBalanceCheck: true });
+                } else {
+                    isConfirmOpen = true;
+                    paymentMessage =
+                        "Wallet recharged. Review your updated cart before placing the order.";
+                    toast.info(
+                        "Cart changed. Review it before placing your order.",
+                    );
+                }
                 return;
             }
 
@@ -303,24 +379,43 @@
         }
     }
 
-    async function resumePendingCheckout(balance: number | null) {
+    async function resumePendingCheckout(
+        balance: number | null,
+        returnedOrderId: string | null,
+    ) {
         if (!browser) return;
 
         const pending = localStorage.getItem(PENDING_CHECKOUT_RECHARGE_KEY);
         if (!pending) return;
 
         try {
-            const saved = JSON.parse(pending) as {
-                cartTotal?: number;
-                createdAt?: number;
-            };
+            const saved = JSON.parse(pending) as Partial<PendingCheckoutRecharge>;
 
             const isFresh =
                 typeof saved.createdAt === "number" &&
-                Date.now() - saved.createdAt < 10 * 60 * 1000;
+                Date.now() - saved.createdAt < PENDING_CHECKOUT_MAX_AGE_MS;
+            const isExpectedPayment =
+                typeof saved.orderId === "string" &&
+                saved.orderId === returnedOrderId;
+            const isSameCart =
+                typeof saved.cartSnapshot === "string" &&
+                matchesCheckoutCartSnapshot(saved.cartSnapshot, cart.items);
 
-            if (!isFresh || cart.items.length === 0) {
+            if (!isFresh || !isExpectedPayment || cart.items.length === 0) {
                 clearPendingCheckoutRecharge();
+                return;
+            }
+
+            if (!isSameCart) {
+                clearPendingCheckoutRecharge();
+                isConfirmOpen = true;
+                paymentMessage =
+                    "Wallet recharged, but your cart changed during payment.";
+                error =
+                    "Review the updated cart and confirm it again. No order was placed automatically.";
+                toast.info(
+                    "Cart changed. Review it before placing your order.",
+                );
                 return;
             }
 
@@ -747,13 +842,17 @@
                         <button
                             class="btn-primary h-13 w-full rounded-2xl px-4 text-sm shadow-sm"
                             onclick={startCheckoutRecharge}
-                            disabled={isRecharging || rechargeShortfall > 1000}
+                            disabled={isRecharging || checkoutRechargeExceedsWalletLimit}
                         >
                             {#if isRecharging}
                                 <Spinner />
                                 Opening payment…
                             {:else}
-                                Add ₹{formatAmount(rechargeShortfall)} & place order
+                                {#if checkoutRechargeExceedsWalletLimit}
+                                    Wallet limit is ₹{MAX_WALLET_BALANCE.toLocaleString("en-IN")}
+                                {:else}
+                                    Add ₹{formatAmount(rechargeShortfall)} & place order
+                                {/if}
                             {/if}
                         </button>
                     {:else}

@@ -22,6 +22,12 @@
         getPendingPayment,
         setPendingPayment,
     } from "$lib/client/pending-payment";
+    import {
+        MAX_WALLET_BALANCE,
+        remainingWalletCapacity,
+        walletLimitMessage,
+        wouldExceedWalletLimit,
+    } from "$lib/wallet";
 
     type WalletTransaction = {
         date: string;
@@ -86,7 +92,7 @@
     }
 
     const MIN_RECHARGE = 1;
-    const MAX_RECHARGE = 1000;
+    const MAX_RECHARGE = MAX_WALLET_BALANCE;
 
     // Whole rupees only: strip non-digits, drop leading zeros, cap at
     // 4 digits and clamp anything above the recharge ceiling.
@@ -108,10 +114,19 @@
     }
 
     const amountValue = $derived(Number(amount));
+    const walletBalanceValue = $derived(Number(walletBalance ?? 0));
+    const walletCapacity = $derived(
+        remainingWalletCapacity(walletBalanceValue),
+    );
+    const exceedsWalletLimit = $derived(
+        amount !== "" &&
+            wouldExceedWalletLimit(walletBalanceValue, amountValue),
+    );
     const isAmountValid = $derived(
         amount !== "" &&
             amountValue >= MIN_RECHARGE &&
-            amountValue <= MAX_RECHARGE,
+            amountValue <= MAX_RECHARGE &&
+            !exceedsWalletLimit,
     );
 
     async function loadWallet(options: { preserveError?: boolean } = {}) {
@@ -151,7 +166,9 @@
             }
 
             walletBalance = accountData.walletBalance ?? "0.00";
-            profile = cacheEatRightProfile(accountData.name, accountData.userid) ?? profile;
+            profile =
+                cacheEatRightProfile(accountData.name, accountData.userid) ??
+                profile;
             transactions = Array.isArray(walletData.transactions)
                 ? walletData.transactions.sort(
                       (a: any, b: any) =>
@@ -181,6 +198,11 @@
             depositAmount > MAX_RECHARGE
         ) {
             error = `Recharge amount must be between ₹${MIN_RECHARGE} and ₹${MAX_RECHARGE}.`;
+            return;
+        }
+
+        if (wouldExceedWalletLimit(walletBalanceValue, depositAmount)) {
+            error = walletLimitMessage(walletBalanceValue);
             return;
         }
 
@@ -288,10 +310,10 @@
     <div class="px-4 max-w-md mx-auto pt-4 lg:max-w-lg">
         <!-- Balance hero -->
         <section
-            class="relative overflow-hidden rounded-[28px] bg-[#1c212b] text-white shadow-float"
+            class="relative overflow-hidden rounded-[28px] bg-primary text-white shadow-float"
         >
             <div
-                class="absolute inset-0 bg-[radial-gradient(85%_70%_at_50%_-15%,rgba(96,146,204,0.28),transparent_70%)]"
+                class="absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(255,255,255,0.1),transparent_45%),radial-gradient(circle_at_100%_100%,rgba(255,255,255,0.06),transparent_40%)]"
             ></div>
             <div
                 class="pointer-events-none absolute inset-0 rounded-[28px] ring-1 ring-inset ring-white/10"
@@ -362,9 +384,13 @@
                         Enter amount
                     </label>
                     <span class="text-[11px] font-medium text-ink-faint">
-                        ₹{MIN_RECHARGE} – ₹{MAX_RECHARGE.toLocaleString(
-                            "en-IN",
-                        )}
+                        {#if walletCapacity >= MIN_RECHARGE}
+                            Up to ₹{walletCapacity.toLocaleString("en-IN", {
+                                maximumFractionDigits: 2,
+                            })}
+                        {:else}
+                            Wallet limit reached
+                        {/if}
                     </span>
                 </div>
 
@@ -381,7 +407,7 @@
                         maxlength="4"
                         value={amount}
                         oninput={handleAmountInput}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || walletCapacity < MIN_RECHARGE}
                         class="w-full bg-transparent text-2xl font-bold tracking-tight text-ink outline-none tabular-nums placeholder:text-ink-faint/50 disabled:opacity-50"
                         placeholder="0"
                     />
@@ -404,7 +430,7 @@
                         <button
                             type="button"
                             onclick={() => quickSelect(value)}
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || value > walletCapacity}
                             class={`h-9 rounded-circle text-[13px] font-semibold transition-all active:scale-95 disabled:opacity-50 ${
                                 Number(amount) === value
                                     ? "bg-primary text-white"
@@ -415,6 +441,22 @@
                         </button>
                     {/each}
                 </div>
+
+                {#if exceedsWalletLimit}
+                    <p
+                        class="mt-3 text-center text-xs font-medium leading-relaxed text-danger"
+                    >
+                        {walletLimitMessage(walletBalanceValue)}
+                    </p>
+                {:else if walletCapacity < MIN_RECHARGE}
+                    <p
+                        class="mt-3 text-center text-xs font-medium leading-relaxed text-ink-muted"
+                    >
+                        Your wallet can hold a maximum of ₹{MAX_WALLET_BALANCE.toLocaleString(
+                            "en-IN",
+                        )}.
+                    </p>
+                {/if}
 
                 <div class="mt-5 flex flex-col gap-2">
                     <button

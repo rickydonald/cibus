@@ -9,7 +9,6 @@
         InfoIcon,
         KeyRoundIcon,
         LogOutIcon,
-        UserRoundIcon,
     } from "@lucide/svelte";
     import { toast } from "svelte-sonner";
     import {
@@ -18,6 +17,7 @@
         type CachedEatRightProfile,
     } from "$lib/client/eatright-profile";
     import { goto } from "$app/navigation";
+    import { normalizePersonName } from "$lib/utils/person-name";
 
     let profile = $state<CachedEatRightProfile | null>(null);
     let copiedUserId = $state(false);
@@ -35,10 +35,17 @@
         profile = getCachedEatRightProfile();
     });
 
+    const displayName = $derived(
+        normalizePersonName(profile?.name, {
+            casing: "title",
+            part: "full",
+            includeHonorifics: true,
+        }),
+    );
+
     const initials = $derived.by(() => {
-        const name = profile?.name?.trim();
-        if (!name) return "?";
-        return name
+        if (!displayName) return "?";
+        return displayName
             .split(/\s+/)
             .slice(0, 2)
             .map((part) => part.charAt(0).toUpperCase())
@@ -112,7 +119,8 @@
             formMessage = data?.message ?? "Password updated successfully.";
             toast.success(formMessage);
         } catch {
-            formError = "Unable to update your password. Check your connection and try again.";
+            formError =
+                "Unable to update your password. Check your connection and try again.";
         } finally {
             isUpdatingPassword = false;
         }
@@ -176,7 +184,7 @@
                     <h2
                         class="truncate text-lg font-bold tracking-tight text-ink"
                     >
-                        {profile?.name ?? "--"}
+                        {displayName || "--"}
                     </h2>
                     <p class="mt-0.5 text-xs font-medium text-ink-muted">
                         Eat Right account
@@ -186,23 +194,11 @@
 
             <div class="divide-y divide-line/70 border-t border-line">
                 <div class="flex items-center gap-3 px-5 py-3.5">
-                    <UserRoundIcon size={16} class="shrink-0 text-ink-faint" />
-                    <div class="min-w-0 flex-1">
-                        <p class="section-label">Name</p>
-                        <p
-                            class="mt-0.5 truncate text-sm font-semibold text-ink"
-                        >
-                            {profile?.name ?? "--"}
-                        </p>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-3 px-5 py-3.5">
                     <KeyRoundIcon size={16} class="shrink-0 text-ink-faint" />
                     <div class="min-w-0 flex-1">
                         <p class="section-label">User ID</p>
                         <p
-                            class="mt-0.5 truncate font-mono text-sm font-semibold text-ink"
+                            class="mt-0.5 truncate font-mono text-sm font-semibold text-ink tracking-wider"
                         >
                             {profile?.userid || "--"}
                         </p>
@@ -352,7 +348,9 @@
                     class="btn-primary mt-1 h-12 text-sm"
                     disabled={isUpdatingPassword}
                 >
-                    {isUpdatingPassword ? "Updating password..." : "Update password"}
+                    {isUpdatingPassword
+                        ? "Updating password..."
+                        : "Update password"}
                 </button>
             </form>
         </section>
@@ -364,7 +362,8 @@
                     Sign out
                 </h2>
                 <p class="mt-1 text-xs font-medium text-ink-muted">
-                    You'll need your User ID and password to sign in back to Eat Right.
+                    You'll need your User ID and password to sign in back to Eat
+                    Right.
                 </p>
             </div>
             <button

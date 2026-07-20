@@ -84,16 +84,16 @@
 
         <div class="relative flex items-center gap-3">
             <div
-                class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white"
+                class="flex h-16 w-16 items-center justify-center rounded-2xl bg-white"
             >
                 <img
                     src={LoyolaCollegeLogo}
                     alt="Loyola College"
-                    class="h-14 w-auto object-contain"
+                    class="h-16 w-auto object-contain"
                 />
             </div>
             <div>
-                <p class="text-sm font-bold tracking-tight">Eat Right</p>
+                <p class="text-lg font-bold tracking-tight">Eat Right</p>
                 <p
                     class="text-[10px] font-bold uppercase tracking-[0.16em] text-white/55"
                 >
@@ -120,7 +120,7 @@
         </div>
 
         <div class="relative flex items-center gap-3 text-sm text-white/60">
-            <span>Designed by RDR28</span>
+            <span>Designed by Rockfort Labs.</span>
         </div>
     </section>
 
@@ -181,11 +181,18 @@
                 </div>
 
                 <div class="flex flex-col gap-2">
-                    <label
-                        for="password"
-                        class="pl-1 text-sm font-semibold text-ink"
-                        >Password</label
-                    >
+                    <div class="flex items-center justify-between gap-3 px-1">
+                        <label
+                            for="password"
+                            class="text-sm font-semibold text-ink"
+                            >Password</label
+                        >
+                        <a
+                            href="/forgot-password"
+                            class="text-xs font-semibold text-primary hover:underline"
+                            >Forgot password?</a
+                        >
+                    </div>
                     <div class="relative">
                         <input
                             type={showPassword ? "text" : "password"}
