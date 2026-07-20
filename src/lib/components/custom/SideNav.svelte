@@ -135,6 +135,6 @@
     </nav>
 
     <p class="px-6 pb-6 text-[11px] font-medium text-ink-faint">
-        Designed by Rockfort Labs.
+        Designed by Ricky Donald.
     </p>
 </aside>

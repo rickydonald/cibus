@@ -74,7 +74,7 @@
     <p
         class="absolute bottom-[max(1.25rem,var(--safe-area-inset-bottom))] text-xs text-white/35"
     >
-        Designed by Rockfort Labs.
+        Designed by Ricky Donald.
     </p>
 </main>
 
