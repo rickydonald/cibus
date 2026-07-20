@@ -304,6 +304,18 @@
                 !(payment === "success" && verifiedStatus === "SUCCESS"),
         });
     });
+
+    let isRechargeInputFocused: HTMLInputElement;
+    function shouldRechargeInputFocus() {
+        const params = new URLSearchParams(window.location.search);
+        const action = params.get("action");
+        if (action === "add-money") {
+            setTimeout(() => isRechargeInputFocused?.focus(), 500)
+        }
+    }
+    onMount(() => {
+        shouldRechargeInputFocus();
+    });
 </script>
 
 <div class="min-h-screen text-ink antialiased">
@@ -410,6 +422,7 @@
                         disabled={isSubmitting || walletCapacity < MIN_RECHARGE}
                         class="w-full bg-transparent text-2xl font-bold tracking-tight text-ink outline-none tabular-nums placeholder:text-ink-faint/50 disabled:opacity-50"
                         placeholder="0"
+                        bind:this={isRechargeInputFocused}
                     />
                     {#if amount}
                         <button

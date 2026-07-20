@@ -169,48 +169,65 @@
                     <div
                         class="relative overflow-hidden rounded-[28px] bg-primary p-6 text-white shadow-card"
                     >
+                        <!-- light same-hue gradient wash -->
                         <div
-                            class="absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(255,255,255,0.1),transparent_45%),radial-gradient(circle_at_100%_100%,rgba(255,255,255,0.06),transparent_40%)]"
+                            class="absolute inset-0 bg-[linear-gradient(140deg,rgba(255,255,255,0.18),rgba(255,255,255,0.04)_35%,rgba(255,255,255,0)_55%),linear-gradient(320deg,rgba(10,54,86,0.28),rgba(10,54,86,0)_50%)]"
+                        ></div>
+                        <!-- subtle grid texture, fading toward the bottom-left -->
+                        <div
+                            class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:28px_28px] [mask-image:radial-gradient(circle_at_80%_0%,black,transparent_70%)]"
                         ></div>
 
-                        <div class="relative z-10 text-center">
-                            <p
-                                class="text-[10px] uppercase tracking-[0.16em] text-white/60 font-bold"
-                            >
-                                Wallet Balance
-                            </p>
-
-                            <div class="mt-2 h-12 flex items-center justify-center-safe">
-                                {#if accountDetails}
-                                    <h2
-                                        class="flex items-baseline text-5xl font-bold tabular-nums"
+                        <div class="relative z-10">
+                            <div class="flex items-start justify-between">
+                                <div class="min-w-0">
+                                    <p
+                                        class="text-[10px] uppercase tracking-[0.16em] text-white/60 font-bold"
                                     >
-                                        <span
-                                            class="text-white/50 text-4xl mr-1 font-normal"
-                                            >₹</span
-                                        >
-                                        <span
-                                            >{getBalanceMajor(
-                                                accountDetails?.walletBalance,
-                                            )}.</span
-                                        >
-                                        <span
-                                            class="text-3xl font-medium text-white/50"
-                                            >{getBalanceMinor(
-                                                accountDetails?.walletBalance,
-                                            )}</span
-                                        >
-                                    </h2>
-                                {:else}
-                                    <div
-                                        class="h-10 w-40 animate-pulse rounded-circle bg-white/15"
-                                    ></div>
-                                {/if}
+                                        Wallet Balance
+                                    </p>
+
+                                    <div class="mt-2 h-12 flex items-center">
+                                        {#if accountDetails}
+                                            <h2
+                                                class="flex items-baseline text-5xl font-bold tabular-nums"
+                                            >
+                                                <span
+                                                    class="text-white/50 text-4xl mr-1 font-normal"
+                                                    >₹</span
+                                                >
+                                                <span
+                                                    >{getBalanceMajor(
+                                                        accountDetails?.walletBalance,
+                                                    )}.</span
+                                                >
+                                                <span
+                                                    class="text-3xl font-medium text-white/50"
+                                                    >{getBalanceMinor(
+                                                        accountDetails?.walletBalance,
+                                                    )}</span
+                                                >
+                                            </h2>
+                                        {:else}
+                                            <div
+                                                class="h-10 w-40 animate-pulse rounded-circle bg-white/15"
+                                            ></div>
+                                        {/if}
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-circle bg-white/10 border border-white/15 backdrop-blur-sm"
+                                >
+                                    <Wallet02Icon width="20" class="text-white/90" />
+                                </div>
                             </div>
 
-                            <div class="mt-6 flex items-center gap-3">
+                            <div
+                                class="mt-6 border-t border-white/15 pt-4 flex items-center gap-3"
+                            >
                                 <button
-                                    onclick={() => goto("/view/wallet")}
+                                    onclick={() => goto("/view/wallet?action=add-money")}
                                     class="flex-1 h-11 rounded-circle bg-white px-3 text-sm text-primary flex items-center justify-center gap-2 font-bold hover:bg-primary-soft active:scale-98 transition whitespace-nowrap"
                                     aria-label="Add Money to Wallet"
                                 >

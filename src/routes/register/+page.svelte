@@ -1,16 +1,15 @@
 <script lang="ts">
-    import LoyolaCollegeLogo from "$lib/assets/logos/loyola-logo.webp";
+    import AuthShell from "$lib/components/custom/AuthShell.svelte";
     import RegistrationSwitch from "$lib/components/custom/RegistrationSwitch.svelte";
     import Spinner from "$lib/components/custom/Spinner.svelte";
     import {
-        ArrowLeftIcon,
         ArrowRightIcon,
         CircleCheckIcon,
         MessagesSquareIcon,
         ShieldCheckIcon,
+        UserIcon,
     } from "@lucide/svelte";
     import { goto } from "$app/navigation";
-    import { DateTime } from "luxon";
 
     let userType = $state<"student" | "staff" | "guest">("student");
     let showOtpSheet = $state(false);
@@ -26,25 +25,32 @@
     let registeredUserId = $state("");
     let passwordHint = $state<string | null>(null);
 
-    function getFoodGreet(): string {
-        const currentHour = DateTime.now().setZone("Asia/Kolkata").hour;
-
-        if (currentHour >= 5 && currentHour < 11) return "Breakfast plans,";
-        if (currentHour >= 11 && currentHour < 15) return "Lunch plans,";
-        if (currentHour >= 15 && currentHour < 19) return "Evening snacks,";
-        return "Dinner plans,";
-    }
-
-    const foodGreet = getFoodGreet();
-
     const otpLength = $derived(userType === "guest" ? 4 : 6);
 
-    const accountCopy = $derived.by(() => {
+    const identifierField = $derived.by(() => {
         if (userType === "staff")
-            return "Use the ID issued to you by the college.";
+            return {
+                id: "staff-id",
+                label: "Faculty / Staff ID",
+                placeholder: "Staff ID · e.g. RDR028",
+                hint: "Use the ID issued to you by the college.",
+                uppercase: true,
+            };
         if (userType === "guest")
-            return "Tell us your name to create a guest account.";
-        return "Use the department number on your student ID.";
+            return {
+                id: "guest-name",
+                label: "Full name",
+                placeholder: "Full name",
+                hint: "Tell us your name to create a guest account.",
+                uppercase: false,
+            };
+        return {
+            id: "dept-no",
+            label: "Department number",
+            placeholder: "Department no. · e.g. 25-PCS-018",
+            hint: "Use the department number on your student ID.",
+            uppercase: true,
+        };
     });
 
     function selectUserType(value: "student" | "staff" | "guest") {
@@ -182,238 +188,128 @@
     />
 </svelte:head>
 
-<main
-    class="min-h-screen bg-canvas lg:grid lg:grid-cols-[minmax(480px,0.95fr)_minmax(0,1.05fr)]"
->
-    <section
-        class="flex min-h-screen items-center justify-center px-5 py-[max(2rem,var(--safe-area-inset-top))] sm:px-10 lg:px-12"
+<AuthShell>
+    <div class="mt-5 text-center">
+        <h1 class="text-[1.65rem] font-bold tracking-[-0.03em] text-ink">
+            Create account
+        </h1>
+        <p class="mt-1 text-[13px] font-medium text-ink-muted">
+            Verify your number, and you're in
+        </p>
+    </div>
+
+    <div class="mt-6">
+        <RegistrationSwitch value={userType} onChange={selectUserType} />
+    </div>
+
+    <form
+        class="mt-4 flex flex-col gap-4"
+        onsubmit={(event) => {
+            event.preventDefault();
+            void handleRegister();
+        }}
     >
-        <div class="w-full max-w-md py-4 lg:py-10">
-            <div class="mb-9 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <img
-                        src={LoyolaCollegeLogo}
-                        alt="Loyola College"
-                        class="h-11 w-auto object-contain"
-                    />
-                    <div class="h-7 w-px bg-line-strong"></div>
-                    <span class="text-sm font-bold tracking-tight text-primary"
-                        >Eat Right</span
-                    >
-                </div>
-                <a
-                    href="/login"
-                    class="flex h-10 items-center gap-2 rounded-circle border border-line bg-surface px-3.5 text-xs font-semibold text-ink-muted transition-colors hover:text-primary lg:hidden"
-                >
-                    <ArrowLeftIcon size="15" /> Sign in
-                </a>
-            </div>
-
-            <div class="mb-7">
-                <p class="section-label mb-3">Get started</p>
-                <h1
-                    class="text-[2rem] font-bold leading-tight tracking-[-0.035em] text-ink sm:text-4xl"
-                >
-                    Create your account
-                </h1>
-                <p class="mt-2.5 text-[15px] leading-6 text-ink-muted">
-                    Choose how you’re joining, then verify your mobile number.
-                </p>
-            </div>
-
-            <RegistrationSwitch value={userType} onChange={selectUserType} />
-
-            <form
-                class="mt-7 flex flex-col gap-5"
-                onsubmit={(event) => {
-                    event.preventDefault();
-                    void handleRegister();
-                }}
-            >
-                <div class="flex flex-col gap-2">
-                    {#if userType === "guest"}
-                        <label
-                            for="guest-name"
-                            class="pl-1 text-sm font-semibold text-ink"
-                            >Full name</label
-                        >
-                        <input
-                            type="text"
-                            placeholder="e.g. Ricky Donald"
-                            id="guest-name"
-                            autocomplete="name"
-                            bind:value={identifier}
-                            disabled={isSubmitting}
-                            required
-                            class="field-input h-14"
-                        />
-                    {:else if userType === "staff"}
-                        <label
-                            for="staff-id"
-                            class="pl-1 text-sm font-semibold text-ink"
-                            >Faculty / Staff ID</label
-                        >
-                        <input
-                            type="text"
-                            placeholder="e.g. RDR028"
-                            id="staff-id"
-                            autocapitalize="characters"
-                            bind:value={identifier}
-                            disabled={isSubmitting}
-                            required
-                            class="field-input h-14 uppercase"
-                        />
-                    {:else}
-                        <label
-                            for="dept-no"
-                            class="pl-1 text-sm font-semibold text-ink"
-                            >Department number</label
-                        >
-                        <input
-                            type="text"
-                            placeholder="e.g. 25-PCS-018"
-                            id="dept-no"
-                            autocapitalize="characters"
-                            bind:value={identifier}
-                            disabled={isSubmitting}
-                            required
-                            class="field-input h-14 uppercase"
-                        />
-                    {/if}
-                    <p class="pl-1 text-xs leading-5 text-ink-faint">
-                        {accountCopy}
-                    </p>
-                </div>
-
-                <div class="flex flex-col gap-2">
-                    <label
-                        for="mobile"
-                        class="pl-1 text-sm font-semibold text-ink"
-                        >Mobile number</label
-                    >
-                    <div class="relative">
-                        <span
-                            class="absolute inset-y-0 left-4 flex items-center border-r border-line pr-3 text-sm font-semibold text-ink-muted"
-                            >+91</span
-                        >
-                        <input
-                            type="tel"
-                            inputmode="numeric"
-                            autocomplete="tel-national"
-                            placeholder="98765 43210"
-                            id="mobile"
-                            bind:value={mobileNumber}
-                            disabled={isSubmitting}
-                            minlength="10"
-                            maxlength="10"
-                            required
-                            class="field-input h-14 pl-[4.5rem] tabular-nums"
-                        />
-                    </div>
-                    <p
-                        class="flex items-center gap-1.5 pl-1 text-xs leading-5 text-ink-faint"
-                    >
-                        <ShieldCheckIcon size="14" strokeWidth="1.8" /> We’ll send
-                        a one-time verification code.
-                    </p>
-                </div>
-
-                {#if error}
-                    <p
-                        class="rounded-2xl border border-danger/15 bg-danger-soft px-4 py-3 text-sm leading-5 text-danger"
-                        role="alert"
-                    >
-                        {error}
-                    </p>
-                {/if}
-
-                <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    class="btn-primary mt-1 h-14 w-full px-5 text-sm"
-                >
-                    {#if isSubmitting}
-                        <Spinner />
-                    {/if}
-                    <span>{isSubmitting ? "Sending code…" : "Continue"}</span>
-                    {#if !isSubmitting}
-                        <ArrowRightIcon size="18" strokeWidth="2" />
-                    {/if}
-                </button>
-            </form>
-        </div>
-    </section>
-
-    <section
-        class="relative hidden min-h-screen overflow-hidden bg-primary px-12 py-10 text-white lg:flex lg:flex-col lg:justify-between xl:px-16 xl:py-14"
-    >
+        <!-- fused field group -->
         <div
-            class="absolute inset-0 bg-[radial-gradient(circle_at_85%_10%,rgba(255,255,255,0.13),transparent_30%),radial-gradient(circle_at_10%_90%,rgba(255,255,255,0.08),transparent_32%)]"
-        ></div>
-        <div
-            class="absolute -left-28 top-1/4 h-72 w-72 rounded-circle border border-white/10"
-        ></div>
-        <div
-            class="absolute -left-16 top-1/3 h-44 w-44 rounded-circle border border-white/10"
-        ></div>
-
-        <a
-            href="/login"
-            class="relative flex w-fit items-center gap-2 rounded-circle border border-white/15 bg-white/8 px-4 py-2 text-xs font-semibold text-white/75 transition-colors hover:bg-white/12 hover:text-white"
+            class="overflow-hidden rounded-2xl border border-line bg-canvas transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15"
         >
-            <ArrowLeftIcon size="15" /> Back to sign in
-        </a>
+            <div class="relative">
+                <label for={identifierField.id} class="sr-only"
+                    >{identifierField.label}</label
+                >
+                <span
+                    class="pointer-events-none absolute inset-y-0 left-4.5 flex items-center text-ink-faint"
+                >
+                    <UserIcon size="18" strokeWidth="1.8" />
+                </span>
+                {#key identifierField.id}
+                    <input
+                        type="text"
+                        placeholder={identifierField.placeholder}
+                        id={identifierField.id}
+                        autocomplete={userType === "guest" ? "name" : "off"}
+                        autocapitalize={identifierField.uppercase
+                            ? "characters"
+                            : "words"}
+                        bind:value={identifier}
+                        disabled={isSubmitting}
+                        required
+                        class="h-14 w-full bg-transparent pl-12.5 pr-4 text-base font-medium text-ink outline-none placeholder:text-sm placeholder:normal-case placeholder:text-ink-faint {identifierField.uppercase
+                            ? 'uppercase'
+                            : ''}"
+                    />
+                {/key}
+            </div>
 
-        <div class="relative max-w-lg pb-6">
-            <p
-                class="mb-5 text-xs font-bold uppercase tracking-[0.18em] text-white/55"
-            >
-                One account, less waiting
-            </p>
-            <h2
-                class="text-5xl font-bold leading-[1.06] tracking-[-0.04em] xl:text-6xl"
-            >
-                {foodGreet}<br />sorted.
-            </h2>
-            <!-- <div class="mt-9 grid max-w-md gap-3">
-                <div
-                    class="flex items-center gap-4 rounded-2xl border border-white/12 bg-white/7 p-4"
+            <div class="mx-4.5 h-px bg-line"></div>
+
+            <div class="relative">
+                <label for="mobile" class="sr-only">Mobile number</label>
+                <span
+                    class="pointer-events-none absolute inset-y-0 left-4.5 flex items-center text-sm font-semibold text-ink-muted"
+                    >+91</span
                 >
-                    <div
-                        class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10"
-                    >
-                        <SmartphoneIcon size="19" />
-                    </div>
-                    <div>
-                        <p class="text-sm font-semibold">Order from anywhere</p>
-                        <p class="mt-0.5 text-xs text-white/55">
-                            Pick up when it’s ready.
-                        </p>
-                    </div>
-                </div>
-                <div
-                    class="flex items-center gap-4 rounded-2xl border border-white/12 bg-white/7 p-4"
-                >
-                    <div
-                        class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10"
-                    >
-                        <BadgeCheckIcon size="19" />
-                    </div>
-                    <div>
-                        <p class="text-sm font-semibold">Built for campus</p>
-                        <p class="mt-0.5 text-xs text-white/55">
-                            Students, staff, faculty, and guests.
-                        </p>
-                    </div>
-                </div>
-            </div> -->
+                <input
+                    type="tel"
+                    inputmode="numeric"
+                    autocomplete="tel-national"
+                    placeholder="Mobile number"
+                    id="mobile"
+                    bind:value={mobileNumber}
+                    disabled={isSubmitting}
+                    minlength="10"
+                    maxlength="10"
+                    required
+                    class="h-14 w-full bg-transparent pl-13 pr-4 text-base font-medium tabular-nums text-ink outline-none placeholder:text-sm placeholder:text-ink-faint"
+                />
+            </div>
         </div>
 
-        <p class="relative text-xs leading-5 text-white/45">
+        <p
+            class="flex items-center justify-center gap-1.5 text-xs leading-5 text-ink-faint"
+        >
+            <ShieldCheckIcon size="14" strokeWidth="1.8" class="shrink-0" />
+            {identifierField.hint} We'll text you a code.
+        </p>
+
+        {#if error}
+            <p
+                class="rounded-2xl border border-danger/15 bg-danger-soft px-4 py-3 text-sm leading-5 text-danger"
+                role="alert"
+            >
+                {error}
+            </p>
+        {/if}
+
+        <button
+            type="submit"
+            disabled={isSubmitting}
+            class="btn-primary h-14 w-full px-5 text-sm bg-[linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0)_55%)] shadow-[0_10px_24px_-10px_rgba(19,126,193,0.65)]"
+        >
+            {#if isSubmitting}
+                <Spinner />
+            {/if}
+            <span>{isSubmitting ? "Sending code…" : "Continue"}</span>
+            {#if !isSubmitting}
+                <ArrowRightIcon size="18" strokeWidth="2" />
+            {/if}
+        </button>
+    </form>
+
+    {#snippet footer()}
+        <p class="text-sm text-white/60">
+            Already have an account?
+            <a
+                href="/login"
+                class="font-bold text-white underline-offset-4 hover:underline"
+                >Sign in</a
+            >
+        </p>
+        <p class="mx-auto mt-3 max-w-xs text-xs leading-5 text-white/40">
             By continuing, you agree to use Eat Right responsibly on campus.
         </p>
-    </section>
-</main>
+    {/snippet}
+</AuthShell>
 
 {#if showOtpSheet}
     <div
