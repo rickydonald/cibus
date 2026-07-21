@@ -179,15 +179,19 @@
                         ></div>
 
                         <div class="relative z-10">
-                            <div class="flex items-start justify-between">
+                            <div class="flex items-center justify-center">
                                 <div class="min-w-0">
                                     <p
-                                        class="text-[10px] uppercase tracking-[0.16em] text-white/60 font-bold"
+                                        class="text-[10px] uppercase tracking-[0.16em] text-white/60 font-bold text-center"
                                     >
-                                        Wallet Balance
+                                        {#if walletOwnerName && walletOwnerName.length < 9}
+                                            {walletOwnerName}'s Wallet Balance
+                                        {:else}
+                                            Wallet Balance
+                                        {/if}
                                     </p>
 
-                                    <div class="mt-2 h-12 flex items-center">
+                                    <div class="mt-2 h-12 flex items-center justify-center">
                                         {#if accountDetails}
                                             <h2
                                                 class="flex items-baseline text-5xl font-bold tabular-nums"
@@ -215,19 +219,14 @@
                                         {/if}
                                     </div>
                                 </div>
-
-                                <div
-                                    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-circle bg-white/10 border border-white/15 backdrop-blur-sm"
-                                >
-                                    <Wallet02Icon width="20" class="text-white/90" />
-                                </div>
                             </div>
 
                             <div
                                 class="mt-6 border-t border-white/15 pt-4 flex items-center gap-3"
                             >
                                 <button
-                                    onclick={() => goto("/view/wallet?action=add-money")}
+                                    onclick={() =>
+                                        goto("/view/wallet?action=add-money")}
                                     class="flex-1 h-11 rounded-circle bg-white px-3 text-sm text-primary flex items-center justify-center gap-2 font-bold hover:bg-primary-soft active:scale-98 transition whitespace-nowrap"
                                     aria-label="Add Money to Wallet"
                                 >

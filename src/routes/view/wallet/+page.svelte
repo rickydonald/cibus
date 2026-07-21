@@ -337,7 +337,7 @@
                 <p
                     class="text-[10px] font-bold uppercase tracking-[0.24em] text-white/45"
                 >
-                    Total Balance
+                    Wallet Balance
                 </p>
 
                 {#if isLoading}
