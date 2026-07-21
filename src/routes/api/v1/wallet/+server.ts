@@ -4,6 +4,10 @@ import { clearEatRightDataCache, getAccountSummary, getWalletTransactions } from
 import { DEV_MODE } from "$lib/server/dev";
 import { FOODCOURT_API_BASE_URL, foodcourtApiRequest, FoodcourtApiError } from "$lib/server/foodcourt-api";
 import { walletLimitMessage, wouldExceedWalletLimit } from "$lib/wallet";
+import {
+  paginateWalletTransactions,
+  parseWalletTransactionPage,
+} from "$lib/wallet-pagination";
 
 const DEV_TRANSACTIONS = [
   { date: "2026-06-22 10:30 AM", amount: 200, balance: 250, sort_time: 1719045000, type: "CREDIT", remarks: "Online Recharge" },
@@ -12,8 +16,20 @@ const DEV_TRANSACTIONS = [
 ];
 
 export async function GET(event) {
+  const page = parseWalletTransactionPage(event.url.searchParams.get("page"));
+
   if (DEV_MODE) {
-    return json({ transactions: DEV_TRANSACTIONS, walletBalance: "250.00" });
+    const transactionPage = paginateWalletTransactions(DEV_TRANSACTIONS, page);
+    return json({
+      transactions: transactionPage.transactions,
+      walletBalance: "250.00",
+      pagination: {
+        page: transactionPage.page,
+        pageSize: transactionPage.pageSize,
+        hasMore: transactionPage.hasMore,
+        total: transactionPage.total,
+      },
+    });
   }
 
   const session = await resolveEatRightSessionFromEvent(event);
@@ -26,7 +42,17 @@ export async function GET(event) {
       getWalletTransactions(session.accessToken),
       getAccountSummary(session),
     ]);
-    return json({ transactions, walletBalance: account.walletBalance });
+    const transactionPage = paginateWalletTransactions(transactions, page);
+    return json({
+      transactions: transactionPage.transactions,
+      walletBalance: account.walletBalance,
+      pagination: {
+        page: transactionPage.page,
+        pageSize: transactionPage.pageSize,
+        hasMore: transactionPage.hasMore,
+        total: transactionPage.total,
+      },
+    });
   } catch (error) {
     const status = error instanceof FoodcourtApiError ? error.status : 502;
     const message = error instanceof FoodcourtApiError ? error.message : "Failed to load wallet transactions";

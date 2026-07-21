@@ -38,11 +38,21 @@
         remarks: string;
     };
 
+    type WalletPagination = {
+        page: number;
+        pageSize: number;
+        hasMore: boolean;
+        total: number;
+    };
+
     let walletBalance = $state<string | null>(null);
     let profile = $state<CachedEatRightProfile | null>(null);
     let transactions = $state<WalletTransaction[]>([]);
     let amount = $state("");
     let isLoading = $state(true);
+    let isLoadingMore = $state(false);
+    let transactionPage = $state(1);
+    let hasMoreTransactions = $state(false);
     let isSubmitting = $state(false);
     let error = $state("");
     let message = $state("");
@@ -136,7 +146,7 @@
         try {
             const [accountResponse, walletResponse] = await Promise.all([
                 fetchEatRight("/api/v1/account/show"),
-                fetchEatRight("/api/v1/wallet"),
+                fetchEatRight("/api/v1/wallet?page=1"),
             ]);
 
             const accountData = await accountResponse.json();
@@ -170,15 +180,72 @@
                 cacheEatRightProfile(accountData.name, accountData.userid) ??
                 profile;
             transactions = Array.isArray(walletData.transactions)
-                ? walletData.transactions.sort(
-                      (a: any, b: any) =>
-                          Number(b.sort_time ?? 0) - Number(a.sort_time ?? 0),
-                  )
+                ? walletData.transactions
                 : [];
+            const pagination = walletData.pagination as
+                | Partial<WalletPagination>
+                | undefined;
+            transactionPage = Number(pagination?.page) || 1;
+            hasMoreTransactions = pagination?.hasMore === true;
         } catch {
             error = "Unable to load wallet.";
         } finally {
             isLoading = false;
+        }
+    }
+
+    function transactionKey(transaction: WalletTransaction): string {
+        return [
+            transaction.sort_time,
+            transaction.date,
+            transaction.amount,
+            transaction.balance,
+            transaction.type,
+            transaction.remarks,
+        ].join("|");
+    }
+
+    async function loadMoreTransactions() {
+        if (isLoadingMore || !hasMoreTransactions) return;
+
+        isLoadingMore = true;
+        try {
+            const response = await fetchEatRight(
+                `/api/v1/wallet?page=${transactionPage + 1}`,
+            );
+            const data = await response.json();
+
+            if (!response.ok || data.error) {
+                if (await redirectIfEatRightConnectRequired(data.errorCode)) {
+                    return;
+                }
+                throw new Error(data.error ?? "Unable to load more activity");
+            }
+
+            const nextTransactions: WalletTransaction[] = Array.isArray(
+                data.transactions,
+            )
+                ? data.transactions
+                : [];
+            const existingKeys = new Set(transactions.map(transactionKey));
+            transactions = [
+                ...transactions,
+                ...nextTransactions.filter(
+                    (transaction) =>
+                        !existingKeys.has(transactionKey(transaction)),
+                ),
+            ];
+
+            const pagination = data.pagination as
+                | Partial<WalletPagination>
+                | undefined;
+            transactionPage =
+                Number(pagination?.page) || transactionPage + 1;
+            hasMoreTransactions = pagination?.hasMore === true;
+        } catch {
+            toast.error("Unable to load more wallet activity.");
+        } finally {
+            isLoadingMore = false;
         }
     }
 
@@ -582,6 +649,22 @@
                             </div>
                         </article>
                     {/each}
+
+                    {#if hasMoreTransactions}
+                        <div class="border-t border-line/70 p-2">
+                            <button
+                                type="button"
+                                class="flex h-10 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-primary transition-colors hover:bg-primary-soft disabled:cursor-wait disabled:opacity-60"
+                                onclick={loadMoreTransactions}
+                                disabled={isLoadingMore}
+                            >
+                                {#if isLoadingMore}
+                                    <Spinner size={16} />
+                                {/if}
+                                Show more
+                            </button>
+                        </div>
+                    {/if}
                 </div>
             {/if}
         </section>

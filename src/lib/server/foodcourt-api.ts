@@ -1,7 +1,7 @@
 import { env } from "$env/dynamic/private";
 
 export const FOODCOURT_API_BASE_URL = (
-    env.FOODCOURT_API_BASE_URL ?? "http://10.2.154.27:8080/foodcourtapi"
+   "https://eatright.loyolacollege.edu/foodcourtapi"
 ).replace(/\/$/, "");
 
 export class FoodcourtApiError extends Error {

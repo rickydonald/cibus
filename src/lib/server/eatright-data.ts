@@ -49,6 +49,7 @@ type OutletResponse = {
 
 const accountCache = new TtlCache<AccountSummary>(20 * 1000);
 const menuCache = new TtlCache<MenuItem[]>(20 * 1000);
+const walletTransactionsCache = new TtlCache<WalletTransaction[]>(20 * 1000);
 
 function sessionKey(accessToken: string) {
   return hashCacheKey(accessToken);
@@ -78,15 +79,17 @@ export async function getAccountSummary(auth: EatRightAuthSession): Promise<Acco
 }
 
 export async function getWalletTransactions(accessToken: string): Promise<WalletTransaction[]> {
-  const payload = await foodcourtApiRequest<unknown>("/ajax/api/getUserWalletTransactions.jsp", {
-    accessToken,
+  return walletTransactionsCache.getOrSet(sessionKey(accessToken), async () => {
+    const payload = await foodcourtApiRequest<unknown>("/ajax/api/getUserWalletTransactions.jsp", {
+      accessToken,
+    });
+    if (Array.isArray(payload)) return payload as WalletTransaction[];
+    if (payload && typeof payload === "object") {
+      const transactions = (payload as Record<string, unknown>).transactions;
+      if (Array.isArray(transactions)) return transactions as WalletTransaction[];
+    }
+    return [];
   });
-  if (Array.isArray(payload)) return payload as WalletTransaction[];
-  if (payload && typeof payload === "object") {
-    const transactions = (payload as Record<string, unknown>).transactions;
-    if (Array.isArray(transactions)) return transactions as WalletTransaction[];
-  }
-  return [];
 }
 
 export async function getMenuItems(input: {
@@ -112,4 +115,5 @@ export function clearEatRightDataCache(accessToken: string) {
   const key = sessionKey(accessToken);
   accountCache.delete(key);
   menuCache.deletePrefix(`${key}:`);
+  walletTransactionsCache.delete(key);
 }
