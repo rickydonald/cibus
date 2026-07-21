@@ -33,7 +33,6 @@
         page.url.searchParams.get("order_id") ??
         "";
     const gatewayStatus = page.url.searchParams.get("status") ?? "";
-    const amount = page.url.searchParams.get("amount") ?? "";
     const returnPath =
         page.url.searchParams.get("return") === "/view/cart"
             ? "/view/cart"
@@ -41,6 +40,7 @@
 
     let verifyState = $state<VerifyState>("verifying");
     let balance = $state<string | null>(null);
+    let verifiedAmount = $state<string | null>(null);
     let message = $state<string | null>(null);
 
     function continuationUrl() {
@@ -48,7 +48,6 @@
             payment: "success",
             order_id: orderId,
         });
-        if (amount) params.set("amount", amount);
         return `${returnPath}?${params.toString()}`;
     }
 
@@ -103,6 +102,10 @@
             if (typeof data.balance === "number") {
                 balance = data.balance.toFixed(2);
             }
+            const transactionAmount = Number(data.transaction?.amount);
+            verifiedAmount = Number.isFinite(transactionAmount)
+                ? transactionAmount.toFixed(2)
+                : null;
 
             if (data.status === "SUCCESS") {
                 verifyState = "success";
@@ -160,7 +163,7 @@
                 Payment successful
             </h1>
             <p class="mt-1 text-xs text-ink-muted">
-                {#if amount}₹{amount} has been added to your wallet.{:else}Your
+                {#if verifiedAmount}₹{verifiedAmount} has been added to your wallet.{:else}Your
                     wallet has been recharged.{/if}
             </p>
             <p class="mt-1 text-[11px] text-ink-faint">

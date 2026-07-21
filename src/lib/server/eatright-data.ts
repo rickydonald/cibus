@@ -55,6 +55,11 @@ function sessionKey(accessToken: string) {
   return hashCacheKey(accessToken);
 }
 
+/**
+ * Method to get account summary of an user
+ * @param auth 
+ * @returns 
+ */
 export async function getAccountSummary(auth: EatRightAuthSession): Promise<AccountSummary> {
   const { accessToken, name, userid } = auth;
   return accountCache.getOrSet(sessionKey(accessToken), async () => {
@@ -78,6 +83,11 @@ export async function getAccountSummary(auth: EatRightAuthSession): Promise<Acco
   });
 }
 
+/**
+ * Method to get Wallet Transactions
+ * @param accessToken 
+ * @returns 
+ */
 export async function getWalletTransactions(accessToken: string): Promise<WalletTransaction[]> {
   return walletTransactionsCache.getOrSet(sessionKey(accessToken), async () => {
     const payload = await foodcourtApiRequest<unknown>("/ajax/api/getUserWalletTransactions.jsp", {
@@ -92,6 +102,11 @@ export async function getWalletTransactions(accessToken: string): Promise<Wallet
   });
 }
 
+/**
+ * Method to get Menu Items
+ * @param input 
+ * @returns 
+ */
 export async function getMenuItems(input: {
   accessToken: string;
   outletId: number | string;
@@ -111,6 +126,10 @@ export async function getMenuItems(input: {
   });
 }
 
+/**
+ * Method to Clear Eat Right Data Cache
+ * @param accessToken 
+ */
 export function clearEatRightDataCache(accessToken: string) {
   const key = sessionKey(accessToken);
   accountCache.delete(key);

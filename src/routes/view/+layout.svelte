@@ -3,8 +3,14 @@
     import { isHubRoute } from "$lib/nav";
     import BottomNav from "$lib/components/custom/BottomNav.svelte";
     import SideNav from "$lib/components/custom/SideNav.svelte";
+    import { cart } from "$lib/stores/cart.svelte";
 
-    let { children }: { children: import("svelte").Snippet } = $props();
+    let { data, children }: {
+        data: { userid: string };
+        children: import("svelte").Snippet;
+    } = $props();
+
+    $effect(() => cart.scopeToUser(data.userid));
 
     const showBottomNav = $derived(isHubRoute(page.url.pathname));
 </script>

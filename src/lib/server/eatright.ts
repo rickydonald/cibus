@@ -4,8 +4,11 @@ import {
     verifyEatRightJwt,
 } from "./eatright-jwt";
 
-const SESSION_COOKIE_NAME = "RioX5EatRightSession";
+const SESSION_COOKIE_NAME = "KairosX5EatRightSession";
 
+/**
+ * Eat Right Session Type
+ */
 export type EatRightSession = {
     access_token: string;
     success: boolean;
@@ -13,6 +16,9 @@ export type EatRightSession = {
     expires_in: number;
 };
 
+/**
+ * Eat Right Identity Type
+ */
 export type EatRightIdentity = {
     name: string;
     userid: string;
@@ -37,6 +43,12 @@ export type EatRightSessionResolution =
     | ({ ok: true; reauthenticated: false } & EatRightAuthSession)
     | { ok: false; response: ReturnType<typeof json> };
 
+
+/**
+ * Method to verify the given Eat Right Access Token
+ * @param accessToken 
+ * @returns 
+ */
 export async function verifyEatRightAccessToken(
     accessToken: string,
 ): Promise<EatRightAuthSession | null> {
@@ -44,18 +56,26 @@ export async function verifyEatRightAccessToken(
     return identity ? { accessToken, ...identity } : null;
 }
 
+/**
+ * Method to manage session cookie options
+ * @param url 
+ * @returns 
+ */
 function sessionCookieOptions(url: URL) {
     return {
         path: "/",
         httpOnly: true,
         sameSite: "lax" as const,
-        // SvelteKit defaults cookies to Secure for every hostname except localhost.
-        // The campus deployment is also accessed directly over HTTP by private IP,
-        // where browsers discard Secure cookies.
         secure: false,
     };
 }
 
+/**
+ * Method to set the Eat Right Session Cookie
+ * @param cookies 
+ * @param session 
+ * @param url 
+ */
 export function setEatRightSessionCookie(
     cookies: Cookies,
     session: EatRightAuthSession,
@@ -68,10 +88,20 @@ export function setEatRightSessionCookie(
     });
 }
 
+/**
+ * Method to clear/remove Eat Right Session Cookie
+ * @param cookies 
+ * @param url 
+ */
 export function clearEatRightSessionCookie(cookies: Cookies, url: URL) {
     cookies.delete(SESSION_COOKIE_NAME, sessionCookieOptions(url));
 }
 
+/**
+ * Method to authenticate Eat Right Request
+ * @param event 
+ * @returns 
+ */
 export async function authenticateEatRightRequest(
     event: RequestEvent,
 ): Promise<EatRightAuthState> {
@@ -106,6 +136,11 @@ export async function authenticateEatRightRequest(
     }
 }
 
+/**
+ * Method to Resolve Eat Right Session for local events
+ * @param event 
+ * @returns 
+ */
 export function resolveEatRightSessionFromEvent(
     event: RequestEvent,
 ): EatRightSessionResolution {

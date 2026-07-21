@@ -11,7 +11,9 @@ export type CartItem = {
   available_qty: number;
 };
 
-const CART_STORAGE_KEY = "kairos:eatright:cart";
+const LEGACY_CART_STORAGE_KEY = "kairos:eatright:cart";
+const LEGACY_PENDING_CHECKOUT_KEY = "eatright:pending_checkout_recharge";
+const CART_STORAGE_PREFIX = "kairos:eatright:cart:";
 export const MAX_QTY = 10;
 
 function isCartItem(value: unknown): value is CartItem {
@@ -36,22 +38,43 @@ function isCartItem(value: unknown): value is CartItem {
  */
 class CartStore {
   items = $state<CartItem[]>([]);
+  private scopedUserId: string | null = null;
 
-  constructor() {
-    if (browser) {
-      this.load();
-    }
+  private storageKey() {
+    return this.scopedUserId
+      ? `${CART_STORAGE_PREFIX}${encodeURIComponent(this.scopedUserId)}`
+      : null;
+  }
+
+  scopeToUser(userId: string) {
+    if (!browser) return;
+    const normalized = userId.trim().toUpperCase();
+    if (!normalized || normalized === this.scopedUserId) return;
+
+    this.scopedUserId = normalized;
+    this.items = [];
+    // Never assign the old shared cart to whichever account signs in next.
+    localStorage.removeItem(LEGACY_CART_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_PENDING_CHECKOUT_KEY);
+    this.load();
+  }
+
+  get userId(): string | null {
+    return this.scopedUserId;
   }
 
   private persist() {
     if (!browser) return;
-
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(this.items));
+    const key = this.storageKey();
+    if (!key) return;
+    localStorage.setItem(key, JSON.stringify(this.items));
   }
 
   private load() {
     try {
-      const raw = localStorage.getItem(CART_STORAGE_KEY);
+      const key = this.storageKey();
+      if (!key) return;
+      const raw = localStorage.getItem(key);
       if (!raw) return;
 
       const parsed: unknown = JSON.parse(raw);
@@ -60,7 +83,8 @@ class CartStore {
 
       this.items = parsed.filter(isCartItem);
     } catch {
-      localStorage.removeItem(CART_STORAGE_KEY);
+      const key = this.storageKey();
+      if (key) localStorage.removeItem(key);
     }
   }
 
@@ -165,6 +189,17 @@ class CartStore {
   clear() {
     this.items = [];
     this.persist();
+  }
+
+  disconnect() {
+    if (browser) {
+      const key = this.storageKey();
+      if (key) localStorage.removeItem(key);
+      localStorage.removeItem(LEGACY_CART_STORAGE_KEY);
+      localStorage.removeItem(LEGACY_PENDING_CHECKOUT_KEY);
+    }
+    this.items = [];
+    this.scopedUserId = null;
   }
 
   /**

@@ -8,5 +8,5 @@ export const load: LayoutServerLoad = ({ locals, url }) => {
         redirect(307, loginUrl.toString());
     }
 
-    return {};
+    return { userid: locals.eatRightAuth.userid };
 };

@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 type CacheEntry<T> = {
   expiresAt: number;
   value?: T;
@@ -6,8 +8,11 @@ type CacheEntry<T> = {
 
 export class TtlCache<T> {
   private entries = new Map<string, CacheEntry<T>>();
+  private ttlMs: number;
 
-  constructor(private ttlMs: number) {}
+  constructor(ttlMs: number) {
+    this.ttlMs = ttlMs;
+  }
 
   get(key: string): T | undefined {
     const entry = this.entries.get(key);
@@ -69,11 +74,5 @@ export class TtlCache<T> {
 }
 
 export function hashCacheKey(value: string): string {
-  let hash = 0;
-
-  for (let index = 0; index < value.length; index += 1) {
-    hash = (hash * 31 + value.charCodeAt(index)) | 0;
-  }
-
-  return Math.abs(hash).toString(36);
+  return createHash("sha256").update(value).digest("base64url");
 }

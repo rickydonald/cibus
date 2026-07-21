@@ -162,14 +162,6 @@
     });
 </script>
 
-<svelte:head>
-    <title>Reset password · Eat Right</title>
-    <meta
-        name="description"
-        content="Reset your Loyola College Eat Right password with an OTP."
-    />
-</svelte:head>
-
 <AuthShell>
     <div class="mt-5 text-center">
         <h1 class="text-[1.65rem] font-bold tracking-[-0.03em] text-ink">

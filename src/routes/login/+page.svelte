@@ -64,14 +64,6 @@
     }
 </script>
 
-<svelte:head>
-    <title>Sign in · Eat Right</title>
-    <meta
-        name="description"
-        content="Sign in to your Loyola College Eat Right account."
-    />
-</svelte:head>
-
 <AuthShell>
     <div class="mt-5 text-center">
         <h1 class="text-[1.65rem] font-bold tracking-[-0.03em] text-ink">

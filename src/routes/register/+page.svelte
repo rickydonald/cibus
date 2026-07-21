@@ -180,14 +180,6 @@
     });
 </script>
 
-<svelte:head>
-    <title>Create account · Eat Right</title>
-    <meta
-        name="description"
-        content="Create your Loyola College Eat Right account."
-    />
-</svelte:head>
-
 <AuthShell>
     <div class="mt-5 text-center">
         <h1 class="text-[1.65rem] font-bold tracking-[-0.03em] text-ink">

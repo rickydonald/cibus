@@ -71,34 +71,36 @@
         ...new Set(
             items
                 .map((item) =>
-                    normalizeMenuCategory(
-                        item.categoryname,
-                        item.outletname,
-                    ),
+                    normalizeMenuCategory(item.categoryname, item.outletname),
                 )
                 .filter((category) => category && category !== "All"),
         ),
     ]);
 
     const filteredItems = $derived(
-        items.filter((item) => {
-            const normalizedName = normalizeMenuItemName(item.itemname);
-            const normalizedCategory = normalizeMenuCategory(
-                item.categoryname,
-                item.outletname,
-            );
-            const normalizedQuery = search.trim().toLowerCase();
+        items
+            .filter((item) => {
+                const normalizedName = normalizeMenuItemName(item.itemname);
+                const normalizedCategory = normalizeMenuCategory(
+                    item.categoryname,
+                    item.outletname,
+                );
+                const normalizedQuery = search.trim().toLowerCase();
 
-            const matchesSearch = `${normalizedName} ${normalizedCategory}`
-                .toLowerCase()
-                .includes(normalizedQuery);
+                const matchesSearch = `${normalizedName} ${normalizedCategory}`
+                    .toLowerCase()
+                    .includes(normalizedQuery);
 
-            const matchesCategory =
-                selectedCategory === "All" ||
-                normalizedCategory === selectedCategory;
+                const matchesCategory =
+                    selectedCategory === "All" ||
+                    normalizedCategory === selectedCategory;
 
-            return matchesSearch && matchesCategory;
-        }),
+                return matchesSearch && matchesCategory;
+            })
+            .sort(
+                (a, b) =>
+                    Number(b.available_qty > 0) - Number(a.available_qty > 0),
+            ),
     );
 
     function handleWindowScroll() {
@@ -212,9 +214,13 @@
                                 <div
                                     class="h-3 bg-canvas rounded-circle w-1/3"
                                 ></div>
-                                <div class="h-5 bg-canvas rounded-lg w-4/5"></div>
+                                <div
+                                    class="h-5 bg-canvas rounded-lg w-4/5"
+                                ></div>
                             </div>
-                            <div class="h-6 w-16 bg-canvas rounded-circle"></div>
+                            <div
+                                class="h-6 w-16 bg-canvas rounded-circle"
+                            ></div>
                         </div>
                         <div
                             class="h-9 w-20 bg-canvas rounded-xl self-end ml-auto"
@@ -246,107 +252,76 @@
                             entry.id === item.id &&
                             entry.outletid === item.outletid,
                     )}
-                    {#if item.available_qty > 0}
-                        <article
-                            class="card overflow-hidden p-4 flex gap-4 items-start transition-all duration-200 hover:border-line-strong"
-                        >
-                            <div class="min-w-0 flex-1">
-                                <div class="flex items-center gap-2">
-                                    <span
-                                        class="max-w-full rounded-circle bg-primary-soft px-2 py-1 text-[10px] font-bold text-primary truncate"
-                                    >
-                                        {normalizeMenuCategory(
-                                            item.categoryname,
-                                            item.outletname,
-                                        )}
-                                    </span>
-                                </div>
-
-                                <h3
-                                    class="mt-2 text-[15px] font-bold tracking-tight text-ink leading-snug"
+                    <article
+                        class={`card overflow-hidden p-4 flex gap-4 items-start transition-all duration-200 hover:border-line-strong ${item.available_qty === 0 ? "opacity-60" : ""}`}
+                    >
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2">
+                                <span
+                                    class="max-w-full rounded-circle bg-primary-soft px-2 py-1 text-[10px] font-bold text-primary truncate"
                                 >
-                                    {normalizeMenuItemName(item.itemname)}
-                                </h3>
-
-                                <div class="flex items-center gap-2 pt-2">
-                                    <div
-                                        class="text-base font-black tracking-tight text-ink tabular-nums"
-                                    >
-                                        ₹{item.amount}
-                                    </div>
-                                    <span
-                                        class="text-[10px] text-line-strong font-medium"
-                                        >•</span
-                                    >
-                                    <span
-                                        class={`text-[10px] font-bold ${item.available_qty <= 5 ? "text-warning" : "text-ink-faint"}`}
-                                    >
-                                        {item.available_qty <= 5
-                                            ? `Only ${item.available_qty} left`
-                                            : `${item.available_qty} available`}
-                                    </span>
-                                </div>
+                                    {normalizeMenuCategory(
+                                        item.categoryname,
+                                        item.outletname,
+                                    )}
+                                </span>
                             </div>
 
-                            <div class="shrink-0 self-center">
-                                {#if cartItem}
-                                    <div
-                                        class="flex items-center gap-2.5 rounded-xl bg-primary p-1 text-white shadow-sm"
-                                    >
-                                        <button
-                                            class="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 text-white transition-all active:scale-90"
-                                            onclick={() =>
-                                                cart.remove(
-                                                    item.id,
-                                                    item.outletid,
-                                                )}
-                                            aria-label="Remove item"
-                                        >
-                                            <MinusIcon
-                                                class="h-3 w-3"
-                                                stroke-width="3"
-                                            />
-                                        </button>
+                            <h3
+                                class="mt-2 text-[15px] font-bold tracking-tight text-ink leading-snug"
+                            >
+                                {normalizeMenuItemName(item.itemname)}
+                            </h3>
 
-                                        <span
-                                            class="font-bold text-xs min-w-[14px] text-center tabular-nums"
-                                        >
-                                            {cartItem.qty}
-                                        </span>
+                            <div class="flex items-center gap-2 pt-2">
+                                <div
+                                    class="text-base font-black tracking-tight text-ink tabular-nums"
+                                >
+                                    ₹{item.amount}
+                                </div>
+                                <span
+                                    class="text-[10px] text-line-strong font-medium"
+                                    >•</span
+                                >
+                                <span
+                                    class={`text-[10px] font-bold ${item.available_qty <= 5 ? "text-warning" : "text-ink-faint"}`}
+                                >
+                                    {#if item.available_qty === 0}
+                                        Sold Out
+                                    {:else if item.available_qty <= 5}
+                                        Only {item.available_qty} left
+                                    {:else}
+                                        {item.available_qty} available
+                                    {/if}
+                                </span>
+                            </div>
+                        </div>
 
-                                        <button
-                                            class="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 text-white transition-all active:scale-90 disabled:opacity-20"
-                                            onclick={() =>
-                                                cart.add({
-                                                    id: item.id,
-                                                    itemname: item.itemname,
-                                                    amount: item.amount,
-                                                    outletid: item.outletid,
-                                                    outletname:
-                                                        item.outletname,
-                                                    shopno: Number(
-                                                        params.shop_no,
-                                                    ),
-                                                    available_qty: Math.min(
-                                                        MAX_QTY,
-                                                        item.available_qty,
-                                                    ),
-                                                })}
-                                            disabled={cartItem.qty >=
-                                                Math.min(
-                                                    MAX_QTY,
-                                                    item.available_qty,
-                                                )}
-                                            aria-label="Add item"
-                                        >
-                                            <PlusIcon
-                                                class="h-3 w-3"
-                                                stroke-width="3"
-                                            />
-                                        </button>
-                                    </div>
-                                {:else}
+                        <div class="shrink-0 self-center">
+                            {#if cartItem}
+                                <div
+                                    class="flex items-center gap-2.5 rounded-xl bg-primary p-1 text-white shadow-sm"
+                                >
                                     <button
+                                        class="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 text-white transition-all active:scale-90"
+                                        onclick={() =>
+                                            cart.remove(item.id, item.outletid)}
+                                        aria-label="Remove item"
+                                    >
+                                        <MinusIcon
+                                            class="h-3 w-3"
+                                            stroke-width="3"
+                                        />
+                                    </button>
+
+                                    <span
+                                        class="font-bold text-xs min-w-[14px] text-center tabular-nums"
+                                    >
+                                        {cartItem.qty}
+                                    </span>
+
+                                    <button
+                                        class="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 text-white transition-all active:scale-90 disabled:opacity-20"
                                         onclick={() =>
                                             cart.add({
                                                 id: item.id,
@@ -360,14 +335,44 @@
                                                     item.available_qty,
                                                 ),
                                             })}
-                                        class="rounded-xl border border-primary/20 bg-primary-soft px-4 py-2 text-xs font-bold text-primary shadow-sm transition-all hover:bg-primary hover:text-white active:scale-[0.96]"
+                                        disabled={cartItem.qty >=
+                                            Math.min(
+                                                MAX_QTY,
+                                                item.available_qty,
+                                            )}
+                                        aria-label="Add item"
                                     >
-                                        Add
+                                        <PlusIcon
+                                            class="h-3 w-3"
+                                            stroke-width="3"
+                                        />
                                     </button>
-                                {/if}
-                            </div>
-                        </article>
-                    {/if}
+                                </div>
+                            {:else}
+                                <button
+                                    onclick={() =>
+                                        cart.add({
+                                            id: item.id,
+                                            itemname: item.itemname,
+                                            amount: item.amount,
+                                            outletid: item.outletid,
+                                            outletname: item.outletname,
+                                            shopno: Number(params.shop_no),
+                                            available_qty: Math.min(
+                                                MAX_QTY,
+                                                item.available_qty,
+                                            ),
+                                        })}
+                                    disabled={item.available_qty === 0}
+                                    class="rounded-xl border border-primary/20 bg-primary-soft px-4 py-2 text-xs font-bold text-primary shadow-sm transition-all hover:bg-primary hover:text-white active:scale-[0.96] disabled:pointer-events-none disabled:border-line disabled:bg-canvas disabled:text-ink-faint disabled:shadow-none"
+                                >
+                                    {item.available_qty === 0
+                                        ? "Sold out"
+                                        : "Add"}
+                                </button>
+                            {/if}
+                        </div>
+                    </article>
                 {/each}
             </div>
         {/if}

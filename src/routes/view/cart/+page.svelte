@@ -6,7 +6,6 @@
     } from "$lib/utils/eatright-client";
     import {
         ArrowLeftIcon,
-        Wallet02Icon,
         ShoppingCart01Icon,
         CheckCircleIcon,
         AlertCircleIcon,
@@ -32,10 +31,15 @@
         createCheckoutCartSnapshot,
         matchesCheckoutCartSnapshot,
     } from "$lib/checkout-cart-snapshot";
+    import {
+        clearPendingOrderCheckout,
+        getOrCreatePendingOrderCheckout,
+    } from "$lib/client/pending-order-checkout";
     import { normalizeStoreName } from "$lib/utils/display-text";
     import { Wallet2Icon, WalletIcon } from "@lucide/svelte";
 
-    const PENDING_CHECKOUT_RECHARGE_KEY = "eatright:pending_checkout_recharge";
+    const PENDING_CHECKOUT_RECHARGE_KEY_PREFIX =
+        "eatright:pending_checkout_recharge:";
     const PENDING_CHECKOUT_MAX_AGE_MS = 10 * 60 * 1000;
 
     type PendingCheckoutRecharge = {
@@ -54,6 +58,12 @@
     let success = $state("");
     let paymentMessage = $state("");
     let walletBalance = $state<number | null>(null);
+
+    function pendingCheckoutRechargeKey() {
+        return cart.userId
+            ? `${PENDING_CHECKOUT_RECHARGE_KEY_PREFIX}${encodeURIComponent(cart.userId)}`
+            : null;
+    }
 
     const hasInsufficientBalance = $derived(
         walletBalance !== null && cart.totalAmount > walletBalance,
@@ -134,15 +144,15 @@
         // A recharge was started but the gateway never redirected back to
         // this app (e.g. local dev) — resume verification on the callback
         // page instead.
-        if (!payment && !orderId) {
-            const pending = getPendingPayment();
-            if (pending && pending.returnPath === "/view/cart") {
-                await goto(
-                    `/view/wallet/callback?order_id=${encodeURIComponent(pending.orderId)}&return=${encodeURIComponent(pending.returnPath)}`,
-                );
-                return;
-            }
-        }
+        // if (!payment && !orderId) {
+        //     const pending = getPendingPayment();
+        //     if (pending && pending.returnPath === "/view/cart") {
+        //         await goto(
+        //             `/view/wallet/callback?order_id=${encodeURIComponent(pending.orderId)}&return=${encodeURIComponent(pending.returnPath)}`,
+        //         );
+        //         return;
+        //     }
+        // }
         let verifiedStatus: string | null = null;
         if (orderId) {
             try {
@@ -187,6 +197,10 @@
 
     async function placeOrder(options: { skipBalanceCheck?: boolean } = {}) {
         if (isPlacingOrder || cart.items.length === 0) return;
+        if (!cart.userId) {
+            error = "Your account session is still loading. Please try again.";
+            return;
+        }
         if (!options.skipBalanceCheck && hasInsufficientBalance) {
             error = "Insufficient EatRight wallet balance.";
             isConfirmOpen = false;
@@ -198,6 +212,10 @@
         success = "";
 
         try {
+            const checkoutId = getOrCreatePendingOrderCheckout(
+                cart.userId,
+                createCheckoutCartSnapshot(cart.items),
+            );
             const response = await fetchEatRight("/api/v1/order", {
                 method: "POST",
                 headers: {
@@ -205,7 +223,7 @@
                 },
                 body: JSON.stringify({
                     cart: cart.items,
-                    grandTotal: cart.totalAmount,
+                    checkoutId,
                 }),
             });
             const data = await response.json();
@@ -219,6 +237,7 @@
                 return;
             }
 
+            clearPendingOrderCheckout(cart.userId);
             cart.clear();
             clearPendingCheckoutRecharge();
             isConfirmOpen = false;
@@ -241,8 +260,10 @@
         const cartSnapshot = createCheckoutCartSnapshot(cart.items);
         if (!browser) return cartSnapshot;
 
+        const storageKey = pendingCheckoutRechargeKey();
+        if (!storageKey) return cartSnapshot;
         localStorage.setItem(
-            PENDING_CHECKOUT_RECHARGE_KEY,
+            storageKey,
             JSON.stringify({
                 amount,
                 baselineBalance,
@@ -258,7 +279,9 @@
         if (!browser || !orderId) return false;
 
         try {
-            const raw = localStorage.getItem(PENDING_CHECKOUT_RECHARGE_KEY);
+            const storageKey = pendingCheckoutRechargeKey();
+            if (!storageKey) return false;
+            const raw = localStorage.getItem(storageKey);
             if (!raw) return false;
 
             const pending = JSON.parse(raw) as PendingCheckoutRecharge;
@@ -271,7 +294,7 @@
             }
 
             localStorage.setItem(
-                PENDING_CHECKOUT_RECHARGE_KEY,
+                storageKey,
                 JSON.stringify({ ...pending, orderId }),
             );
             return true;
@@ -283,7 +306,8 @@
 
     function clearPendingCheckoutRecharge() {
         if (!browser) return;
-        localStorage.removeItem(PENDING_CHECKOUT_RECHARGE_KEY);
+        const storageKey = pendingCheckoutRechargeKey();
+        if (storageKey) localStorage.removeItem(storageKey);
     }
 
     async function startCheckoutRecharge() {
@@ -387,7 +411,9 @@
     ) {
         if (!browser) return;
 
-        const pending = localStorage.getItem(PENDING_CHECKOUT_RECHARGE_KEY);
+        const storageKey = pendingCheckoutRechargeKey();
+        if (!storageKey) return;
+        const pending = localStorage.getItem(storageKey);
         if (!pending) return;
 
         try {

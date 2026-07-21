@@ -327,19 +327,6 @@
         const paymentMessage = params.get("payment_message");
         const orderId = params.get("order_id");
 
-        // A recharge was started but the gateway never redirected back to
-        // this app (e.g. local dev) — resume verification on the callback
-        // page instead.
-        // if (!payment && !orderId) {
-        //     const pending = getPendingPayment();
-        //     if (pending) {
-        //         await goto(
-        //             `/view/wallet/callback?order_id=${encodeURIComponent(pending.orderId)}&return=${encodeURIComponent(pending.returnPath)}`,
-        //         );
-        //         return;
-        //     }
-        // }
-
         let verifiedStatus: string | null = null;
         if (orderId) {
             try {

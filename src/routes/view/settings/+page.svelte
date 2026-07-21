@@ -16,6 +16,9 @@
         getCachedEatRightProfile,
         type CachedEatRightProfile,
     } from "$lib/client/eatright-profile";
+    import { clearPendingPayment } from "$lib/client/pending-payment";
+    import { clearPendingOrderCheckout } from "$lib/client/pending-order-checkout";
+    import { cart } from "$lib/stores/cart.svelte";
     import { goto } from "$app/navigation";
     import { normalizePersonName } from "$lib/utils/person-name";
 
@@ -133,6 +136,9 @@
         isSigningOut = true;
         try {
             await fetch("/api/v1/disconnect", { method: "POST" });
+            clearPendingOrderCheckout(cart.userId);
+            clearPendingPayment();
+            cart.disconnect();
             clearCachedEatRightProfile();
             await goto("/login");
         } catch {
@@ -141,10 +147,6 @@
         }
     }
 </script>
-
-<svelte:head>
-    <title>Settings · Eat Right</title>
-</svelte:head>
 
 <div class="min-h-screen text-ink antialiased">
     <!-- Header -->

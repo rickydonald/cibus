@@ -100,7 +100,7 @@
 	<meta name="apple-mobile-web-app-title" content="Eat Right" />
 	<meta name="mobile-web-app-capable" content="yes" />
 	<link rel="apple-touch-icon" href="/icons/512.png" />
-	<title>Eat Right</title>
+	<title>Eat Right - Loyola College</title>
 </svelte:head>
 <Toaster
 	position="top-center"

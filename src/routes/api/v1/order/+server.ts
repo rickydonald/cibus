@@ -5,6 +5,13 @@ import { DEV_MODE } from "$lib/server/dev";
 import { officialApiUrl } from "$lib/server/foodcourt-api";
 import { hasDuplicateItemIds } from "$lib/order-validation";
 
+const MAX_BODY_BYTES = 64 * 1024;
+const MAX_CART_ITEMS = 50;
+const MAX_ITEM_QTY = 10;
+const MAX_TOTAL_QTY = 100;
+const MAX_ORDER_TOTAL = 1000;
+const CHECKOUT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 type OrderItem = {
   id: number;
   itemname: string;
@@ -15,12 +22,15 @@ type OrderItem = {
   outletname: string;
 };
 
-type PlacedOrder = {
+type CheckoutBody = {
+  checkoutId?: unknown;
+  cart?: unknown;
+};
+
+type BackendOrder = {
   order_no: string;
   outletid: number;
 };
-
-type EatRightCartItem = ReturnType<typeof toEatRightCartPayload>[number];
 
 function foodcourtHeaders(accessToken: string) {
   return {
@@ -30,315 +40,158 @@ function foodcourtHeaders(accessToken: string) {
   };
 }
 
-function parseJsonText(text: string): unknown {
+function parseJson(text: string): Record<string, unknown> | null {
   try {
-    return JSON.parse(text.trim());
+    const value = JSON.parse(text.trim());
+    return value && typeof value === "object" && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : null;
   } catch {
     return null;
   }
 }
 
-function toEatRightCartPayload(cart: OrderItem[]) {
+function validateCart(value: unknown): { cart: OrderItem[]; error?: never }
+  | { cart?: never; error: string } {
+  if (!Array.isArray(value) || value.length === 0) {
+    return { error: "Cart is empty" };
+  }
+  if (value.length > MAX_CART_ITEMS) {
+    return { error: `Cart cannot contain more than ${MAX_CART_ITEMS} items` };
+  }
+
+  const cart = value as OrderItem[];
+  if (hasDuplicateItemIds(cart)) {
+    return { error: "Cart contains duplicate items" };
+  }
+
+  let totalQty = 0;
+  let total = 0;
+  for (const item of cart) {
+    if (!item || typeof item !== "object") return { error: "Cart contains invalid items" };
+    if (
+      !Number.isSafeInteger(item.id) || item.id <= 0 ||
+      !Number.isSafeInteger(item.outletid) || item.outletid <= 0 ||
+      !Number.isSafeInteger(item.shopno) || item.shopno <= 0 ||
+      !Number.isInteger(item.qty) || item.qty < 1 || item.qty > MAX_ITEM_QTY ||
+      !Number.isFinite(item.amount) || item.amount <= 0 || item.amount > MAX_ORDER_TOTAL ||
+      Math.abs(item.amount * 100 - Math.round(item.amount * 100)) > 1e-7 ||
+      typeof item.itemname !== "string" || item.itemname.length < 1 || item.itemname.length > 200 ||
+      typeof item.outletname !== "string" || item.outletname.length > 200
+    ) {
+      return { error: "Cart contains invalid items" };
+    }
+    totalQty += item.qty;
+    total += item.amount * item.qty;
+  }
+
+  if (totalQty > MAX_TOTAL_QTY) return { error: "Cart quantity is too large" };
+  if (!Number.isFinite(total) || total <= 0 || total > MAX_ORDER_TOTAL) {
+    return { error: `Order total must be between ₹1 and ₹${MAX_ORDER_TOTAL}` };
+  }
+  return { cart };
+}
+
+function backendCart(cart: OrderItem[]) {
   return cart.map((item) => ({
-    id: Number(item.id),
-    name: item.itemname,
-    qty: Number(item.qty),
-    price: Number(item.amount),
-    total: Number(item.amount) * Number(item.qty),
-    shopno: Number(item.shopno),
-    outletid: Number(item.outletid),
+    id: item.id,
+    qty: item.qty,
+    outletid: item.outletid,
+    shopno: item.shopno,
   }));
 }
 
-function getCartTotal(cart: EatRightCartItem[]) {
-  return cart.reduce((sum, item) => sum + item.total, 0);
-}
-
-function getCartGroupKey(item: EatRightCartItem) {
-  return `${item.outletid}:${item.shopno}`;
-}
-
-function groupCartByShop(cart: EatRightCartItem[]) {
-  const groups = new Map<string, EatRightCartItem[]>();
-
-  for (const item of cart) {
-    const key = getCartGroupKey(item);
-    const group = groups.get(key);
-
-    if (group) {
-      group.push(item);
-    } else {
-      groups.set(key, [item]);
-    }
-  }
-
-  return [...groups.values()];
-}
-
-function normalizePlacedOrders(placeOrderPayload: unknown, cart: ReturnType<typeof toEatRightCartPayload>): PlacedOrder[] {
-  const payload = placeOrderPayload as Record<string, unknown> | null;
-  const orders = payload?.orders;
-
-  if (Array.isArray(orders)) {
-    return orders
-      .map((order) => {
-        const value = order as Record<string, unknown>;
-        const orderNo = String(value.order_no ?? value.orderNo ?? "");
-        const outletId = Number(value.outletid ?? value.outletId ?? cart[0]?.outletid);
-        return { order_no: orderNo, outletid: outletId };
-      })
-      .filter((order) => order.order_no && Number.isFinite(order.outletid));
-  }
-
-  const orderNos = payload?.order_nos ?? payload?.orderNos ?? payload?.order_no ?? payload?.orderNo;
-  const normalizedOrderNos = Array.isArray(orderNos) ? orderNos : orderNos ? [orderNos] : [];
-  const outletIds = [...new Set(cart.map((item) => item.outletid))];
-
-  return normalizedOrderNos
-    .map((orderNo, index) => ({
-      order_no: String(orderNo),
-      outletid: Number(outletIds[index] ?? outletIds[0]),
-    }))
-    .filter((order) => order.order_no && Number.isFinite(order.outletid));
-}
-
-function normalizeOrderList(payload: unknown): Array<Record<string, unknown>> {
-  if (Array.isArray(payload)) return payload as Array<Record<string, unknown>>;
-
-  if (payload && typeof payload === "object") {
-    const value = payload as Record<string, unknown>;
-    if (Array.isArray(value.orders)) return value.orders as Array<Record<string, unknown>>;
-    if (Array.isArray(value.data)) return value.data as Array<Record<string, unknown>>;
-  }
-
-  return [];
-}
-
-async function waitForOrdersToAppear(accessToken: string, placedOrders: PlacedOrder[]) {
-  const expected = new Set(placedOrders.map((order) => order.order_no));
-
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    const response = await fetch(officialApiUrl("/ajax/getUserOrders.jsp"), {
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    if (response.ok) {
-      const payload = parseJsonText(await response.text());
-      const orders = normalizeOrderList(payload);
-      const foundOrderNos = new Set(
-        orders.map((order) => String(order.order_no ?? order.orderNo ?? "")),
-      );
-      const found = [...expected].every((orderNo) => foundOrderNos.has(orderNo));
-
-      if (found) return true;
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 700));
-  }
-
-  return false;
-}
-
-async function placeEatRightOrder(
-  accessToken: string,
-  userid: string,
-  cart: EatRightCartItem[],
-) {
-  const form = new URLSearchParams();
-
-  form.set("cart", JSON.stringify(cart));
-  form.set("grandTotal", String(getCartTotal(cart)));
-  form.set("paymentStatus", "Payment Not Made");
-  form.set("userid", userid);
-
-  const response = await fetch(officialApiUrl("/ajax/placeOrder.jsp"), {
-    method: "POST",
-    headers: foodcourtHeaders(accessToken),
-    body: form.toString(),
+function normalizeOrders(value: unknown): BackendOrder[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((entry) => {
+    if (!entry || typeof entry !== "object") return [];
+    const order = entry as Record<string, unknown>;
+    const orderNo = String(order.order_no ?? "").trim();
+    const outletId = Number(order.outletid);
+    return orderNo && Number.isSafeInteger(outletId) && outletId > 0
+      ? [{ order_no: orderNo, outletid: outletId }]
+      : [];
   });
-  const text = await response.text();
-
-  if (!response.ok) {
-    return {
-      ok: false as const,
-      status: response.status,
-      error: "Failed to place EatRight order",
-      response: text,
-    };
-  }
-
-  const payload = parseJsonText(text);
-  if (!payload) {
-    return {
-      ok: false as const,
-      status: 502,
-      error: "EatRight returned an invalid place order response",
-      response: text,
-    };
-  }
-
-  const orders = normalizePlacedOrders(payload, cart);
-  if (orders.length === 0) {
-    return {
-      ok: false as const,
-      status: 502,
-      error: "EatRight did not return an order number",
-      response: payload,
-    };
-  }
-
-  return {
-    ok: true as const,
-    orders,
-  };
 }
 
 export async function POST(event) {
-  const { request } = event;
-  const {
-    cart,
-  }: {
-    cart: OrderItem[];
-  } = await request.json();
+  const contentLength = Number(event.request.headers.get("content-length") ?? 0);
+  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
+    return json({ error: "Checkout request is too large", errorCode: "request_too_large" }, { status: 413 });
+  }
+
+  let body: CheckoutBody;
+  try {
+    body = await event.request.json();
+  } catch {
+    return json({ error: "Invalid JSON body", errorCode: "invalid_json" }, { status: 400 });
+  }
+
+  const checkoutId = typeof body.checkoutId === "string" ? body.checkoutId.trim() : "";
+  if (!CHECKOUT_ID.test(checkoutId)) {
+    return json({ error: "A valid checkout ID is required", errorCode: "checkout_id_invalid" }, { status: 400 });
+  }
+
+  const validated = validateCart(body.cart);
+  if ("error" in validated) {
+    return json({ error: validated.error, errorCode: "cart_invalid" }, { status: 400 });
+  }
 
   if (DEV_MODE) {
     return json({
       success: true,
-      orders: (cart ?? []).length > 0
-        ? [{ order_no: "DEV-" + Date.now(), outletid: cart[0]?.outletid ?? 1 }]
-        : [],
-      grandTotal: (cart ?? []).reduce((sum, item) => sum + item.amount * item.qty, 0),
+      orders: [{ order_no: `DEV-${checkoutId.slice(0, 8)}`, outletid: validated.cart[0].outletid }],
+      grandTotal: validated.cart.reduce((sum, item) => sum + item.amount * item.qty, 0),
       payment: { status: "success" },
       redirectUrl: "/view/home",
     });
   }
 
   const session = await resolveEatRightSessionFromEvent(event);
-  if (!session.ok) {
-    return session.response;
-  }
+  if (!session.ok) return session.response;
 
-  const { accessToken, userid } = session;
-
-  if (!Array.isArray(cart) || cart.length === 0) {
-    return json(
-      {
-        error: "Cart is empty",
-        errorCode: "cart_empty",
-      },
-      { status: 400 },
-    );
-  }
-
-  const orderCart = toEatRightCartPayload(cart);
-  const grandTotal = getCartTotal(orderCart);
-  const hasDuplicateItems = hasDuplicateItemIds(orderCart);
-
-  if (
-    hasDuplicateItems ||
-    orderCart.some(
-      (item) =>
-        !Number.isFinite(item.id) ||
-        !Number.isFinite(item.qty) ||
-        !Number.isFinite(item.price) ||
-        !Number.isFinite(item.total) ||
-        !Number.isFinite(item.shopno) ||
-        !Number.isFinite(item.outletid) ||
-        item.qty <= 0,
-    )
-  ) {
-    return json(
-      {
-        error: hasDuplicateItems
-          ? "Cart contains duplicate items"
-          : "Cart contains invalid items",
-        errorCode: hasDuplicateItems ? "cart_duplicate_item" : "cart_invalid",
-      },
-      { status: 400 },
-    );
-  }
-
-  const orderGroups = groupCartByShop(orderCart);
-  const placedOrders: PlacedOrder[] = [];
-
-  for (const group of orderGroups) {
-    const placedOrder = await placeEatRightOrder(accessToken, userid, group);
-
-    if (!placedOrder.ok) {
-      return json(
-        {
-          error: placedOrder.error,
-          response: placedOrder.response,
-        },
-        { status: placedOrder.status },
-      );
-    }
-
-    placedOrders.push(...placedOrder.orders);
-  }
-
-  const paymentForm = new URLSearchParams();
-  paymentForm.set("order_nos", JSON.stringify(placedOrders.map((order) => order.order_no)));
-  paymentForm.set("grand_total", String(grandTotal));
-
-  const paymentResponse = await fetch(officialApiUrl("/ajax/makePayment.jsp"), {
-    method: "POST",
-    headers: foodcourtHeaders(accessToken),
-    body: paymentForm.toString(),
+  const form = new URLSearchParams({
+    checkout_id: checkoutId,
+    cart: JSON.stringify(backendCart(validated.cart)),
   });
-  const paymentText = await paymentResponse.text();
 
-  if (!paymentResponse.ok) {
+  let response: Response;
+  try {
+    response = await fetch(officialApiUrl("/ajax/api/checkoutOrder.jsp"), {
+      method: "POST",
+      headers: foodcourtHeaders(session.accessToken),
+      body: form.toString(),
+    });
+  } catch {
+    return json({ error: "Unable to reach the Foodcourt checkout service" }, { status: 502 });
+  }
+
+  const responseText = await response.text();
+  const payload = parseJson(responseText);
+  if (!response.ok || payload?.status !== "success") {
+    const message = typeof payload?.message === "string"
+      ? payload.message
+      : "Foodcourt checkout could not be completed";
     return json(
-      {
-        error: "Failed to make EatRight wallet payment",
-        response: paymentText,
-      },
-      { status: paymentResponse.status },
+      { error: message, errorCode: String(payload?.errorCode ?? "checkout_failed") },
+      { status: response.status >= 400 && response.status < 500 ? response.status : 502 },
     );
   }
 
-  const payment = parseJsonText(paymentText);
-  if (
-    !payment ||
-    typeof payment !== "object" ||
-    (payment as Record<string, unknown>).status !== "success"
-  ) {
-    return json(
-      {
-        error: "EatRight payment was not completed",
-        response: payment ?? paymentText,
-      },
-      { status: 502 },
-    );
+  const orders = normalizeOrders(payload.orders);
+  if (orders.length === 0) {
+    return json({ error: "Foodcourt did not return an order number" }, { status: 502 });
   }
 
-  clearEatRightDataCache(accessToken);
-  const isRecorded = await waitForOrdersToAppear(accessToken, placedOrders);
-
-  if (!isRecorded) {
-    return json(
-      {
-        error: "EatRight accepted payment but did not record the order in history.",
-        errorCode: "order_not_recorded",
-        orders: placedOrders,
-        grandTotal,
-        payment,
-      },
-      { status: 502 },
-    );
-  }
-
+  clearEatRightDataCache(session.accessToken);
+  const grandTotal = Number(payload.grandTotal);
   return json({
     success: true,
-    orders: placedOrders,
-    grandTotal,
-    payment,
-    isRecorded,
-    redirectUrl: `/view/confirmation?${placedOrders
+    idempotent: payload.idempotent === true,
+    orders,
+    grandTotal: Number.isFinite(grandTotal) ? grandTotal : 0,
+    payment: { status: "success", idempotent: payload.idempotent === true },
+    redirectUrl: `/view/confirmation?${orders
       .map((order) => `order_no=${encodeURIComponent(order.order_no)}&outletid=${encodeURIComponent(order.outletid)}`)
       .join("&")}`,
   });
