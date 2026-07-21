@@ -32,7 +32,7 @@
             return {
                 id: "staff-id",
                 label: "Faculty / Staff ID",
-                placeholder: "Staff ID · e.g. RDR028",
+                placeholder: "Staff ID",
                 hint: "Use the ID issued to you by the college.",
                 uppercase: true,
             };
@@ -40,14 +40,14 @@
             return {
                 id: "guest-name",
                 label: "Full name",
-                placeholder: "Full name",
+                placeholder: "Full name (e.g. Ricky Donald)",
                 hint: "Tell us your name to create a guest account.",
                 uppercase: false,
             };
         return {
             id: "dept-no",
             label: "Department number",
-            placeholder: "Department no. · e.g. 25-PCS-018",
+            placeholder: "Dept. Number (e.g. 25-PCS-018)",
             hint: "Use the department number on your student ID.",
             uppercase: true,
         };
