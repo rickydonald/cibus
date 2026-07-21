@@ -5,6 +5,18 @@ import {
     walletLimitMessage,
     wouldExceedWalletLimit,
 } from "../src/lib/wallet.ts";
+import { createPaymentCallbackPath } from "../src/lib/server/payment-callback.ts";
+
+test("sends only the Svelte callback path to the JSP backend", () => {
+    assert.equal(
+        createPaymentCallbackPath("/view/wallet"),
+        "/view/wallet/callback?return=%2Fview%2Fwallet",
+    );
+    assert.equal(
+        createPaymentCallbackPath("/view/cart"),
+        "/view/wallet/callback?return=%2Fview%2Fcart",
+    );
+});
 
 test("limits the wallet by its resulting balance", () => {
     assert.equal(remainingWalletCapacity(980), 20);

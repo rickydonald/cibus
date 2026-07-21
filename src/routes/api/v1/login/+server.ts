@@ -52,7 +52,7 @@ export const POST: RequestHandler = async (event) => {
             );
         }
 
-        setEatRightSessionCookie(cookies, auth);
+        setEatRightSessionCookie(cookies, auth, event.url);
         return json({
             success: true,
             name: auth.name,

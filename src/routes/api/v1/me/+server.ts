@@ -29,7 +29,7 @@ export async function GET(event) {
   } catch (error) {
     console.error(error);
     if (error instanceof FoodcourtApiError && (error.status === 401 || error.status === 403)) {
-      clearEatRightSessionCookie(event.cookies);
+      clearEatRightSessionCookie(event.cookies, event.url);
       return json(
         {
           error: "EatRight session is no longer valid. Please sign in again.",

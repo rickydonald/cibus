@@ -44,18 +44,32 @@ export async function verifyEatRightAccessToken(
     return identity ? { accessToken, ...identity } : null;
 }
 
-export function setEatRightSessionCookie(cookies: Cookies, session: EatRightAuthSession) {
-    const tokenLifetime = session.expiresAt - Math.floor(Date.now() / 1000);
-    cookies.set(SESSION_COOKIE_NAME, session.accessToken, {
+function sessionCookieOptions(url: URL) {
+    return {
         path: "/",
         httpOnly: true,
-        sameSite: "lax",
+        sameSite: "lax" as const,
+        // SvelteKit defaults cookies to Secure for every hostname except localhost.
+        // The campus deployment is also accessed directly over HTTP by private IP,
+        // where browsers discard Secure cookies.
+        secure: false,
+    };
+}
+
+export function setEatRightSessionCookie(
+    cookies: Cookies,
+    session: EatRightAuthSession,
+    url: URL,
+) {
+    const tokenLifetime = session.expiresAt - Math.floor(Date.now() / 1000);
+    cookies.set(SESSION_COOKIE_NAME, session.accessToken, {
+        ...sessionCookieOptions(url),
         maxAge: Math.max(0, tokenLifetime),
     });
 }
 
-export function clearEatRightSessionCookie(cookies: Cookies) {
-    cookies.delete(SESSION_COOKIE_NAME, { path: "/" });
+export function clearEatRightSessionCookie(cookies: Cookies, url: URL) {
+    cookies.delete(SESSION_COOKIE_NAME, sessionCookieOptions(url));
 }
 
 export async function authenticateEatRightRequest(
@@ -78,7 +92,7 @@ export async function authenticateEatRightRequest(
         const session = await verifyEatRightAccessToken(accessToken);
         if (session) return { session, errorCode: null };
 
-        if (!hasAuthorizationHeader) clearEatRightSessionCookie(event.cookies);
+        if (!hasAuthorizationHeader) clearEatRightSessionCookie(event.cookies, event.url);
         return {
             session: null,
             errorCode: hasAuthorizationHeader ? "token_invalid" : "eatright_session_expired",

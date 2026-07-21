@@ -3,6 +3,7 @@ import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
 import { clearEatRightDataCache, getAccountSummary, getWalletTransactions } from "$lib/server/eatright-data";
 import { DEV_MODE } from "$lib/server/dev";
 import { FOODCOURT_API_BASE_URL, foodcourtApiRequest, FoodcourtApiError } from "$lib/server/foodcourt-api";
+import { createPaymentCallbackPath } from "$lib/server/payment-callback";
 import { walletLimitMessage, wouldExceedWalletLimit } from "$lib/wallet";
 import {
   paginateWalletTransactions,
@@ -175,8 +176,8 @@ export async function POST(event) {
     // Register the app's payment callback with the backend: after the
     // gateway responds, Responsepayload.jsp redirects the user here
     // instead of the JSP page flow.
-    const appCallback = `${event.url.origin}/view/wallet/callback?return=${encodeURIComponent(safeReturnPath)}`;
-    paymentUrl += `${paymentUrl.includes("?") ? "&" : "?"}app_callback=${encodeURIComponent(appCallback)}`;
+    const appCallbackPath = createPaymentCallbackPath(safeReturnPath);
+    paymentUrl += `${paymentUrl.includes("?") ? "&" : "?"}app_callback_path=${encodeURIComponent(appCallbackPath)}`;
 
     // The client also needs the order id so it can verify the payment by
     // polling, even when the gateway's return redirect never reaches this
