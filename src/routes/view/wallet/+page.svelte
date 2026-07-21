@@ -364,7 +364,7 @@
                     class="mt-5 flex max-w-full min-w-0 items-center gap-2 rounded-circle bg-white/8 px-4 py-1.5 ring-1 ring-inset ring-white/10 font-mono!"
                 >
                     <span
-                        class="min-w-0 flex-1 truncate text-xs font-semibold text-white/85 tracking-widest"
+                        class="min-w-0 flex-1 truncate text-xs font-semibold text-white/85 tracking-widest uppercase"
                         title={profile?.name ?? "Eat Right user"}
                     >
                         {profile?.name ?? "Eat Right user"}

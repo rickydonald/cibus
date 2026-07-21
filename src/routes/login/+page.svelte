@@ -19,8 +19,7 @@
         getSafeRedirectPath(page.url.searchParams.get("redirect"), ""),
     );
 
-    const justRegistered =
-        page.url.searchParams.get("registered") === "1";
+    const justRegistered = page.url.searchParams.get("registered") === "1";
 
     let userId = $state(
         page.url.searchParams.get("userId")?.toUpperCase() ?? "",
@@ -143,8 +142,10 @@
                 <button
                     type="button"
                     onclick={() => (showPassword = !showPassword)}
-                    class="absolute inset-y-0 right-1 flex w-12 items-center justify-center text-ink-muted transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-primary"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    class="absolute inset-y-0 right-1 flex w-12 items-center justify-center text-ink-muted transition-colors hover:text-primary focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-primary"
+                    aria-label={showPassword
+                        ? "Hide password"
+                        : "Show password"}
                 >
                     {#if showPassword}
                         <EyeOffIcon size="19" strokeWidth="1.8" />

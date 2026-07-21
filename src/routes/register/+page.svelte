@@ -12,7 +12,7 @@
     import { goto } from "$app/navigation";
 
     let userType = $state<"student" | "staff" | "guest">("student");
-    let showOtpSheet = $state(false);
+    let showOtpSheet = $state<boolean>(false);
     let otp = $state("");
     let identifier = $state("");
     let mobileNumber = $state("");

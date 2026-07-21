@@ -1,10 +1,7 @@
 <script lang="ts">
     import ContentWrapper from "$lib/components/ui/ContentWrapper.svelte";
     import MainContainer from "$lib/components/ui/MainContainer.svelte";
-    import {
-        ChevronRightIcon,
-        Wallet02Icon,
-    } from "@untitled-theme/icons-svelte";
+    import { ChevronRightIcon } from "@untitled-theme/icons-svelte";
 
     import { goto } from "$app/navigation";
     import { onMount } from "svelte";
@@ -21,9 +18,10 @@
     import { cart } from "$lib/store/cart.svelte";
 
     import FloatingCartBar from "$lib/components/custom/FloatingCartBar.svelte";
-    import { Settings } from "@lucide/svelte";
+    import { Settings, WalletIcon } from "@lucide/svelte";
     import helpers from "$lib/helpers";
     import { greetingName } from "$lib/utils/person-name";
+    import { normalizeStoreName } from "$lib/utils/display-text";
 
     type Outlet = {
         id: number;
@@ -41,8 +39,8 @@
 
     let accountDetails = $state<EatRightAccountDetails | null>(null);
     let cachedProfile = $state<CachedEatRightProfile | null>(null);
-    let isNavigateLoading = $state(false);
-    let hasCurrentOrder = $state(false);
+    let isNavigateLoading = $state<boolean>(false);
+    let hasCurrentOrder = $state<boolean>(false);
 
     let isAccountLoading: boolean = $state(false);
 
@@ -59,6 +57,9 @@
         return fixed.split(".")[1] || "00";
     }
 
+    /**
+     * Method to get Account Details from Backend API
+     */
     async function getAccountDetails() {
         try {
             isAccountLoading = true;
@@ -103,14 +104,18 @@
         cart.totalItems > 0 && !allOutletsClosed && !isAccountLoading,
     );
 
+    // Normalize Wallet Username
     const profile = $derived(cachedProfile);
     const walletOwnerName = $derived.by(() => {
-        return greetingName(profile?.name);
+        return greetingName(profile?.name, true);
     });
 
+    // Check the current account belongs to student
     const isStudent = $derived.by(() => {
         return /^\d{2}-[A-Z]{3}-\d{3}$/.test(cachedProfile?.userid ?? "");
     });
+
+    // Greeting based on Department
     const isFrenchDept = $derived(
         cachedProfile?.userid.split("-")[1].slice(1, 3) === "FR",
     );
@@ -118,6 +123,9 @@
         cachedProfile?.userid.split("-")[1].slice(1, 3) === "TL",
     );
 
+    /**
+     * Method to return Greet
+     */
     function returnGreet(): string {
         if (isStudent) {
             if (isFrenchDept) return "Bonjour";
@@ -137,6 +145,7 @@
                 <div
                     class="flex items-center justify-between px-5 pt-1 max-w-md mx-auto lg:max-w-2xl"
                 >
+                    <!-- Home Header -->
                     <div class="min-w-0">
                         <h1
                             class="text-xl font-bold tracking-tight text-ink truncate"
@@ -173,10 +182,6 @@
                         <div
                             class="absolute inset-0 bg-[linear-gradient(140deg,rgba(255,255,255,0.18),rgba(255,255,255,0.04)_35%,rgba(255,255,255,0)_55%),linear-gradient(320deg,rgba(10,54,86,0.28),rgba(10,54,86,0)_50%)]"
                         ></div>
-                        <!-- subtle grid texture, fading toward the bottom-left -->
-                        <div
-                            class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:28px_28px] [mask-image:radial-gradient(circle_at_80%_0%,black,transparent_70%)]"
-                        ></div>
 
                         <div class="relative z-10">
                             <div class="flex items-center justify-center">
@@ -191,7 +196,9 @@
                                         {/if}
                                     </p>
 
-                                    <div class="mt-2 h-12 flex items-center justify-center">
+                                    <div
+                                        class="mt-2 h-12 flex items-center justify-center"
+                                    >
                                         {#if accountDetails}
                                             <h2
                                                 class="flex items-baseline text-5xl font-bold tabular-nums"
@@ -221,16 +228,14 @@
                                 </div>
                             </div>
 
-                            <div
-                                class="mt-6 border-t border-white/15 pt-4 flex items-center gap-3"
-                            >
+                            <div class="mt-6 flex items-center gap-3">
                                 <button
                                     onclick={() =>
                                         goto("/view/wallet?action=add-money")}
                                     class="flex-1 h-11 rounded-circle bg-white px-3 text-sm text-primary flex items-center justify-center gap-2 font-bold hover:bg-primary-soft active:scale-98 transition whitespace-nowrap"
                                     aria-label="Add Money to Wallet"
                                 >
-                                    <Wallet02Icon width="16" class="shrink-0" />
+                                    <WalletIcon size="18" />
                                     <span>Add Money</span>
                                 </button>
                             </div>
@@ -275,7 +280,9 @@
                                                 src={helpers.mapStoreIcon(
                                                     String(outlet.shopNo),
                                                 )}
-                                                alt={outlet.name}
+                                                alt={normalizeStoreName(
+                                                    outlet.name,
+                                                )}
                                                 class="h-8 w-8 object-contain"
                                             />
                                         </div>
@@ -284,7 +291,9 @@
                                             <h3
                                                 class="truncate text-base font-semibold tracking-tight text-ink"
                                             >
-                                                {outlet.name}
+                                                {normalizeStoreName(
+                                                    outlet.name,
+                                                )}
                                             </h3>
                                             <p
                                                 class="text-xs text-ink-faint font-medium mt-0.5"
@@ -346,11 +355,6 @@
                 </div>
             </ContentWrapper>
         </div>
-
-        <!-- <CurrentOrderBanner
-            stacked={hasFloatingCart}
-            onActiveChange={(active) => (hasCurrentOrder = active)}
-        /> -->
 
         <!-- Sticky Bottom Floating Action Overlay Tray -->
         {#if hasFloatingCart}

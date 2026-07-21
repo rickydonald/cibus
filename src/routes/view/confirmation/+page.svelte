@@ -19,6 +19,7 @@
         createVisibilityPoller,
         type VisibilityPoller,
     } from "$lib/utils/visibility-poller";
+    import { normalizeStoreName } from "$lib/utils/display-text";
 
     type OrderItem = {
         order_item_id: number;
@@ -544,7 +545,7 @@
                                 <h2
                                     class="mt-1.5 text-lg font-bold tracking-tight text-ink"
                                 >
-                                    {order.outlet_name}
+                                    {normalizeStoreName(order.outlet_name)}
                                 </h2>
                                 <p
                                     class="mt-1 font-geist-mono text-[11px] font-semibold text-ink-muted"

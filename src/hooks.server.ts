@@ -10,5 +10,6 @@ export const handle: Handle = async ({ event, resolve }) => {
     if (event.url.pathname.startsWith("/api/")) {
         response.headers.set("Cache-Control", "no-store");
     }
+
     return response;
 };

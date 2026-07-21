@@ -21,6 +21,8 @@
         parseOrderDate,
         type EatRightOrder,
     } from "$lib/utils/orders";
+    import { normalizeStoreName } from "$lib/utils/display-text";
+    import { ReceiptTextIcon } from "@lucide/svelte";
 
     type OrderFilter = "all" | "active" | "delivered" | "cancelled";
 
@@ -268,7 +270,7 @@
                 <div
                     class="grid h-14 w-14 place-items-center rounded-circle bg-primary-soft text-primary"
                 >
-                    <ReceiptIcon class="h-6 w-6" />
+                    <ReceiptTextIcon class="h-6 w-6" />
                 </div>
                 <h2 class="mt-4 text-base font-bold text-ink">No orders yet</h2>
                 <p
@@ -338,7 +340,9 @@
                                         <h3
                                             class="truncate text-sm font-semibold leading-snug text-ink"
                                         >
-                                            {order.outletname}
+                                            {normalizeStoreName(
+                                                order.outletname,
+                                            )}
                                         </h3>
                                         <p
                                             class="mt-0.5 truncate text-[11px] font-medium text-ink-faint"

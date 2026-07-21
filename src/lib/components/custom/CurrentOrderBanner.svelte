@@ -14,6 +14,7 @@
         type EatRightOrder,
     } from "$lib/utils/orders";
     import { createVisibilityPoller } from "$lib/utils/visibility-poller";
+    import { normalizeStoreName } from "$lib/utils/display-text";
 
     const DISMISSED_ORDER_KEY = "eatright:dismissed-current-order";
 
@@ -29,6 +30,9 @@
 
     const current = $derived(activeOrders[0]);
     const displayedOrder = $derived(current ?? deliveredOrder ?? undefined);
+    const displayedOutletName = $derived(
+        normalizeStoreName(displayedOrder?.outletname),
+    );
     const isDeliveredNotice = $derived(Boolean(deliveredOrder && !current));
     const extraCount = $derived(Math.max(activeOrders.length - 1, 0));
     const isPaymentPending = $derived(
@@ -133,7 +137,7 @@
             <a
                 href={confirmationUrl(displayedOrder)}
                 class="flex h-full min-w-0 flex-1 items-center gap-2.5"
-                aria-label={`${isDeliveredNotice ? "Delivered" : isPaymentPending ? "Payment pending" : "Preparing"} order from ${displayedOrder.outletname}`}
+                aria-label={`${isDeliveredNotice ? "Delivered" : isPaymentPending ? "Payment pending" : "Preparing"} order from ${displayedOutletName}`}
             >
                 {#if isDeliveredNotice}
                     <span
@@ -159,7 +163,7 @@
                 <p
                     class="min-w-0 flex-1 truncate text-[13px] font-semibold tracking-tight"
                 >
-                    {displayedOrder.outletname}
+                    {displayedOutletName}
                 </p>
                 <span
                     class="font-medium text-[13px] {isDeliveredNotice

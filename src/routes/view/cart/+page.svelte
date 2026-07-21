@@ -32,6 +32,8 @@
         createCheckoutCartSnapshot,
         matchesCheckoutCartSnapshot,
     } from "$lib/checkout-cart-snapshot";
+    import { normalizeStoreName } from "$lib/utils/display-text";
+    import { Wallet2Icon, WalletIcon } from "@lucide/svelte";
 
     const PENDING_CHECKOUT_RECHARGE_KEY = "eatright:pending_checkout_recharge";
     const PENDING_CHECKOUT_MAX_AGE_MS = 10 * 60 * 1000;
@@ -471,7 +473,7 @@
                         href="/view/wallet"
                         class="flex items-center gap-1.5 rounded-circle px-3 py-1.5 bg-surface border border-line shadow-card hover:border-primary/30 transition-all"
                     >
-                        <Wallet02Icon class="h-4 w-4 text-primary" />
+                        <WalletIcon class="h-4 w-4 text-primary" />
                         <span
                             class="text-sm font-semibold text-ink tabular-nums"
                         >
@@ -537,7 +539,7 @@
                                             )?.shopno,
                                         ),
                                     )}
-                                    alt={outlet}
+                                    alt={normalizeStoreName(outlet)}
                                     class="h-8 w-8 object-contain"
                                 />
                             </div>
@@ -545,7 +547,7 @@
                                 <h2
                                     class="text-base font-semibold tracking-tight text-ink truncate"
                                 >
-                                    {outlet}
+                                    {normalizeStoreName(outlet)}
                                 </h2>
                                 <p
                                     class="text-xs text-ink-muted font-medium uppercase tracking-wider mt-0.5"
@@ -720,7 +722,7 @@
                             : 'bg-primary-soft text-primary'}"
                     >
                         {#if hasInsufficientBalance}
-                            <Wallet02Icon class="h-5 w-5" />
+                            <WalletIcon class="h-5 w-5" />
                         {:else}
                             <ReceiptCheckIcon class="h-5 w-5" />
                         {/if}
@@ -751,7 +753,7 @@
                                     : "Order total"}
                             </p>
                             <p
-                                class="mt-1 font-mono text-[42px] font-semibold leading-none tracking-[-0.06em] text-ink tabular-nums"
+                                class="mt-1 text-[42px] font-semibold font-mono leading-none text-ink tabular-nums"
                             >
                                 ₹{formatAmount(
                                     hasInsufficientBalance

@@ -15,6 +15,11 @@
         fetchEatRight,
         redirectIfEatRightConnectRequired,
     } from "$lib/utils/eatright-client";
+    import {
+        normalizeMenuItemName,
+        normalizeMenuCategory,
+        normalizeStoreName,
+    } from "$lib/utils/display-text";
 
     type Outlet = {
         id: number;
@@ -38,28 +43,6 @@
     let allItems = $state<SearchItem[]>([]);
     let isLoading = $state(true);
     let loadError = $state<string | null>(null);
-
-    function titleCase(value: string) {
-        return value
-            .toLowerCase()
-            .replace(/\b([a-z])/g, (char) => char.toUpperCase())
-            .replace(/\bIdly\b/g, "Idli");
-    }
-
-    function cleanString(str: string | undefined) {
-        if (!str) return "";
-
-        return titleCase(
-            str
-                .replace(/\s*-\s*(YAMUNA'?S?\s*KITCHEN|GIVE\s*LIFE).*$/gi, "")
-                .replace(/\s+/g, " ")
-                .trim(),
-        );
-    }
-
-    function itemTitle(str: string) {
-        return cleanString(str.split(/\s+-\s+/)[0]);
-    }
 
     async function loadAllItems() {
         isLoading = true;
@@ -120,9 +103,12 @@
             .filter((item) => item.available_qty > 0)
             .map((item) => ({
                 item,
-                name: cleanString(item.itemname),
-                category: cleanString(item.categoryname),
-                outlet: cleanString(item.outletname),
+                name: normalizeMenuItemName(item.itemname),
+                category: normalizeMenuCategory(
+                    item.categoryname,
+                    item.outletname,
+                ),
+                outlet: normalizeStoreName(item.outletname),
             })),
     );
 
@@ -195,21 +181,24 @@
                                 <p
                                     class="text-[11px] font-semibold text-ink-muted truncate"
                                 >
-                                    {cleanString(item.outletname)}
+                                    {normalizeStoreName(item.outletname)}
                                 </p>
                             </div>
 
                             <h3
                                 class="mt-1.5 text-[15px] font-bold tracking-tight text-ink leading-snug"
                             >
-                                {itemTitle(item.itemname)}
+                                {normalizeMenuItemName(item.itemname)}
                             </h3>
 
                             <div class="mt-2 flex items-center gap-2">
                                 <span
                                     class="max-w-full rounded-circle bg-primary-soft px-2 py-0.5 text-[10px] font-bold text-primary truncate"
                                 >
-                                    {cleanString(item.categoryname)}
+                                    {normalizeMenuCategory(
+                                        item.categoryname,
+                                        item.outletname,
+                                    )}
                                 </span>
                                 <span
                                     class={`text-[10px] font-bold ${item.available_qty <= 5 ? "text-warning" : "text-ink-faint"}`}

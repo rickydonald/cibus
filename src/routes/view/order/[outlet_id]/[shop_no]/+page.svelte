@@ -14,6 +14,11 @@
         redirectIfEatRightConnectRequired,
     } from "$lib/utils/eatright-client";
     import FloatingCartBar from "$lib/components/custom/FloatingCartBar.svelte";
+    import {
+        normalizeMenuItemName,
+        normalizeMenuCategory,
+        normalizeStoreName,
+    } from "$lib/utils/display-text";
 
     let { params }: PageProps = $props();
 
@@ -34,29 +39,6 @@
     let isHeaderCollapsed = $state(false);
     let lastScrollY = 0;
     let ticking = false;
-
-    function titleCase(value: string) {
-        return value
-            .toLowerCase()
-            .replace(/\b([a-z])/g, (char) => char.toUpperCase())
-            .replace(/\bIdly\b/g, "Idli")
-            .replace(/\bVeg\b/g, "Veg");
-    }
-
-    function cleanString(str: string | undefined) {
-        if (!str) return "";
-
-        return titleCase(
-            str
-                .replace(/\s*-\s*(YAMUNA'?S?\s*KITCHEN|GIVE\s*LIFE).*$/gi, "")
-                .replace(/\s+/g, " ")
-                .trim(),
-        );
-    }
-
-    function itemTitle(str: string) {
-        return cleanString(str.split(/\s+-\s+/)[0]);
-    }
 
     async function getItems() {
         isLoading = true;
@@ -86,13 +68,25 @@
 
     const categories = $derived([
         "All",
-        ...new Set(items.map((item) => item.categoryname)),
+        ...new Set(
+            items
+                .map((item) =>
+                    normalizeMenuCategory(
+                        item.categoryname,
+                        item.outletname,
+                    ),
+                )
+                .filter((category) => category && category !== "All"),
+        ),
     ]);
 
     const filteredItems = $derived(
         items.filter((item) => {
-            const normalizedName = itemTitle(item.itemname);
-            const normalizedCategory = cleanString(item.categoryname);
+            const normalizedName = normalizeMenuItemName(item.itemname);
+            const normalizedCategory = normalizeMenuCategory(
+                item.categoryname,
+                item.outletname,
+            );
             const normalizedQuery = search.trim().toLowerCase();
 
             const matchesSearch = `${normalizedName} ${normalizedCategory}`
@@ -101,7 +95,7 @@
 
             const matchesCategory =
                 selectedCategory === "All" ||
-                item.categoryname === selectedCategory;
+                normalizedCategory === selectedCategory;
 
             return matchesSearch && matchesCategory;
         }),
@@ -157,7 +151,7 @@
                                 class="text-xl font-bold tracking-tight text-ink truncate"
                             >
                                 {items[0]?.outletname
-                                    ? cleanString(items[0].outletname)
+                                    ? normalizeStoreName(items[0].outletname)
                                     : isLoading
                                       ? "Loading Menu"
                                       : "Outlet Store"}
@@ -200,7 +194,7 @@
                                     : "bg-canvas text-ink-muted hover:bg-primary-soft hover:text-primary"
                             }`}
                         >
-                            {category === "All" ? "All" : cleanString(category)}
+                            {category}
                         </button>
                     {/each}
                 </nav>
@@ -261,14 +255,17 @@
                                     <span
                                         class="max-w-full rounded-circle bg-primary-soft px-2 py-1 text-[10px] font-bold text-primary truncate"
                                     >
-                                        {cleanString(item.categoryname)}
+                                        {normalizeMenuCategory(
+                                            item.categoryname,
+                                            item.outletname,
+                                        )}
                                     </span>
                                 </div>
 
                                 <h3
                                     class="mt-2 text-[15px] font-bold tracking-tight text-ink leading-snug"
                                 >
-                                    {itemTitle(item.itemname)}
+                                    {normalizeMenuItemName(item.itemname)}
                                 </h3>
 
                                 <div class="flex items-center gap-2 pt-2">

@@ -33,7 +33,6 @@
 		"jose": "^6.2.3",
 		"jsbarcode": "^3.12.3",
 		"luxon": "^3.7.2",
-		"svelte-bottom-sheet": "^2.3.0",
 		"svelte-sonner": "^1.1.1",
 		"tailwindcss-corner-shape": "^1.4.6",
 		"workbox-core": "^7.4.1",
