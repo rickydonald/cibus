@@ -129,7 +129,7 @@
 
 <div class="min-h-screen text-ink antialiased pb-36">
     <div
-        class={`sticky top-0 z-30 bg-surface/90 backdrop-blur-xl border-b border-line transition-transform duration-250 ease-out ${
+        class={`page-header transition-transform duration-250 ease-out ${
             isHeaderCollapsed && !isLoading && categories.length > 1
                 ? "-translate-y-full"
                 : "translate-y-0"
@@ -169,7 +169,7 @@
 
                 <div class="px-5 pb-3">
                     <div
-                        class="flex items-center gap-2.5 rounded-2xl border border-line bg-canvas px-3.5 py-3 transition-all focus-within:bg-surface focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15"
+                        class="bg-white flex items-center gap-2.5 rounded-2xl border border-line px-3.5 py-3 transition-all focus-within:bg-surface focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15"
                     >
                         <SearchMdIcon class="h-4 w-4 text-ink-faint" />
                         <input
@@ -193,7 +193,7 @@
                             class={`whitespace-nowrap rounded-circle px-3.5 py-2 text-xs font-semibold transition-all shrink-0 ${
                                 selectedCategory === category
                                     ? "bg-primary text-white shadow-sm"
-                                    : "bg-canvas text-ink-muted hover:bg-primary-soft hover:text-primary"
+                                    : "bg-white text-ink-muted hover:bg-primary-soft hover:text-primary"
                             }`}
                         >
                             {category}

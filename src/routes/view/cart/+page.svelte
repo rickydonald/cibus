@@ -226,14 +226,32 @@
                     checkoutId,
                 }),
             });
-            const data = await response.json();
+            const responseText = await response.text();
+            let data: Record<string, unknown>;
+            try {
+                data = JSON.parse(responseText) as Record<string, unknown>;
+            } catch {
+                error = response.ok
+                    ? "EatRight returned an invalid checkout response."
+                    : `Checkout service failed with HTTP ${response.status}.`;
+                return;
+            }
 
             if (!response.ok || data.error) {
-                if (await redirectIfEatRightConnectRequired(data.errorCode)) {
+                if (
+                    await redirectIfEatRightConnectRequired(
+                        typeof data.errorCode === "string"
+                            ? data.errorCode
+                            : undefined,
+                    )
+                ) {
                     return;
                 }
 
-                error = data.error ?? "Unable to place your order.";
+                error =
+                    typeof data.error === "string"
+                        ? data.error
+                        : "Unable to place your order.";
                 return;
             }
 
@@ -241,7 +259,11 @@
             cart.clear();
             clearPendingCheckoutRecharge();
             isConfirmOpen = false;
-            await goto(data.redirectUrl ?? "/view/history");
+            await goto(
+                typeof data.redirectUrl === "string"
+                    ? data.redirectUrl
+                    : "/view/history",
+            );
         } catch {
             error = "Unable to reach EatRight. Please try again.";
         } finally {
@@ -671,11 +693,11 @@
     <!-- Order Bar Summary Footer -->
     {#if cart.items.length > 0}
         <div
-            class="fixed bottom-0 left-0 right-0 z-40 border-t border-line bg-surface shadow-[0_-8px_24px_rgba(26,30,38,0.04)] lg:left-64"
+            class="fixed bottom-0 left-0 right-0 z-40 border-t border-line bg-canvas shadow-[0_-8px_24px_rgba(26,30,38,0.04)] lg:left-64"
             style="padding-right: var(--safe-area-inset-right); padding-bottom: var(--safe-area-inset-bottom); padding-left: var(--safe-area-inset-left);"
         >
             <div
-                class="bg-surface p-5 pb-8 shadow-[0_-8px_32px_rgba(33,32,28,0.08)] border-t border-line max-w-md mx-auto sm:rounded-t-4xl lg:max-w-lg"
+                class="mx-auto max-w-md p-5 pb-8 lg:max-w-lg"
             >
                 <div class="flex items-center justify-between gap-4">
                     <div class="shrink-0 mr-3">

@@ -1,4 +1,5 @@
 import { browser } from "$app/environment";
+import { CHECKOUT_ID_PATTERN, createCheckoutId } from "$lib/checkout-id";
 
 const STORAGE_PREFIX = "eatright:order-checkout:";
 const MAX_AGE_MS = 24 * 60 * 60 * 1000;
@@ -26,7 +27,7 @@ export function getOrCreatePendingOrderCheckout(
       const pending = JSON.parse(raw) as Partial<PendingOrderCheckout>;
       if (
         typeof pending.checkoutId === "string" &&
-        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(pending.checkoutId) &&
+        CHECKOUT_ID_PATTERN.test(pending.checkoutId) &&
         pending.cartSnapshot === cartSnapshot &&
         typeof pending.createdAt === "number" &&
         Date.now() - pending.createdAt < MAX_AGE_MS
@@ -38,7 +39,7 @@ export function getOrCreatePendingOrderCheckout(
     // Replace malformed or stale browser state below.
   }
 
-  const checkoutId = crypto.randomUUID();
+  const checkoutId = createCheckoutId();
   localStorage.setItem(key, JSON.stringify({
     checkoutId,
     cartSnapshot,
