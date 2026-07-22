@@ -3,6 +3,7 @@
     import { page } from "$app/state";
     import { clearCachedEatRightProfile } from "$lib/client/eatright-profile";
     import { getSafeRedirectPath } from "$lib/auth-redirect";
+    import { isGuestUserId } from "$lib/password-reset";
     import AuthShell from "$lib/components/custom/AuthShell.svelte";
     import Spinner from "$lib/components/custom/Spinner.svelte";
     import {
@@ -20,12 +21,14 @@
     );
 
     const justRegistered = page.url.searchParams.get("registered") === "1";
+    const guestPending = page.url.searchParams.get("guestPending") === "1";
 
     let userId = $state(
         page.url.searchParams.get("userId")?.toUpperCase() ?? "",
     );
     let password = $state("");
     let error = $state("");
+    const isGuestAccount = $derived(isGuestUserId(userId));
 
     let isLoginButtonDisabled = $state(true);
     let isLoginLoading = $state(false);
@@ -62,6 +65,13 @@
 
         await goto(redirectTo || getSafeRedirectPath(res.redirectUrl));
     }
+
+    function constructForgotPasswordUrl(): string {
+        if (userId.length >= 3 && userId !== null) {
+            return "/forgot-password?userId=" + userId;
+        }
+        return "/forgot-password";
+    }
 </script>
 
 <AuthShell>
@@ -79,7 +89,9 @@
             class="mt-5 flex items-center gap-2.5 rounded-2xl border border-success/15 bg-success-soft px-4 py-3 text-[13px] font-medium leading-5 text-success"
         >
             <CircleCheckIcon size="16" class="shrink-0" />
-            Account created — sign in with your new ID.
+            {guestPending
+                ? "Guest account created — go to the Foodcourt Manager to activate it before signing in."
+                : "Account created — sign in with your new ID."}
         </div>
     {/if}
 
@@ -109,7 +121,7 @@
                     autocomplete="username"
                     autocapitalize="characters"
                     required
-                    class="h-14 w-full bg-transparent pl-12.5 pr-4 text-base font-medium uppercase text-ink outline-none placeholder:text-sm placeholder:normal-case placeholder:text-ink-faint"
+                    class="h-14 w-full bg-transparent pl-12.5 pr-4 text-base font-semibold uppercase text-ink outline-none placeholder:font-medium placeholder:text-sm placeholder:normal-case placeholder:text-ink-faint"
                 />
             </div>
 
@@ -171,11 +183,13 @@
             {/if}
         </button>
 
-        <a
-            href="/forgot-password"
-            class="mx-auto mt-1 px-2 text-xs font-semibold text-ink-muted transition-colors hover:text-primary"
-            >Forgot password?</a
-        >
+        {#if !isGuestAccount}
+            <a
+                href={constructForgotPasswordUrl()}
+                class="mx-auto mt-1 px-2 text-xs font-semibold text-ink-muted transition-colors hover:text-primary"
+                >Forgot password?</a
+            >
+        {/if}
     </form>
 
     {#snippet footer()}

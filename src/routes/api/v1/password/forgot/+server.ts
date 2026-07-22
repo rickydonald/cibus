@@ -1,5 +1,8 @@
 import { json, type RequestHandler } from "@sveltejs/kit";
-import { normalizePasswordResetUserId } from "$lib/password-reset";
+import {
+  isGuestUserId,
+  normalizePasswordResetUserId,
+} from "$lib/password-reset";
 import {
   foodcourtApiRequest,
   FoodcourtApiError,
@@ -21,6 +24,12 @@ export const POST: RequestHandler = async (event) => {
   const userId = normalizePasswordResetUserId(body.userId);
   if (!userId) {
     return json({ error: "Enter a valid user ID" }, { status: 400, headers: noStore });
+  }
+  if (isGuestUserId(userId)) {
+    return json(
+      { error: "Password reset is not available for guest accounts" },
+      { status: 403, headers: noStore },
+    );
   }
 
   const rateLimited = enforceRateLimits(event, [

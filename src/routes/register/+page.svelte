@@ -24,6 +24,7 @@
     let registrationComplete = $state(false);
     let registeredUserId = $state("");
     let passwordHint = $state<string | null>(null);
+    let activationRequired = $state(false);
 
     const otpLength = $derived(userType === "guest" ? 4 : 6);
 
@@ -60,6 +61,7 @@
         error = "";
         otpError = "";
         registrationComplete = false;
+        activationRequired = false;
         showOtpSheet = false;
     }
 
@@ -144,6 +146,7 @@
 
             registeredUserId = data.userId ?? identifier.trim().toUpperCase();
             passwordHint = data.passwordHint ?? null;
+            activationRequired = data.activationRequired === true;
             registrationComplete = true;
             otp = "";
         } catch {
@@ -164,7 +167,7 @@
 
     async function continueToLogin() {
         await goto(
-            `/login?registered=1&userId=${encodeURIComponent(registeredUserId)}`,
+            `/login?registered=1&userId=${encodeURIComponent(registeredUserId)}${activationRequired ? "&guestPending=1" : ""}`,
         );
     }
 
@@ -334,7 +337,9 @@
                     Account created
                 </h2>
                 <p class="mt-2 text-sm leading-6 text-ink-muted">
-                    Your Eat Right account is ready with User ID
+                    {activationRequired
+                        ? "Your guest account was created with User ID"
+                        : "Your Eat Right account is ready with User ID"}
                 </p>
                 <div
                     class="mt-4 rounded-2xl border border-line bg-canvas px-4 py-3 text-center font-mono text-base font-bold tracking-wide text-ink"
@@ -350,12 +355,20 @@
                         number.
                     {/if}
                 </p>
+                {#if activationRequired}
+                    <div
+                        class="mt-4 rounded-2xl border border-warning/20 bg-warning-soft px-4 py-3 text-sm font-semibold leading-5 text-ink"
+                    >
+                        Please go to the Foodcourt Manager to activate your
+                        account before signing in.
+                    </div>
+                {/if}
                 <button
                     type="button"
                     class="btn-primary mt-5 h-13 w-full text-sm"
                     onclick={() => void continueToLogin()}
                 >
-                    Continue to sign in
+                    {activationRequired ? "Back to sign in" : "Continue to sign in"}
                 </button>
             {:else}
                 <div

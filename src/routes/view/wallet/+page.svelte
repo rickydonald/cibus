@@ -68,7 +68,7 @@
 
     function formatMain(main: string) {
         const num = Number(main);
-        return Number.isFinite(num) ? num.toLocaleString("en-IN") : main;
+        return Number.isFinite(num) ? String(num) : main;
     }
 
     function txVisual(type: string) {

@@ -5,6 +5,11 @@ export function normalizePasswordResetUserId(value: unknown): string | null {
   return USER_ID_PATTERN.test(userId) ? userId : null;
 }
 
+export function isGuestUserId(value: unknown): boolean {
+  const userId = String(value ?? "").trim().toUpperCase();
+  return userId.startsWith("GUEST");
+}
+
 export function normalizePasswordResetOtp(value: unknown): string {
   return String(value ?? "").replace(/\D/g, "").slice(0, 6);
 }

@@ -1,7 +1,9 @@
 <script lang="ts">
+    import { page } from "$app/state";
     import AuthShell from "$lib/components/custom/AuthShell.svelte";
     import Spinner from "$lib/components/custom/Spinner.svelte";
     import {
+        isGuestUserId,
         normalizePasswordResetOtp,
         normalizePasswordResetUserId,
         validateResetPassword,
@@ -14,6 +16,7 @@
         LockIcon,
         UserIcon,
     } from "@lucide/svelte";
+    import { onMount } from "svelte";
 
     type ResetStep = "account" | "otp" | "password" | "complete";
 
@@ -30,9 +33,7 @@
     let isSubmitting = $state(false);
     let resendSeconds = $state(0);
 
-    const stepIndex = $derived(
-        step === "account" ? 0 : step === "otp" ? 1 : 2,
-    );
+    const stepIndex = $derived(step === "account" ? 0 : step === "otp" ? 1 : 2);
 
     async function requestOtp() {
         error = "";
@@ -40,6 +41,10 @@
         const normalizedUserId = normalizePasswordResetUserId(userId);
         if (!normalizedUserId) {
             error = "Enter a valid user ID.";
+            return;
+        }
+        if (isGuestUserId(normalizedUserId)) {
+            error = "Password reset is not available for guest accounts.";
             return;
         }
 
@@ -151,6 +156,15 @@
         await requestOtp();
     }
 
+    onMount(() => {
+        const params = new URLSearchParams(window.location.search);
+        const slug = params.get("userId");
+
+        if (slug) {
+            userId = slug;
+        }
+    });
+
     $effect(() => {
         otp = normalizePasswordResetOtp(otp);
     });
@@ -261,7 +275,10 @@
             >
                 {#if isSubmitting}<Spinner />{/if}
                 <span>{isSubmitting ? "Sending OTP…" : "Send OTP"}</span>
-                {#if !isSubmitting}<ArrowRightIcon size="18" strokeWidth="2" />{/if}
+                {#if !isSubmitting}<ArrowRightIcon
+                        size="18"
+                        strokeWidth="2"
+                    />{/if}
             </button>
         </form>
     {:else if step === "otp"}
@@ -368,7 +385,10 @@
                         {#if showPassword}<EyeOffIcon
                                 size="19"
                                 strokeWidth="1.8"
-                            />{:else}<EyeIcon size="19" strokeWidth="1.8" />{/if}
+                            />{:else}<EyeIcon
+                                size="19"
+                                strokeWidth="1.8"
+                            />{/if}
                     </button>
                 </div>
 
@@ -405,7 +425,10 @@
                         {#if showConfirmation}<EyeOffIcon
                                 size="19"
                                 strokeWidth="1.8"
-                            />{:else}<EyeIcon size="19" strokeWidth="1.8" />{/if}
+                            />{:else}<EyeIcon
+                                size="19"
+                                strokeWidth="1.8"
+                            />{/if}
                     </button>
                 </div>
             </div>

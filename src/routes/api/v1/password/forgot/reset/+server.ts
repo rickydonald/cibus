@@ -1,5 +1,6 @@
 import { json, type RequestHandler } from "@sveltejs/kit";
 import {
+  isGuestUserId,
   normalizePasswordResetUserId,
   validateResetPassword,
 } from "$lib/password-reset";
@@ -28,6 +29,12 @@ export const POST: RequestHandler = async (event) => {
     return json(
       { error: "The password reset session is invalid or expired" },
       { status: 400, headers: noStore },
+    );
+  }
+  if (isGuestUserId(userId)) {
+    return json(
+      { error: "Password reset is not available for guest accounts" },
+      { status: 403, headers: noStore },
     );
   }
   if (passwordError) {

@@ -49,6 +49,12 @@ export const POST: RequestHandler = async (event) => {
 
     const session = await resolveEatRightSessionFromEvent(event);
     if (!session.ok) return session.response;
+    if (session.userid.trim().toUpperCase().startsWith("GUEST")) {
+        return json(
+            { error: "Guest accounts cannot change their password" },
+            { status: 403, headers: noStore },
+        );
+    }
 
     try {
         const payload = await foodcourtApiRequest<ChangePasswordResponse>(

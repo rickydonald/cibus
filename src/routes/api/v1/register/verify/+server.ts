@@ -69,11 +69,20 @@ export async function POST(event) {
             return json({ error: failure.message }, { status: failure.status, headers: noStore });
         }
 
+        const userId = String(payload.userid ?? (isGuest ? "" : input.identifier)).trim();
+        if (!userId) {
+            return json(
+                { error: "The guest account was created, but its User ID could not be retrieved. Contact the Foodcourt Manager." },
+                { status: 502, headers: noStore },
+            );
+        }
+
         cookies.delete(REGISTRATION_SESSION_COOKIE, { path: "/api/v1/register" });
         return json({
             status: "SUCCESS",
-            userId: String(payload.userid ?? input.identifier),
+            userId,
             passwordHint: payload.password_hint === "LAST_4_DIGITS" ? "LAST_4_DIGITS" : null,
+            activationRequired: isGuest && payload.activation_required !== false,
         }, { headers: noStore });
     } catch (error) {
         if (error instanceof RegistrationApiError) {

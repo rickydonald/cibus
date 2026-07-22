@@ -1,5 +1,6 @@
 import { json, type RequestHandler } from "@sveltejs/kit";
 import {
+  isGuestUserId,
   normalizePasswordResetOtp,
   normalizePasswordResetUserId,
 } from "$lib/password-reset";
@@ -24,6 +25,12 @@ export const POST: RequestHandler = async (event) => {
   const otp = normalizePasswordResetOtp(body.otp);
   if (!userId || otp.length !== 6) {
     return json({ error: "Enter the six-digit OTP" }, { status: 400, headers: noStore });
+  }
+  if (isGuestUserId(userId)) {
+    return json(
+      { error: "Password reset is not available for guest accounts" },
+      { status: 403, headers: noStore },
+    );
   }
 
   const rateLimited = enforceRateLimits(event, [

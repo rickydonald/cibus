@@ -21,8 +21,10 @@
     import { cart } from "$lib/stores/cart.svelte";
     import { goto } from "$app/navigation";
     import { normalizePersonName } from "$lib/utils/person-name";
+    import { isGuestUserId } from "$lib/password-reset";
 
     let profile = $state<CachedEatRightProfile | null>(null);
+    let profileLoaded = $state(false);
     let copiedUserId = $state(false);
 
     let currentPassword = $state("");
@@ -36,6 +38,7 @@
 
     onMount(() => {
         profile = getCachedEatRightProfile();
+        profileLoaded = true;
     });
 
     const displayName = $derived(
@@ -45,6 +48,7 @@
             includeHonorifics: true,
         }),
     );
+    const isGuestAccount = $derived(isGuestUserId(profile?.userid));
 
     const initials = $derived.by(() => {
         if (!displayName) return "?";
@@ -226,8 +230,9 @@
             </div>
         </section>
 
-        <!-- Change Password -->
-        <section class="card p-5">
+        {#if profileLoaded && !isGuestAccount}
+            <!-- Change Password -->
+            <section class="card p-5">
             <h2 class="text-base font-bold tracking-tight text-ink">
                 Change password
             </h2>
@@ -355,7 +360,8 @@
                         : "Update password"}
                 </button>
             </form>
-        </section>
+            </section>
+        {/if}
 
         <!-- Sign out -->
         <section class="card flex flex-col gap-4 p-5">

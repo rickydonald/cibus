@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  isGuestUserId,
   normalizePasswordResetOtp,
   normalizePasswordResetUserId,
   validateResetPassword,
@@ -10,6 +11,12 @@ test("normalizes and validates password-reset user IDs", () => {
   assert.equal(normalizePasswordResetUserId(" 23-ucs-001 "), "23-UCS-001");
   assert.equal(normalizePasswordResetUserId("invalid user"), null);
   assert.equal(normalizePasswordResetUserId("x"), null);
+});
+
+test("identifies guest accounts that cannot reset passwords", () => {
+  assert.equal(isGuestUserId(" guest12 "), true);
+  assert.equal(isGuestUserId("23-ucs-001"), false);
+  assert.equal(isGuestUserId("staff001"), false);
 });
 
 test("keeps only the first six OTP digits", () => {
