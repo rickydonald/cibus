@@ -503,7 +503,7 @@
             <div class="flex-1">
                 <h1 class="text-2xl font-bold tracking-tight text-ink">Cart</h1>
                 <p
-                    class="text-xs text-ink-muted font-medium uppercase tracking-wider mt-0.5"
+                    class="text-xs text-ink-muted font-medium mt-0.5"
                 >
                     {cart.totalItems}
                     {cart.totalItems === 1 ? "item" : "items"} selected

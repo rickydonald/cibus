@@ -64,7 +64,7 @@
                 Eat Right
             </span>
             <span class="mt-1 block text-[11px] font-medium text-ink-muted">
-                Food Court
+                Campus Food Court
             </span>
         </span>
     </a>
