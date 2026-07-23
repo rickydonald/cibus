@@ -7,7 +7,6 @@
         SearchMdIcon,
         PlusIcon,
         MinusIcon,
-        Building02Icon,
     } from "@untitled-theme/icons-svelte";
     import FloatingCartBar from "$lib/components/custom/FloatingCartBar.svelte";
     import Spinner from "$lib/components/custom/Spinner.svelte";
@@ -37,6 +36,12 @@
         outletname: string;
         outletid: number;
         shopno: number;
+    };
+
+    type DisplaySearchItem = SearchItem & {
+        displayName: string;
+        displayCategory: string;
+        displayOutlet: string;
     };
 
     let query = $state("");
@@ -98,17 +103,17 @@
         loadAllItems();
     });
 
-    const searchDocuments = $derived(
+    const searchDocuments = $derived<DisplaySearchItem[]>(
         allItems
             .filter((item) => item.available_qty > 0)
             .map((item) => ({
-                item,
-                name: normalizeMenuItemName(item.itemname),
-                category: normalizeMenuCategory(
+                ...item,
+                displayName: normalizeMenuItemName(item.itemname),
+                displayCategory: normalizeMenuCategory(
                     item.categoryname,
                     item.outletname,
                 ),
-                outlet: normalizeStoreName(item.outletname),
+                displayOutlet: normalizeStoreName(item.outletname),
             })),
     );
 
@@ -116,9 +121,9 @@
         () =>
             new Fuse(searchDocuments, {
                 keys: [
-                    { name: "name", weight: 0.65 },
-                    { name: "category", weight: 0.2 },
-                    { name: "outlet", weight: 0.15 },
+                    { name: "displayName", weight: 0.65 },
+                    { name: "displayCategory", weight: 0.2 },
+                    { name: "displayOutlet", weight: 0.15 },
                 ],
                 threshold: 0.35,
                 distance: 100,
@@ -132,13 +137,45 @@
         const q = query.trim();
         if (q.length < 2) return [];
 
-        return searchIndex.search(q, { limit: 30 }).map(({ item }) => item.item);
+        return searchIndex.search(q, { limit: 30 }).map(({ item }) => item);
     });
+
+    function itemLimit(item: SearchItem) {
+        return Math.min(MAX_QTY, Math.max(0, item.available_qty));
+    }
+
+    function cartEntry(item: SearchItem) {
+        return cart.items.find(
+            (entry) =>
+                entry.id === item.id && entry.outletid === item.outletid,
+        );
+    }
+
+    function addItem(item: SearchItem) {
+        const limit = itemLimit(item);
+        if (limit === 0) return;
+
+        cart.add({
+            id: item.id,
+            itemname: item.itemname,
+            amount: item.amount,
+            outletid: item.outletid,
+            outletname: item.outletname,
+            shopno: item.shopno,
+            available_qty: limit,
+        });
+    }
+
+    function formatPrice(value: number) {
+        const amount = Number(value);
+        if (!Number.isFinite(amount)) return "--";
+        return Number.isInteger(amount) ? String(amount) : amount.toFixed(2);
+    }
 </script>
 
 <div class="min-h-screen text-ink antialiased">
     <!-- Search Input -->
-    <div class="px-5 pt-5 max-w-md mx-auto lg:max-w-2xl">
+    <div class="mx-auto max-w-lg px-4 pt-5 lg:max-w-4xl">
         <div
             class="flex items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-3 shadow-card transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15"
         >
@@ -158,133 +195,121 @@
 
     <!-- Results -->
     <div
-        class="px-5 pt-4 max-w-md mx-auto lg:max-w-2xl"
+        class="mx-auto max-w-lg px-4 pt-4 lg:max-w-4xl"
         class:pb-cart-float={cart.totalItems > 0}
     >
         {#if results.length > 0}
-            <div class="space-y-3 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
-                {#each results as item (item.id + "-" + item.outletid)}
-                    {@const cartItem = cart.items.find(
-                        (entry) =>
-                            entry.id === item.id &&
-                            entry.outletid === item.outletid,
-                    )}
+            <div
+                class="overflow-hidden rounded-lg border border-line bg-surface shadow-[0_1px_2px_rgba(26,30,38,0.025)] lg:grid lg:grid-cols-2"
+            >
+                {#each results as item, index (`${item.outletid}-${item.id}`)}
+                    {@const cartItem = cartEntry(item)}
+                    {@const lowStock = item.available_qty <= 5}
 
                     <article
-                        class="card overflow-hidden p-4 flex gap-4 items-start transition-all duration-200 hover:border-line-strong"
+                        class={`relative flex min-h-28 items-center gap-4 px-4 py-4 ${
+                            index > 0 ? "border-t border-line/70" : ""
+                        } ${
+                            index % 2 === 1
+                                ? "lg:border-l lg:border-line/70"
+                                : ""
+                        } ${
+                            index === 1
+                                ? "lg:border-t-0"
+                                : index > 1
+                                  ? "lg:border-t lg:border-line/70"
+                                  : ""
+                        }`}
                     >
                         <div class="min-w-0 flex-1">
-                            <div class="flex items-center gap-1.5 min-w-0">
-                                <Building02Icon
-                                    class="h-3 w-3 shrink-0 text-ink-faint"
-                                />
-                                <p
-                                    class="text-[11px] font-semibold text-ink-muted truncate"
-                                >
-                                    {normalizeStoreName(item.outletname)}
-                                </p>
-                            </div>
-
                             <h3
-                                class="mt-1.5 text-[15px] font-bold tracking-tight text-ink leading-snug"
+                                class="text-[15px] font-semibold leading-snug text-ink"
                             >
-                                {normalizeMenuItemName(item.itemname)}
+                                {item.displayName}
                             </h3>
 
-                            <div class="mt-2 flex items-center gap-2">
+                            <p
+                                class="mt-1 truncate text-[10px] font-semibold text-ink-faint"
+                            >
+                                {item.displayOutlet}
+                                <span class="px-1 text-line-strong">·</span>
+                                {item.displayCategory}
+                            </p>
+
+                            <div
+                                class="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1"
+                            >
                                 <span
-                                    class="max-w-full rounded-circle bg-primary-soft px-2 py-0.5 text-[10px] font-bold text-primary truncate"
+                                    class="text-[15px] font-bold tabular-nums text-ink"
                                 >
-                                    {normalizeMenuCategory(
-                                        item.categoryname,
-                                        item.outletname,
-                                    )}
+                                    ₹{formatPrice(item.amount)}
                                 </span>
                                 <span
-                                    class={`text-[10px] font-bold ${item.available_qty <= 5 ? "text-warning" : "text-ink-faint"}`}
+                                    class={`flex items-center gap-1.5 text-[10px] font-semibold ${
+                                        lowStock
+                                            ? "text-warning"
+                                            : "text-ink-faint"
+                                    }`}
                                 >
-                                    {item.available_qty <= 5
+                                    <span
+                                        class={`h-1.5 w-1.5 shrink-0 rounded-circle ${
+                                            lowStock
+                                                ? "bg-warning"
+                                                : "bg-success"
+                                        }`}
+                                    ></span>
+                                    {lowStock
                                         ? `Only ${item.available_qty} left`
-                                        : `${item.available_qty} available`}
+                                        : "Available"}
                                 </span>
                             </div>
                         </div>
 
                         <div
-                            class="shrink-0 self-center flex flex-col items-end gap-2"
+                            class="flex h-10 w-28 shrink-0 items-center justify-end"
                         >
-                            <div
-                                class="text-base font-black tracking-tight text-ink tabular-nums"
-                            >
-                                ₹{item.amount}
-                            </div>
-
                             {#if cartItem}
                                 <div
-                                    class="flex items-center gap-2.5 rounded-xl bg-primary p-1 text-white shadow-sm"
+                                    class="grid h-10 w-28 grid-cols-[2.5rem_2rem_2.5rem] items-center overflow-hidden rounded-lg bg-primary text-white shadow-sm"
                                 >
                                     <button
-                                        class="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 text-white transition-all active:scale-90"
+                                        type="button"
+                                        class="grid h-10 place-items-center text-white transition-colors active:bg-white/15"
                                         onclick={() =>
                                             cart.remove(item.id, item.outletid)}
-                                        aria-label="Remove item"
+                                        aria-label={`Remove one ${item.displayName}`}
                                     >
                                         <MinusIcon
-                                            class="h-3 w-3"
+                                            class="h-3.5 w-3.5"
                                             stroke-width="3"
                                         />
                                     </button>
 
                                     <span
-                                        class="font-bold text-xs min-w-[14px] text-center tabular-nums"
+                                        class="text-center text-sm font-bold tabular-nums"
                                     >
                                         {cartItem.qty}
                                     </span>
 
                                     <button
-                                        class="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 text-white transition-all active:scale-90 disabled:opacity-20"
-                                        onclick={() =>
-                                            cart.add({
-                                                id: item.id,
-                                                itemname: item.itemname,
-                                                amount: item.amount,
-                                                outletid: item.outletid,
-                                                outletname: item.outletname,
-                                                shopno: item.shopno,
-                                                available_qty: Math.min(
-                                                    MAX_QTY,
-                                                    item.available_qty,
-                                                ),
-                                            })}
-                                        disabled={cartItem.qty >=
-                                            Math.min(
-                                                MAX_QTY,
-                                                item.available_qty,
-                                            )}
-                                        aria-label="Add item"
+                                        type="button"
+                                        class="grid h-10 place-items-center text-white transition-colors active:bg-white/15 disabled:opacity-30"
+                                        onclick={() => addItem(item)}
+                                        disabled={cartItem.qty >= itemLimit(item)}
+                                        aria-label={`Add one ${item.displayName}`}
                                     >
                                         <PlusIcon
-                                            class="h-3 w-3"
+                                            class="h-3.5 w-3.5"
                                             stroke-width="3"
                                         />
                                     </button>
                                 </div>
                             {:else}
                                 <button
-                                    onclick={() =>
-                                        cart.add({
-                                            id: item.id,
-                                            itemname: item.itemname,
-                                            amount: item.amount,
-                                            outletid: item.outletid,
-                                            outletname: item.outletname,
-                                            shopno: item.shopno,
-                                            available_qty: Math.min(
-                                                MAX_QTY,
-                                                item.available_qty,
-                                            ),
-                                        })}
-                                    class="rounded-xl border border-primary/20 bg-primary-soft px-4 py-2 text-xs font-bold text-primary shadow-sm transition-all hover:bg-primary hover:text-white active:scale-[0.96]"
+                                    type="button"
+                                    onclick={() => addItem(item)}
+                                    class="h-10 w-24 rounded-lg border border-primary/25 bg-primary-soft text-xs font-bold text-primary transition-[background-color,color,transform] hover:bg-primary hover:text-white active:scale-95"
+                                    aria-label={`Add ${item.displayName} to cart`}
                                 >
                                     Add
                                 </button>

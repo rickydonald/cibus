@@ -6,13 +6,12 @@
     import { isGuestUserId } from "$lib/password-reset";
     import AuthShell from "$lib/components/custom/AuthShell.svelte";
     import Spinner from "$lib/components/custom/Spinner.svelte";
+    import { slide } from "svelte/transition";
     import {
         ArrowRightIcon,
         CircleCheckIcon,
         EyeIcon,
         EyeOffIcon,
-        LockIcon,
-        UserIcon,
     } from "@lucide/svelte";
 
     let showPassword = $state(false);
@@ -75,19 +74,13 @@
 </script>
 
 <AuthShell>
-    <div class="mt-5 text-center">
-        <h1 class="text-[1.65rem] font-bold tracking-[-0.03em] text-ink">
-            Sign in
-        </h1>
-        <p class="mt-1 text-[13px] font-medium text-ink-muted">
-            Your campus food court
-        </p>
-    </div>
+    <h1 class="auth-title font-medium">Welcome back.</h1>
+    <!-- <p class="auth-subtitle">
+        Sign in to start your next order.
+    </p> -->
 
     {#if justRegistered}
-        <div
-            class="mt-5 flex items-center gap-2.5 rounded-2xl border border-success/15 bg-success-soft px-4 py-3 text-[13px] font-medium leading-5 text-success"
-        >
+        <div class="auth-alert-success mt-5" transition:slide={{ duration: 260 }}>
             <CircleCheckIcon size="16" class="shrink-0" />
             {guestPending
                 ? "Guest account created — go to the Foodcourt Manager to activate it before signing in."
@@ -96,57 +89,51 @@
     {/if}
 
     <form
-        class="mt-6 flex flex-col gap-4"
+        class="mt-7 flex flex-col gap-5"
         onsubmit={(event) => {
             event.preventDefault();
             if (!isLoginButtonDisabled && !isLoginLoading) handleLogin();
         }}
     >
-        <!-- fused field group -->
-        <div
-            class="overflow-hidden rounded-2xl border border-line bg-canvas transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15"
-        >
-            <div class="relative">
-                <label for="user-id" class="sr-only">User ID</label>
-                <span
-                    class="pointer-events-none absolute inset-y-0 left-4.5 flex items-center text-ink-faint"
-                >
-                    <UserIcon size="18" strokeWidth="1.8" />
-                </span>
-                <input
-                    type="text"
-                    bind:value={userId}
-                    placeholder="User ID (Dept. Number, Staff ID)"
-                    id="user-id"
-                    autocomplete="username"
-                    autocapitalize="characters"
-                    required
-                    class="h-14 w-full bg-transparent pl-12.5 pr-4 text-base font-semibold uppercase text-ink outline-none placeholder:font-medium placeholder:text-sm placeholder:normal-case placeholder:text-ink-faint"
-                />
+        <div>
+            <label class="auth-label" for="user-id">User ID</label>
+            <input
+                type="text"
+                bind:value={userId}
+                placeholder="Dept. number or staff ID"
+                id="user-id"
+                autocomplete="username"
+                autocapitalize="characters"
+                required
+                class="auth-input font-semibold uppercase"
+            />
+        </div>
+
+        <div>
+            <div class="auth-label">
+                <label for="password">Password</label>
+                {#if !isGuestAccount}
+                    <a
+                        href={constructForgotPasswordUrl()}
+                        class="text-xs font-semibold text-ink-muted transition-colors hover:text-primary"
+                        >Forgot password?</a
+                    >
+                {/if}
             </div>
-
-            <div class="mx-4.5 h-px bg-line"></div>
-
             <div class="relative">
-                <label for="password" class="sr-only">Password</label>
-                <span
-                    class="pointer-events-none absolute inset-y-0 left-4.5 flex items-center text-ink-faint"
-                >
-                    <LockIcon size="18" strokeWidth="1.8" />
-                </span>
                 <input
                     type={showPassword ? "text" : "password"}
                     bind:value={password}
-                    placeholder="Password"
+                    placeholder="Enter your password"
                     id="password"
                     autocomplete="current-password"
                     required
-                    class="h-14 w-full bg-transparent pl-12.5 pr-14 text-base font-medium text-ink outline-none placeholder:text-sm placeholder:text-ink-faint"
+                    class="auth-input pr-13"
                 />
                 <button
                     type="button"
                     onclick={() => (showPassword = !showPassword)}
-                    class="absolute inset-y-0 right-1 flex w-12 items-center justify-center text-ink-muted transition-colors hover:text-primary focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-primary"
+                    class="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-2xl text-ink-faint transition-colors hover:text-primary focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-primary"
                     aria-label={showPassword
                         ? "Hide password"
                         : "Show password"}
@@ -163,7 +150,8 @@
         {#if error}
             <div
                 role="alert"
-                class="rounded-2xl border border-danger/15 bg-danger-soft px-4 py-3.5 text-sm font-medium leading-5 text-danger"
+                class="auth-alert-danger"
+                transition:slide={{ duration: 240 }}
             >
                 {error}
             </div>
@@ -171,35 +159,27 @@
 
         <button
             type="submit"
-            class="btn-primary h-14 w-full px-5 text-sm bg-[linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0)_55%)] shadow-[0_10px_24px_-10px_rgba(19,126,193,0.65)]"
+            class="btn-auth group mt-1"
             disabled={isLoginButtonDisabled || isLoginLoading}
         >
             {#if isLoginLoading}
                 <Spinner />
-            {/if}
-            <span>{isLoginLoading ? "Signing in…" : "Sign in"}</span>
-            {#if !isLoginLoading}
-                <ArrowRightIcon size="18" strokeWidth="2" />
+                <span>Signing in…</span>
+            {:else}
+                <span>Sign in</span>
+                <ArrowRightIcon
+                    size="18"
+                    strokeWidth="2.2"
+                    class="transition-transform duration-200 group-hover:translate-x-0.5"
+                />
             {/if}
         </button>
-
-        {#if !isGuestAccount}
-            <a
-                href={constructForgotPasswordUrl()}
-                class="mx-auto mt-1 px-2 text-xs font-semibold text-ink-muted transition-colors hover:text-primary"
-                >Forgot password?</a
-            >
-        {/if}
     </form>
 
     {#snippet footer()}
-        <p class="text-sm text-white/60">
-            New here?
-            <a
-                href="/register"
-                class="font-bold text-white underline-offset-4 hover:underline"
-                >Create an account</a
-            >
+        <p class="text-center text-sm text-ink-muted">
+            New to Eat Right?
+            <a href="/register" class="auth-link">Create an account</a>
         </p>
     {/snippet}
 </AuthShell>
