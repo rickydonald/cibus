@@ -74,7 +74,7 @@
 </script>
 
 <AuthShell>
-    <h1 class="auth-title font-medium">Welcome back.</h1>
+    <h1 class="auth-title font-medium text-center">Welcome back.</h1>
     <!-- <p class="auth-subtitle">
         Sign in to start your next order.
     </p> -->

@@ -193,7 +193,7 @@
 
 <AuthShell>
     {#if step === "details"}
-        <h1 class="auth-title font-medium">Create your account.</h1>
+        <h1 class="auth-title font-medium text-center">Create your account.</h1>
 
         <div class="mt-7">
             <RegistrationSwitch value={userType} onChange={selectUserType} />
