@@ -12,7 +12,7 @@
         TimerOffIcon,
     } from "@lucide/svelte";
     import { toast } from "svelte-sonner";
-    import { fly, scale } from "svelte/transition";
+    import { scale } from "svelte/transition";
     import { onMount } from "svelte";
     import JsBarcode from "jsbarcode";
     import {
@@ -20,6 +20,7 @@
         type VisibilityPoller,
     } from "$lib/utils/visibility-poller";
     import { normalizeStoreName } from "$lib/utils/display-text";
+    import { contentReveal } from "$lib/utils/transitions";
 
     type OrderItem = {
         order_item_id: number;
@@ -442,6 +443,7 @@
         {:else if error}
             <div
                 class="flex min-h-[60vh] flex-col items-center justify-center text-center px-4"
+                in:contentReveal={{ duration: 320 }}
             >
                 <div
                     class="h-12 w-12 rounded-circle bg-danger-soft flex items-center justify-center text-danger mb-3"
@@ -473,7 +475,10 @@
                 </button>
             </div>
         {:else}
-            <div class="space-y-5 pt-2">
+            <div
+                class="space-y-5 pt-2"
+                in:contentReveal={{ duration: 280 }}
+            >
                 <!-- Lightweight live status: one list request every 30 seconds
                      while an undelivered order is visible. -->
                 <!-- <div
@@ -529,10 +534,9 @@
                 </div> -->
 
                 <!-- Receipts -->
-                {#each orders as order, i}
+                {#each orders as order}
                     <article
                         class={`filter-[drop-shadow(0_1px_2px_rgb(26_30_38/0.05))_drop-shadow(0_14px_28px_rgb(26_30_38/0.10))] transition-opacity ${isDelivered(order) ? "opacity-75 grayscale" : ""}`}
-                        in:fly={{ y: 24, duration: 380, delay: 120 + i * 90 }}
                     >
                         <div class="rounded-t-xl bg-surface px-6 pt-7 pb-6">
                             <!-- Receipt header -->
@@ -787,8 +791,7 @@
 
                             <!-- Barcode / order reference -->
                             <button
-                                class="mt-5 block w-full border-t border-dashed border-line-strong pt-5 text-center transition-opacity active:opacity-60"
-                                onclick={() => copyOrderNo(order.order_no)}
+                                class="mt-5 block w-full border-t border-dashed border-line-strong pt-5 text-center transition-opacity"
                                 aria-label="Copy order reference"
                             >
                                 <svg
@@ -826,11 +829,6 @@
                 {#if orders.length > 1}
                     <div
                         class="flex items-center justify-between rounded-2xl border border-line bg-surface px-5 py-3.5 shadow-card"
-                        in:fly={{
-                            y: 24,
-                            duration: 380,
-                            delay: 120 + orders.length * 90,
-                        }}
                     >
                         <span class="text-sm font-semibold text-ink-muted">
                             Total across {orders.length} counters
@@ -845,14 +843,7 @@
                 {/if}
 
                 <!-- Actions -->
-                <div
-                    class="grid grid-cols-2 gap-3 pt-1"
-                    in:fly={{
-                        y: 16,
-                        duration: 350,
-                        delay: 200 + orders.length * 90,
-                    }}
-                >
+                <div class="grid grid-cols-2 gap-3 pt-1">
                     <button
                         class="btn-quiet py-3.5 text-sm"
                         onclick={() => goto("/view/history")}

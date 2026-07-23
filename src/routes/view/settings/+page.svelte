@@ -230,136 +230,148 @@
             </div>
         </section>
 
+        {#if profileLoaded && isGuestAccount}
+            <section class="card p-5">
+                <h2 class="text-base font-bold tracking-tight text-ink">
+                    Password
+                </h2>
+                <p class="mt-1 text-sm font-medium text-ink-muted">
+                    Your password is the last 4 digits of your registered mobile
+                    number.
+                </p>
+            </section>
+        {/if}
+
         {#if profileLoaded && !isGuestAccount}
             <!-- Change Password -->
             <section class="card p-5">
-            <h2 class="text-base font-bold tracking-tight text-ink">
-                Change password
-            </h2>
-            <p class="mt-1 text-xs font-medium text-ink-muted">
-                Use at least 6 characters. You'll sign in with the new password
-                next time.
-            </p>
+                <h2 class="text-base font-bold tracking-tight text-ink">
+                    Change password
+                </h2>
+                <p class="mt-1 text-xs font-medium text-ink-muted">
+                    Use at least 6 characters. You'll sign in with the new
+                    password next time.
+                </p>
 
-            <form
-                class="mt-5 flex flex-col gap-4"
-                onsubmit={handleChangePassword}
-            >
-                <div class="flex flex-col gap-1.5">
-                    <label
-                        for="current-password"
-                        class="pl-1 text-sm font-medium text-ink-muted"
-                    >
-                        Current password
-                    </label>
-                    <div class="relative">
-                        <input
-                            id="current-password"
-                            type={showCurrent ? "text" : "password"}
-                            bind:value={currentPassword}
-                            placeholder="Enter your current password"
-                            autocomplete="current-password"
-                            class="field-input pr-12"
-                            disabled={isUpdatingPassword}
-                        />
-                        <button
-                            type="button"
-                            class="absolute right-3 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg text-ink-faint transition-colors hover:text-ink"
-                            onclick={() => (showCurrent = !showCurrent)}
-                            aria-label={showCurrent
-                                ? "Hide current password"
-                                : "Show current password"}
+                <form
+                    class="mt-5 flex flex-col gap-4"
+                    onsubmit={handleChangePassword}
+                >
+                    <div class="flex flex-col gap-1.5">
+                        <label
+                            for="current-password"
+                            class="pl-1 text-sm font-medium text-ink-muted"
                         >
-                            {#if showCurrent}
-                                <EyeOffIcon size={16} />
-                            {:else}
-                                <EyeIcon size={16} />
-                            {/if}
-                        </button>
+                            Current password
+                        </label>
+                        <div class="relative">
+                            <input
+                                id="current-password"
+                                type={showCurrent ? "text" : "password"}
+                                bind:value={currentPassword}
+                                placeholder="Enter your current password"
+                                autocomplete="current-password"
+                                class="field-input pr-12"
+                                disabled={isUpdatingPassword}
+                            />
+                            <button
+                                type="button"
+                                class="absolute right-3 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg text-ink-faint transition-colors hover:text-ink"
+                                onclick={() => (showCurrent = !showCurrent)}
+                                aria-label={showCurrent
+                                    ? "Hide current password"
+                                    : "Show current password"}
+                            >
+                                {#if showCurrent}
+                                    <EyeOffIcon size={16} />
+                                {:else}
+                                    <EyeIcon size={16} />
+                                {/if}
+                            </button>
+                        </div>
                     </div>
-                </div>
 
-                <div class="flex flex-col gap-1.5">
-                    <label
-                        for="new-password"
-                        class="pl-1 text-sm font-medium text-ink-muted"
-                    >
-                        New password
-                    </label>
-                    <div class="relative">
+                    <div class="flex flex-col gap-1.5">
+                        <label
+                            for="new-password"
+                            class="pl-1 text-sm font-medium text-ink-muted"
+                        >
+                            New password
+                        </label>
+                        <div class="relative">
+                            <input
+                                id="new-password"
+                                type={showNew ? "text" : "password"}
+                                bind:value={newPassword}
+                                placeholder="At least 6 characters"
+                                autocomplete="new-password"
+                                maxlength={128}
+                                class="field-input pr-12"
+                                disabled={isUpdatingPassword}
+                            />
+                            <button
+                                type="button"
+                                class="absolute right-3 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg text-ink-faint transition-colors hover:text-ink"
+                                onclick={() => (showNew = !showNew)}
+                                aria-label={showNew
+                                    ? "Hide new password"
+                                    : "Show new password"}
+                            >
+                                {#if showNew}
+                                    <EyeOffIcon size={16} />
+                                {:else}
+                                    <EyeIcon size={16} />
+                                {/if}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-1.5">
+                        <label
+                            for="confirm-password"
+                            class="pl-1 text-sm font-medium text-ink-muted"
+                        >
+                            Confirm new password
+                        </label>
                         <input
-                            id="new-password"
+                            id="confirm-password"
                             type={showNew ? "text" : "password"}
-                            bind:value={newPassword}
-                            placeholder="At least 6 characters"
+                            bind:value={confirmPassword}
+                            placeholder="Re-enter the new password"
                             autocomplete="new-password"
                             maxlength={128}
-                            class="field-input pr-12"
+                            class="field-input"
                             disabled={isUpdatingPassword}
                         />
-                        <button
-                            type="button"
-                            class="absolute right-3 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg text-ink-faint transition-colors hover:text-ink"
-                            onclick={() => (showNew = !showNew)}
-                            aria-label={showNew
-                                ? "Hide new password"
-                                : "Show new password"}
+                    </div>
+
+                    {#if formError}
+                        <div
+                            class="rounded-xl border border-danger/10 bg-danger-soft px-4 py-3 text-sm font-medium text-danger"
                         >
-                            {#if showNew}
-                                <EyeOffIcon size={16} />
-                            {:else}
-                                <EyeIcon size={16} />
-                            {/if}
-                        </button>
-                    </div>
-                </div>
+                            {formError}
+                        </div>
+                    {/if}
 
-                <div class="flex flex-col gap-1.5">
-                    <label
-                        for="confirm-password"
-                        class="pl-1 text-sm font-medium text-ink-muted"
-                    >
-                        Confirm new password
-                    </label>
-                    <input
-                        id="confirm-password"
-                        type={showNew ? "text" : "password"}
-                        bind:value={confirmPassword}
-                        placeholder="Re-enter the new password"
-                        autocomplete="new-password"
-                        maxlength={128}
-                        class="field-input"
+                    {#if formMessage}
+                        <div
+                            class="flex items-start gap-2.5 rounded-xl border border-primary/10 bg-primary-soft px-4 py-3 text-sm font-medium text-primary"
+                        >
+                            <InfoIcon size={16} class="mt-0.5 shrink-0" />
+                            <span>{formMessage}</span>
+                        </div>
+                    {/if}
+
+                    <button
+                        type="submit"
+                        class="btn-primary mt-1 h-12 text-sm"
                         disabled={isUpdatingPassword}
-                    />
-                </div>
-
-                {#if formError}
-                    <div
-                        class="rounded-xl border border-danger/10 bg-danger-soft px-4 py-3 text-sm font-medium text-danger"
                     >
-                        {formError}
-                    </div>
-                {/if}
-
-                {#if formMessage}
-                    <div
-                        class="flex items-start gap-2.5 rounded-xl border border-primary/10 bg-primary-soft px-4 py-3 text-sm font-medium text-primary"
-                    >
-                        <InfoIcon size={16} class="mt-0.5 shrink-0" />
-                        <span>{formMessage}</span>
-                    </div>
-                {/if}
-
-                <button
-                    type="submit"
-                    class="btn-primary mt-1 h-12 text-sm"
-                    disabled={isUpdatingPassword}
-                >
-                    {isUpdatingPassword
-                        ? "Updating password..."
-                        : "Update password"}
-                </button>
-            </form>
+                        {isUpdatingPassword
+                            ? "Updating password..."
+                            : "Update password"}
+                    </button>
+                </form>
             </section>
         {/if}
 

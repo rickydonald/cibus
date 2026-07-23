@@ -33,7 +33,7 @@
             return {
                 id: "staff-id",
                 label: "Faculty / Staff ID",
-                placeholder: "Staff ID",
+                placeholder: "Faculty/Staff ID",
                 hint: "Use the ID issued to you by the college.",
                 uppercase: true,
             };
@@ -189,7 +189,7 @@
             Create account
         </h1>
         <p class="mt-1 text-[13px] font-medium text-ink-muted">
-            Verify your number, and you're in
+            Verify your details to get started
         </p>
     </div>
 

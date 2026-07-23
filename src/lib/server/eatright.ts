@@ -181,8 +181,8 @@ export function resolveEatRightSessionFromEvent(
         response: json(
             {
                 error: expired
-                    ? "EatRight session has expired. Please sign in again."
-                    : "EatRight session is missing. Please sign in.",
+                    ? "Eat Right session has expired. Please sign in again."
+                    : "Eat Right session is missing. Please sign in.",
                 errorCode: expired
                     ? "eatright_session_expired"
                     : "eatright_session_missing",

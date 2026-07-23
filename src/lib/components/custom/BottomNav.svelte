@@ -32,6 +32,7 @@
                     : 'text-ink-faint hover:text-ink-muted'}"
                 aria-current={isActive ? "page" : undefined}
             >
+                <!-- Bottom Nav Tab : ICON -->
                 <span
                     class="flex h-8 w-14 items-center justify-center rounded-circle transition-colors {isActive
                         ? 'bg-primary-soft'
@@ -39,8 +40,9 @@
                 >
                     <tab.icon size={19} strokeWidth={isActive ? 2.4 : 2} />
                 </span>
+                <!-- Bottom Nav Tab : TEXT -->
                 <span
-                    class="text-[10px] {isActive
+                    class="text-[11px] {isActive
                         ? 'font-bold'
                         : 'font-semibold'}"
                 >

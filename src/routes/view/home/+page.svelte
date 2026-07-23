@@ -18,6 +18,7 @@
     import { cart } from "$lib/store/cart.svelte";
 
     import FloatingCartBar from "$lib/components/custom/FloatingCartBar.svelte";
+    import Spinner from "$lib/components/custom/Spinner.svelte";
     import { Settings, WalletIcon } from "@lucide/svelte";
     import helpers from "$lib/helpers";
     import { greetingName } from "$lib/utils/person-name";
@@ -39,7 +40,7 @@
 
     let accountDetails = $state<EatRightAccountDetails | null>(null);
     let cachedProfile = $state<CachedEatRightProfile | null>(null);
-    let isNavigateLoading = $state<boolean>(false);
+    let navigatingOutletId = $state<number | null>(null);
     let hasCurrentOrder = $state<boolean>(false);
 
     let isAccountLoading: boolean = $state(false);
@@ -91,8 +92,14 @@
     });
 
     async function handleNavigation(outletId: number, shopNo: number) {
-        isNavigateLoading = true;
-        await goto(`/view/order/${outletId}/${shopNo}`);
+        if (navigatingOutletId !== null) return;
+        navigatingOutletId = outletId;
+        try {
+            await goto(`/view/order/${outletId}/${shopNo}`);
+        } catch (error) {
+            console.error(error);
+            navigatingOutletId = null;
+        }
     }
 
     const allOutletsClosed = $derived(
@@ -261,11 +268,19 @@
                 >
                     {#if accountDetails}
                         {#each accountDetails.outlets as outlet}
+                            {@const isNavigating =
+                                navigatingOutletId === outlet.id}
                             <button
                                 onclick={() =>
                                     handleNavigation(outlet.id, outlet.shopNo)}
-                                disabled={outlet.isClosed || isNavigateLoading}
-                                class="group card p-4 text-left transition-all hover:border-line-strong active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                                disabled={outlet.isClosed ||
+                                    navigatingOutletId !== null}
+                                aria-busy={isNavigating}
+                                class="group card p-4 text-left transition-all hover:border-line-strong active:scale-[0.99] disabled:cursor-not-allowed"
+                                class:opacity-60={outlet.isClosed ||
+                                    (navigatingOutletId !== null &&
+                                        !isNavigating)}
+                                class:border-primary={isNavigating}
                             >
                                 <div
                                     class="flex items-center justify-between gap-3"
@@ -304,7 +319,13 @@
                                     </div>
 
                                     <div>
-                                        {#if outlet.isClosed}
+                                        {#if isNavigating}
+                                            <div
+                                                class="flex h-7 w-7 items-center justify-center rounded-circle bg-primary-soft border border-primary/10 text-primary"
+                                            >
+                                                <Spinner size={16} />
+                                            </div>
+                                        {:else if outlet.isClosed}
                                             <div
                                                 class="flex items-center gap-1 rounded-circle bg-danger-soft border border-danger/10 px-2.5 py-1"
                                             >

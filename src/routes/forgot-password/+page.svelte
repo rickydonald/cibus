@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { page } from "$app/state";
     import AuthShell from "$lib/components/custom/AuthShell.svelte";
     import Spinner from "$lib/components/custom/Spinner.svelte";
     import {

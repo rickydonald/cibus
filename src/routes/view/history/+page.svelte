@@ -23,6 +23,7 @@
     } from "$lib/utils/orders";
     import { normalizeStoreName } from "$lib/utils/display-text";
     import { ReceiptTextIcon } from "@lucide/svelte";
+    import { contentReveal } from "$lib/utils/transitions";
 
     type OrderFilter = "all" | "active" | "delivered" | "cancelled";
 
@@ -242,6 +243,7 @@
         {:else if error}
             <div
                 class="flex min-h-[55vh] flex-col items-center justify-center text-center px-4"
+                in:contentReveal={{ duration: 320 }}
             >
                 <div
                     class="grid h-14 w-14 place-items-center rounded-circle bg-danger-soft text-danger"
@@ -266,6 +268,7 @@
         {:else if orders.length === 0}
             <div
                 class="flex min-h-[55vh] flex-col items-center justify-center text-center px-4"
+                in:contentReveal={{ duration: 360 }}
             >
                 <div
                     class="grid h-14 w-14 place-items-center rounded-circle bg-primary-soft text-primary"
@@ -287,8 +290,9 @@
                 </button>
             </div>
         {:else}
-            <!-- Status filter -->
-            <div class="no-scrollbar mt-4 flex gap-2 overflow-x-auto px-1">
+            <div in:contentReveal={{ duration: 280 }}>
+                <!-- Status filter -->
+                <div class="no-scrollbar mt-4 flex gap-2 overflow-x-auto px-1">
                 {#each FILTERS as filter}
                     <button
                         type="button"
@@ -302,17 +306,17 @@
                         {filter.label}
                     </button>
                 {/each}
-            </div>
-
-            {#if filteredOrders.length === 0}
-                <div
-                    class="card mt-4 rounded-[22px] p-8 text-center text-xs font-medium text-ink-faint"
-                >
-                    No {activeFilter} orders yet.
                 </div>
-            {:else}
-                {#each orderGroups as group}
-                    <section class="mt-6">
+
+                {#if filteredOrders.length === 0}
+                    <div
+                        class="card mt-4 rounded-[22px] p-8 text-center text-xs font-medium text-ink-faint"
+                    >
+                        No {activeFilter} orders yet.
+                    </div>
+                {:else}
+                    {#each orderGroups as group}
+                        <section class="mt-6">
                         <h2 class="section-label pl-4">{group.label}</h2>
 
                         <div class="card mt-2 overflow-hidden rounded-[22px]">
@@ -373,9 +377,10 @@
                                 </button>
                             {/each}
                         </div>
-                    </section>
-                {/each}
-            {/if}
+                        </section>
+                    {/each}
+                {/if}
+            </div>
         {/if}
     </div>
 </div>

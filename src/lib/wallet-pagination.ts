@@ -27,6 +27,12 @@ export function parseWalletTransactionPage(value: string | null): number {
     return Math.min(page, 10_000);
 }
 
+/**
+ * Method to paginate wallet transactions
+ * @param transactions 
+ * @param page 
+ * @returns 
+ */
 export function paginateWalletTransactions<T extends SortableWalletTransaction>(
     transactions: T[],
     page: number,
@@ -36,7 +42,7 @@ export function paginateWalletTransactions<T extends SortableWalletTransaction>(
         .sort(
             (left, right) =>
                 transactionTimestamp(right.transaction) -
-                    transactionTimestamp(left.transaction) ||
+                transactionTimestamp(left.transaction) ||
                 left.index - right.index,
         )
         .map(({ transaction }) => transaction);
