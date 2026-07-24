@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { goto } from "$app/navigation";
     import { ArrowLeftIcon } from "@lucide/svelte";
 
     interface Props {
@@ -14,7 +15,7 @@
     >
         {#if showBackButton}
             <button
-                onclick={() => history.back()}
+                onclick={() => goto('/view/home')}
                 class="icon-btn"
                 aria-label="Go back"
             >

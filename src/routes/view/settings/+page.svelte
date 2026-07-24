@@ -159,7 +159,7 @@
             class="safe-top-offset flex items-center gap-4 px-6 py-4 max-w-md mx-auto lg:max-w-lg"
         >
             <button
-                onclick={() => history.back()}
+                onclick={() => goto('/view/home')}
                 class="icon-btn"
                 aria-label="Go back"
             >

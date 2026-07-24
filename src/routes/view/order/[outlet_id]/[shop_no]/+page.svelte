@@ -22,6 +22,7 @@
         normalizeStoreName,
     } from "$lib/utils/display-text";
     import { contentReveal } from "$lib/utils/transitions";
+    import { goto } from "$app/navigation";
 
     let { params }: PageProps = $props();
 
@@ -237,7 +238,7 @@
         <div class="mx-auto max-w-lg lg:max-w-4xl">
             <header class="safe-top-offset flex items-center gap-3 px-4 pb-3">
                 <button
-                    onclick={() => history.back()}
+                    onclick={() => goto('/view/home')}
                     class="icon-btn"
                     aria-label="Go back"
                 >
