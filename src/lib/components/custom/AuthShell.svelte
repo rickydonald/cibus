@@ -93,9 +93,6 @@
             {#if footer}
                 {@render footer()}
             {/if}
-            <p class="mt-4 text-center text-[11px] text-ink-faint">
-                Designed by Ricky Donald.
-            </p>
         </div>
     </div>
 </main>

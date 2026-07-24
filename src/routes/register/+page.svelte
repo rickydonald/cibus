@@ -42,7 +42,7 @@
             return {
                 id: "guest-name",
                 label: "Full name",
-                placeholder: "e.g. Ricky Donald",
+                placeholder: "e.g. Donald",
                 hint: "Tell us your name to create a guest account.",
                 uppercase: false,
             };

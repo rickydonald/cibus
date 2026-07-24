@@ -117,7 +117,7 @@
             </a>
         {/if}
 
-        <div class="mt-auto pb-2">
+        <div class="mt-auto pb-2 mb-5">
             <a
                 href="/view/settings"
                 class="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm transition-colors {isSettingsActive
@@ -133,8 +133,4 @@
             </a>
         </div>
     </nav>
-
-    <p class="px-6 pb-6 text-[11px] font-medium text-ink-faint">
-        Designed by Ricky Donald.
-    </p>
 </aside>

@@ -52,7 +52,7 @@ test("formats the complete parsed name using the requested casing", () => {
 });
 
 test("can apply every casing mode to only the parsed given name", () => {
-    const name = "Rev. Fr. RICKY DONALD";
+    const name = "Rev. Fr. John Doe";
 
     assert.equal(
         normalizePersonName(name, { casing: "uppercase", part: "given" }),
