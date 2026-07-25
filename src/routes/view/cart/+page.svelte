@@ -600,10 +600,7 @@
                                 <p
                                     class="text-xs text-ink-muted font-medium uppercase tracking-wider mt-0.5"
                                 >
-                                    Counter {outletItems[0].shopno} • {outletItems.length}
-                                    {outletItems.length === 1
-                                        ? "item"
-                                        : "items"}
+                                    Counter {outletItems[0].shopno}
                                 </p>
                             </div>
                             <button
