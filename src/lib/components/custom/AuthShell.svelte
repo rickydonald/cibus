@@ -42,13 +42,6 @@
     });
 </script>
 
-<svelte:head>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&display=swap"
-        rel="stylesheet"
-    />
-</svelte:head>
-
 <main class="flex min-h-dvh flex-col bg-surface">
     <div
         class="mx-auto flex w-full max-w-[26.5rem] flex-1 flex-col px-6 pb-[max(1.75rem,var(--safe-area-inset-bottom))] pt-[calc(var(--safe-area-inset-top)+3rem)] sm:justify-center sm:px-8 sm:py-16"

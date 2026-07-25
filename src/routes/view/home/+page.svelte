@@ -107,8 +107,12 @@
             ? accountDetails.outlets.every((o) => o.isClosed)
             : false,
     );
+    // Keep the cart bar steady while the account loads — gating it on
+    // isAccountLoading makes it flash out and back in (show → hide → show)
+    // on every arrival at home with items in the cart. allOutletsClosed is
+    // already false until the outlets resolve, so nothing is gained by it.
     const hasFloatingCart = $derived(
-        cart.totalItems > 0 && !allOutletsClosed && !isAccountLoading,
+        cart.totalItems > 0 && !allOutletsClosed,
     );
 
     // Normalize Wallet Username

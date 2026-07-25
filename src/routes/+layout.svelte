@@ -5,6 +5,7 @@
 	import { onMount } from "svelte";
 	import { onNavigate } from "$app/navigation";
 	import { dev } from "$app/environment";
+	import { isHubRoute } from "$lib/nav";
 
 	let { children } = $props();
 
@@ -60,16 +61,41 @@
 		}
 	});
 
-	// onNavigate((navigation) => {
-	// 	if (!document.startViewTransition) return;
+	// Run a view transition across the hub <-> detail boundary (e.g. home
+	// <-> order menu) so the floating cart bar, which is named on both
+	// sides, morphs in place instead of hard-cutting with the page. The
+	// rest of the page does a soft crossfade. CSS lives in layout.css.
+	onNavigate((navigation) => {
+		if (!document.startViewTransition) return;
+		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-	// 	return new Promise((resolve) => {
-	// 		document.startViewTransition(async () => {
-	// 			resolve();
-	// 			await navigation.complete;
-	// 		});
-	// 	});
-	// });
+		const from = navigation.from?.url.pathname;
+		const to = navigation.to?.url.pathname;
+		if (!from || !to) return;
+
+		const isDetail = (p: string) =>
+			p.startsWith("/view/") && !isHubRoute(p);
+		const crosses =
+			(isHubRoute(from) && isDetail(to)) ||
+			(isDetail(from) && isHubRoute(to));
+		if (!crosses) return;
+
+		// Flag this transition so the page content swaps instantly and
+		// only the shared floating cart bar morphs (see layout.css).
+		document.documentElement.dataset.nav = "cart";
+
+		return new Promise((resolve) => {
+			const transition = document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+			void transition.finished
+				.catch(() => {})
+				.finally(() => {
+					delete document.documentElement.dataset.nav;
+				});
+		});
+	});
 </script>
 
 <svelte:head>
@@ -86,6 +112,11 @@
 
 	<link
 		href="https://fonts.googleapis.com/css2?family=Red+Hat+Mono:wght@300..700&display=swap"
+		rel="stylesheet"
+	/>
+
+	<link
+		href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&display=swap"
 		rel="stylesheet"
 	/>
 	<link rel="icon" href={favicon} />

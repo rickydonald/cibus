@@ -17,7 +17,7 @@
 
 <SideNav />
 
-<div class="lg:pl-64">
+<div class="lg:pl-68">
     {#if showBottomNav}
         <div class="hub-page-shell">
             {@render children()}

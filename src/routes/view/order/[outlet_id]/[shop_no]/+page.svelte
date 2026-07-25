@@ -262,9 +262,9 @@
                         <p
                             class="mt-0.5 truncate text-[11px] font-semibold text-ink-muted"
                         >
-                            Counter {params.shop_no}
+                            <span>Counter {params.shop_no}</span>
                             {#if items.length > 0}
-                                <span class="px-1 text-line-strong">·</span>
+                                <span class="text-line-strong">|</span>
                                 {items.length}
                                 {items.length === 1 ? "item" : "items"}
                             {/if}
@@ -308,14 +308,15 @@
                     aria-label="Menu categories"
                 >
                     {#each categories as category}
+                        {@const isSelected = selectedCategory === category}
                         <button
                             type="button"
                             onclick={() => (selectedCategory = category)}
-                            aria-pressed={selectedCategory === category}
-                            class={`h-9 shrink-0 whitespace-nowrap rounded-circle px-4 text-xs font-semibold transition-[background-color,color,border-color,transform] active:scale-95 ${
-                                selectedCategory === category
-                                    ? "border border-primary bg-primary text-white"
-                                    : "border border-line bg-surface text-ink-muted hover:border-line-strong hover:text-ink"
+                            aria-pressed={isSelected}
+                            class={`category-chip h-9 shrink-0 whitespace-nowrap rounded-circle px-4 text-[13px] font-semibold transition-all duration-200 active:scale-95 ${
+                                isSelected
+                                    ? "category-chip-active bg-primary text-white"
+                                    : "bg-surface text-ink-muted ring-1 ring-inset ring-line hover:text-primary hover:ring-primary/30"
                             }`}
                         >
                             {category}
@@ -606,5 +607,18 @@
 
     input[type="search"]::-webkit-search-cancel-button {
         display: none;
+    }
+
+    /* Selected category chip — filled primary with the same soft sheen
+       and lift used on the app's primary buttons. */
+    .category-chip-active {
+        background-image: linear-gradient(
+            180deg,
+            rgb(255 255 255 / 0.16),
+            rgb(255 255 255 / 0) 55%
+        );
+        box-shadow:
+            0 8px 18px -8px rgb(19 126 193 / 0.6),
+            inset 0 1px 0 rgb(255 255 255 / 0.14);
     }
 </style>

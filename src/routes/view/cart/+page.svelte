@@ -693,7 +693,7 @@
     <!-- Order Bar Summary Footer -->
     {#if cart.items.length > 0}
         <div
-            class="fixed bottom-0 left-0 right-0 z-40 border-t border-line bg-canvas shadow-[0_-8px_24px_rgba(26,30,38,0.04)] lg:left-64"
+            class="fixed bottom-0 left-0 right-0 z-40 border-t border-line bg-canvas shadow-[0_-8px_24px_rgba(26,30,38,0.04)] lg:left-68"
             style="padding-right: var(--safe-area-inset-right); padding-bottom: var(--safe-area-inset-bottom); padding-left: var(--safe-area-inset-left);"
         >
             <div

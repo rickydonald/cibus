@@ -232,6 +232,25 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 /*
+ * Floating cart bar shared-element transition. The bar carries the name
+ * on both the hub pages and the order menu, so on navigation it morphs
+ * (glides) between its two resting positions instead of hard-jumping.
+ * For these navigations the page content is swapped instantly — only the
+ * cart bar animates — by suppressing the root snapshot's crossfade.
+ */
+html[data-nav="cart"]::view-transition-old(root),
+html[data-nav="cart"]::view-transition-new(root) {
+    animation: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    ::view-transition-group(floating-cart) {
+        animation-duration: 320ms;
+        animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+}
+
+/*
  * Auth flow view transitions — the brand lockup holds perfectly still
  * while only the form column morphs and crossfades between /login,
  * /register, /forgot-password and their in-page steps.
