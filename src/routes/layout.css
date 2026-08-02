@@ -1,6 +1,38 @@
 @import 'tailwindcss';
 @plugin "tailwindcss-corner-shape/presets/squircle";
 
+@font-face {
+    font-family: "Paper Mono";
+    src: url("/fonts/paper-mono/paper-mono-regular.woff2") format("woff2");
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Paper Mono";
+    src: url("/fonts/paper-mono/paper-mono-medium.woff2") format("woff2");
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Paper Mono";
+    src: url("/fonts/paper-mono/paper-mono-semibold.woff2") format("woff2");
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Paper Mono";
+    src: url("/fonts/paper-mono/paper-mono-bold.woff2") format("woff2");
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+}
+
 :root {
     --safe-area-inset-top: env(safe-area-inset-top, 0px);
     --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
@@ -45,8 +77,8 @@
 }
 
 @theme inline {
-    --font-geist-mono: "Red Hat Mono", monospace;
-    --font-mono: "Red Hat Mono", monospace;
+    --font-geist-mono: "Paper Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --font-mono: "Paper Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 /*

@@ -106,17 +106,7 @@
 		crossorigin="anonymous"
 	/>
 	<link
-		href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200..800&display=swap"
-		rel="stylesheet"
-	/>
-
-	<link
-		href="https://fonts.googleapis.com/css2?family=Red+Hat+Mono:wght@300..700&display=swap"
-		rel="stylesheet"
-	/>
-
-	<link
-		href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&display=swap"
+		href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Plus+Jakarta+Sans:wght@200..800&display=swap"
 		rel="stylesheet"
 	/>
 	<link rel="icon" href={favicon} />

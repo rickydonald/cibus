@@ -65,7 +65,7 @@
 
         <!-- total + count -->
         <span class="relative z-10 min-w-0 flex-1 leading-tight">
-            <span class="block text-[17px] font-bold tabular-nums tracking-tight">
+            <span class="block text-[17px] font-mono font-bold tabular-nums tracking-[-0.020em]">
                 ₹{cart.totalAmount}
             </span>
             <span class="block truncate text-[11px] font-medium text-white/60">

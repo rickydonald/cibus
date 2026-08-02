@@ -10,9 +10,13 @@
         CheckCircleIcon,
         AlertCircleIcon,
         ReceiptCheckIcon,
+        MinusIcon,
+        PlusIcon,
+        Trash01Icon,
+        ChevronRightIcon,
     } from "@untitled-theme/icons-svelte";
     import Spinner from "$lib/components/custom/Spinner.svelte";
-    import { cart, MAX_QTY } from "$lib/stores/cart.svelte";
+    import { cart, MAX_QTY, type CartItem } from "$lib/stores/cart.svelte";
     import {
         getPendingPayment,
         setPendingPayment,
@@ -21,6 +25,8 @@
     import { browser } from "$app/environment";
     import helpers from "$lib/helpers";
     import { fly, fade } from "svelte/transition";
+    import { flip } from "svelte/animate";
+    import { contentReveal, collapse } from "$lib/utils/transitions";
     import { toast } from "svelte-sonner";
     import {
         MAX_WALLET_BALANCE,
@@ -36,7 +42,7 @@
         getOrCreatePendingOrderCheckout,
     } from "$lib/client/pending-order-checkout";
     import { normalizeStoreName } from "$lib/utils/display-text";
-    import { Wallet2Icon, WalletIcon } from "@lucide/svelte";
+    import { WalletIcon } from "@lucide/svelte";
 
     const PENDING_CHECKOUT_RECHARGE_KEY_PREFIX =
         "eatright:pending_checkout_recharge:";
@@ -102,6 +108,13 @@
     const grouped = $derived(
         Object.groupBy(cart.items, (item) => item.outletname),
     );
+
+    // Distinct counters in the cart — drives the header subtitle.
+    const counterCount = $derived(Object.keys(grouped).length);
+
+    function outletUnitCount(items: CartItem[]) {
+        return items.reduce((sum, item) => sum + item.qty, 0);
+    }
 
     function formatAmount(amount: number | null) {
         if (amount === null || Number.isNaN(amount)) return "--";
@@ -500,13 +513,16 @@
                 <ArrowLeftIcon class="h-5 w-5 text-ink-muted" />
             </button>
 
-            <div class="flex-1">
+            <div class="min-w-0 flex-1">
                 <h1 class="text-2xl font-bold tracking-tight text-ink">Cart</h1>
-                <p
-                    class="text-xs text-ink-muted font-medium mt-0.5"
-                >
-                    {cart.totalItems}
-                    {cart.totalItems === 1 ? "item" : "items"} selected
+                <p class="text-xs text-ink-muted font-medium mt-0.5">
+                    {#if cart.items.length === 0}
+                        Nothing added yet
+                    {:else}
+                        {cart.totalItems}
+                        {cart.totalItems === 1 ? "item" : "items"}{#if counterCount > 1}
+                            · {counterCount} counters{/if}
+                    {/if}
                 </p>
             </div>
 
@@ -519,9 +535,14 @@
                 {:else}
                     <a
                         href="/view/wallet"
-                        class="flex items-center gap-1.5 rounded-circle px-3 py-1.5 bg-surface border border-line shadow-card hover:border-primary/30 transition-all"
+                        class="flex items-center gap-2 rounded-circle py-1.5 pl-1.5 pr-3.5 bg-surface border border-line shadow-card transition-all hover:border-primary/30 active:scale-95"
+                        aria-label="Open wallet"
                     >
-                        <WalletIcon class="h-4 w-4 text-primary" />
+                        <span
+                            class="grid h-6 w-6 place-items-center rounded-circle bg-primary-soft"
+                        >
+                            <WalletIcon class="h-3.5 w-3.5 text-primary" />
+                        </span>
                         <span
                             class="text-sm font-semibold text-ink tabular-nums"
                         >
@@ -536,7 +557,7 @@
     <!-- Scroll Container -->
     <div
         class="px-5 pt-4 max-w-md mx-auto lg:max-w-lg"
-        style="padding-bottom: max(env(safe-area-inset-bottom), 160px)"
+        style="padding-bottom: max(env(safe-area-inset-bottom), 168px)"
     >
         {#if error}
             <div
@@ -550,42 +571,51 @@
 
         {#if cart.items.length === 0}
             <div
-                class="flex min-h-[60vh] flex-col items-center justify-center text-center"
+                class="flex min-h-[62vh] flex-col items-center justify-center text-center"
+                in:contentReveal={{ duration: 240 }}
             >
                 <div
-                    class="mb-4 flex h-20 w-20 items-center justify-center rounded-circle bg-surface border border-line shadow-card"
+                    class="mb-5 grid h-20 w-20 place-items-center rounded-circle bg-surface border border-line shadow-card"
                 >
                     <ShoppingCart01Icon class="h-9 w-9 text-ink-faint" />
                 </div>
                 <h2 class="text-lg font-semibold tracking-tight text-ink">
                     Your cart is empty
                 </h2>
-                <p class="mt-1 max-w-xs text-sm text-ink-muted leading-relaxed">
+                <p class="mt-1.5 max-w-xs text-sm text-ink-muted leading-relaxed">
                     Browse the available food counters to fill your tray.
                 </p>
-                <a href="/view/home" class="btn-primary mt-5 px-5 py-3 text-sm">
+                <a
+                    href="/view/home"
+                    class="btn-primary mt-6 rounded-circle px-6 py-3 text-sm shadow-md shadow-primary/20"
+                >
                     Browse Counters
+                    <ChevronRightIcon class="h-4 w-4" />
                 </a>
             </div>
         {:else}
-            {#each Object.entries(grouped) as [outlet, items]}
-                {@const outletItems = items ?? []}
-                <div class="card mb-4 overflow-hidden rounded-[28px]">
-                    <!-- Brand Section Header -->
-                    <div class="border-b border-line bg-canvas/60 px-4 py-3.5">
-                        <div class="flex items-center gap-3">
+            <div
+                class="flex flex-col gap-4"
+                in:contentReveal={{ duration: 240 }}
+            >
+                {#each Object.entries(grouped) as [outlet, items] (outlet)}
+                    {@const outletItems = items ?? []}
+                    {@const unitCount = outletUnitCount(outletItems)}
+                    <div
+                        class="card overflow-hidden rounded-[28px]"
+                        out:collapse={{ duration: 320 }}
+                        animate:flip={{ duration: 320 }}
+                    >
+                        <!-- Brand Section Header -->
+                        <div
+                            class="flex items-center gap-3 border-b border-line bg-canvas/50 px-4 py-3.5"
+                        >
                             <div
-                                class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-soft border border-primary/10"
+                                class="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-primary-soft border border-primary/10"
                             >
                                 <img
                                     src={helpers.mapStoreIcon(
-                                        String(
-                                            cart.items.find(
-                                                (item) =>
-                                                    item.shopno ===
-                                                    outletItems[0].shopno,
-                                            )?.shopno,
-                                        ),
+                                        String(outletItems[0].shopno),
                                     )}
                                     alt={normalizeStoreName(outlet)}
                                     class="h-8 w-8 object-contain"
@@ -593,126 +623,155 @@
                             </div>
                             <div class="min-w-0 flex-1">
                                 <h2
-                                    class="text-base font-semibold tracking-tight text-ink truncate"
+                                    class="truncate text-base font-semibold tracking-tight text-ink"
                                 >
                                     {normalizeStoreName(outlet)}
                                 </h2>
                                 <p
-                                    class="text-xs text-ink-muted font-medium uppercase tracking-wider mt-0.5"
+                                    class="mt-0.5 text-[11px] font-semibold uppercase tracking-wider text-ink-faint"
                                 >
-                                    Counter {outletItems[0].shopno}
+                                    Counter {outletItems[0].shopno} · {unitCount}
+                                    {unitCount === 1 ? "item" : "items"}
                                 </p>
                             </div>
                             <button
                                 onclick={() => {
                                     cart.removeByOutlet(outlet);
-                                    toast.success("Cleared " + outlet);
+                                    toast.success(
+                                        "Cleared " + normalizeStoreName(outlet),
+                                    );
                                 }}
-                                class="text-[11px] font-semibold text-danger hover:bg-danger-soft transition-colors shrink-0 px-2.5 py-1.5 rounded-lg"
+                                class="grid h-8 w-8 shrink-0 place-items-center rounded-circle text-ink-faint transition-colors hover:bg-danger-soft hover:text-danger active:scale-90"
+                                aria-label={`Clear all items from ${normalizeStoreName(outlet)}`}
                             >
-                                Clear
+                                <Trash01Icon class="h-4 w-4" />
                             </button>
                         </div>
-                    </div>
 
-                    <!-- Individual Menu List Rows -->
-                    <div class="divide-y divide-line/70 px-4">
-                        {#each outletItems as item}
-                            <div class="flex items-center gap-3 py-3.5">
-                                <div class="min-w-0 flex-1">
-                                    <h3
-                                        class="text-sm font-semibold text-ink leading-snug wrap-break-word pr-1"
-                                    >
-                                        {item.itemname}
-                                    </h3>
-                                    <p
-                                        class="mt-0.5 text-xs text-ink-muted font-medium tabular-nums"
-                                    >
-                                        ₹{item.amount} each
-                                    </p>
-                                </div>
-
-                                <!-- Incremental Engine Pill Container -->
+                        <!-- Individual Menu List Rows -->
+                        <div class="divide-y divide-line/70 px-4">
+                            {#each outletItems as item (item.id + "-" + item.outletid)}
+                                {@const atMax =
+                                    item.qty >=
+                                    Math.min(
+                                        MAX_QTY,
+                                        item.available_qty ?? MAX_QTY,
+                                    )}
                                 <div
-                                    class="flex h-8 shrink-0 items-center rounded-xl border border-line bg-canvas p-0.5 shadow-2xs"
+                                    class="flex items-center gap-3 py-4"
+                                    out:collapse={{ duration: 260 }}
+                                    animate:flip={{ duration: 260 }}
                                 >
-                                    <button
-                                        class="flex h-7 w-7 items-center justify-center text-sm font-semibold text-ink-muted hover:text-primary rounded-lg active:bg-surface transition-colors"
-                                        onclick={() =>
-                                            cart.remove(item.id, item.outletid)}
-                                    >
-                                        −
-                                    </button>
+                                    <div class="min-w-0 flex-1">
+                                        <h3
+                                            class="text-[15px] font-semibold text-ink leading-snug wrap-break-word pr-1"
+                                        >
+                                            {item.itemname}
+                                        </h3>
+                                        <p
+                                            class="mt-1 text-xs text-ink-faint font-medium tabular-nums"
+                                        >
+                                            ₹{item.amount} each
+                                        </p>
+                                    </div>
 
-                                    <span
-                                        class="w-6 text-center text-xs font-semibold text-ink tabular-nums"
+                                    <!-- Quantity stepper — quiet outlined pill;
+                                         minus becomes a delete affordance at the
+                                         last unit, plus carries a soft accent. -->
+                                    <div
+                                        class="flex h-9 shrink-0 items-center gap-0.5 rounded-circle border border-line bg-canvas p-1"
                                     >
-                                        {item.qty}
-                                    </span>
+                                        <button
+                                            class="grid h-7 w-7 place-items-center rounded-circle transition-all active:scale-90 {item.qty ===
+                                            1
+                                                ? 'text-danger hover:bg-danger-soft'
+                                                : 'text-ink-muted hover:bg-surface hover:text-ink'}"
+                                            onclick={() =>
+                                                cart.remove(
+                                                    item.id,
+                                                    item.outletid,
+                                                )}
+                                            aria-label={item.qty === 1
+                                                ? `Remove ${item.itemname}`
+                                                : `Decrease ${item.itemname}`}
+                                        >
+                                            {#if item.qty === 1}
+                                                <Trash01Icon class="h-4 w-4" />
+                                            {:else}
+                                                <MinusIcon
+                                                    class="h-4 w-4"
+                                                    stroke-width="2.5"
+                                                />
+                                            {/if}
+                                        </button>
 
-                                    <button
-                                        class="flex h-7 w-7 items-center justify-center text-sm font-semibold text-ink-muted hover:text-primary rounded-lg active:bg-surface disabled:opacity-20 transition-colors"
-                                        onclick={() =>
-                                            cart.add({
-                                                id: item.id,
-                                                itemname: item.itemname,
-                                                amount: item.amount,
-                                                outletid: item.outletid,
-                                                outletname: item.outletname,
-                                                shopno: item.shopno,
-                                                available_qty:
-                                                    item.available_qty ??
-                                                    MAX_QTY,
-                                            })}
-                                        disabled={item.qty >=
-                                            Math.min(
-                                                MAX_QTY,
-                                                item.available_qty ?? MAX_QTY,
-                                            )}
+                                        <span
+                                            class="w-6 text-center text-sm font-bold text-ink tabular-nums"
+                                        >
+                                            {item.qty}
+                                        </span>
+
+                                        <button
+                                            class="grid h-7 w-7 place-items-center rounded-circle text-primary transition-all hover:bg-surface active:scale-90 disabled:text-ink-faint disabled:opacity-40"
+                                            onclick={() =>
+                                                cart.add({
+                                                    id: item.id,
+                                                    itemname: item.itemname,
+                                                    amount: item.amount,
+                                                    outletid: item.outletid,
+                                                    outletname: item.outletname,
+                                                    shopno: item.shopno,
+                                                    available_qty:
+                                                        item.available_qty ??
+                                                        MAX_QTY,
+                                                })}
+                                            disabled={atMax}
+                                            aria-label={`Add one ${item.itemname}`}
+                                        >
+                                            <PlusIcon
+                                                class="h-4 w-4"
+                                                stroke-width="2.5"
+                                            />
+                                        </button>
+                                    </div>
+
+                                    <div
+                                        class="w-16 shrink-0 text-right text-[15px] font-bold text-ink tabular-nums"
                                     >
-                                        +
-                                    </button>
+                                        ₹{item.amount * item.qty}
+                                    </div>
                                 </div>
-
-                                <div
-                                    class="w-16 shrink-0 text-right text-sm font-semibold text-ink tabular-nums"
-                                >
-                                    ₹{item.amount * item.qty}
-                                </div>
-                            </div>
-                        {/each}
+                            {/each}
+                        </div>
                     </div>
-                </div>
-            {/each}
+                {/each}
+            </div>
         {/if}
     </div>
 
     <!-- Order Bar Summary Footer -->
     {#if cart.items.length > 0}
         <div
-            class="fixed bottom-0 left-0 right-0 z-40 border-t border-line bg-canvas shadow-[0_-8px_24px_rgba(26,30,38,0.04)] lg:left-68"
+            class="fixed bottom-0 left-0 right-0 z-40 border-t border-line bg-surface/95 backdrop-blur-xl shadow-[0_-8px_24px_rgba(26,30,38,0.06)] lg:left-68"
             style="padding-right: var(--safe-area-inset-right); padding-bottom: var(--safe-area-inset-bottom); padding-left: var(--safe-area-inset-left);"
         >
-            <div
-                class="mx-auto max-w-md p-5 pb-8 lg:max-w-lg"
-            >
+            <div class="mx-auto max-w-md px-5 pt-4 pb-8 lg:max-w-lg">
                 <div class="flex items-center justify-between gap-4">
-                    <div class="shrink-0 mr-3">
+                    <div class="shrink-0">
                         <p
-                            class="text-[10px] font-medium uppercase tracking-[0.16em] text-ink-faint"
+                            class="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-faint"
                         >
-                            To Pay • {cart.totalItems}
-                            {cart.totalItems === 1 ? "item" : "items"}
+                            Total payable
                         </p>
                         <h3
-                            class="text-2xl font-bold tracking-tight text-ink tabular-nums mt-0.5"
+                            class="mt-0.5 text-2xl font-bold tracking-tight text-ink tabular-nums"
                         >
                             ₹{cart.totalAmount}
                         </h3>
                     </div>
 
                     <button
-                        class="btn-primary flex-1 rounded-4xl py-3.5 text-sm shadow-md shadow-primary/20"
+                        class="btn-primary flex-1 rounded-circle py-3.5 text-sm shadow-md shadow-primary/20"
                         onclick={openOrderConfirmation}
                         disabled={isPlacingOrder ||
                             isWalletLoading ||
@@ -724,6 +783,7 @@
                             Processing...
                         {:else}
                             Review Order
+                            <ChevronRightIcon class="h-4 w-4" />
                         {/if}
                     </button>
                 </div>
