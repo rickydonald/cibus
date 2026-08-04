@@ -47,6 +47,8 @@
     const PENDING_CHECKOUT_RECHARGE_KEY_PREFIX =
         "eatright:pending_checkout_recharge:";
     const PENDING_CHECKOUT_MAX_AGE_MS = 10 * 60 * 1000;
+    const ALL_STORES_CLOSED_MESSAGE =
+        "All food counters are closed. Checkout is unavailable.";
 
     type PendingCheckoutRecharge = {
         amount: number;
@@ -64,6 +66,25 @@
     let success = $state("");
     let paymentMessage = $state("");
     let walletBalance = $state<number | null>(null);
+    let areAllStoresClosed = $state(false);
+    let closedOutletIds = $state<Set<number>>(new Set());
+
+    const checkoutAvailabilityMessage = $derived.by(() => {
+        if (areAllStoresClosed) return ALL_STORES_CLOSED_MESSAGE;
+
+        const closedStoreNames = Array.from(
+            new Set(
+                cart.items
+                    .filter((item) => closedOutletIds.has(item.outletid))
+                    .map((item) => normalizeStoreName(item.outletname)),
+            ),
+        );
+        if (closedStoreNames.length === 0) return "";
+        if (closedStoreNames.length === 1) {
+            return `${closedStoreNames[0]} is closed. Remove its items to continue.`;
+        }
+        return "Some counters are closed. Remove their items to continue.";
+    });
 
     function pendingCheckoutRechargeKey() {
         return cart.userId
@@ -139,6 +160,33 @@
             }
 
             walletBalance = Number(data.walletBalance ?? 0);
+            const outlets = (Array.isArray(data.outlets)
+                ? data.outlets
+                : []) as unknown[];
+            const nextClosedOutletIds = new Set<number>();
+            for (const outlet of outlets) {
+                if (
+                    outlet === null ||
+                    typeof outlet !== "object" ||
+                    (outlet as { isClosed?: unknown }).isClosed !== true
+                ) {
+                    continue;
+                }
+
+                const outletId = Number((outlet as { id?: unknown }).id);
+                if (Number.isSafeInteger(outletId) && outletId > 0) {
+                    nextClosedOutletIds.add(outletId);
+                }
+            }
+            closedOutletIds = nextClosedOutletIds;
+            areAllStoresClosed =
+                outlets.length === 0 ||
+                outlets.every(
+                    (outlet) =>
+                        outlet !== null &&
+                        typeof outlet === "object" &&
+                        (outlet as { isClosed?: unknown }).isClosed === true,
+                );
             return walletBalance;
         } catch {
             error = "Unable to load wallet balance.";
@@ -195,6 +243,12 @@
         error = "";
         success = "";
 
+        if (checkoutAvailabilityMessage) {
+            error = checkoutAvailabilityMessage;
+            toast.error(error);
+            return;
+        }
+
         if (isWalletLoading) {
             error = "Checking wallet balance. Please wait.";
             return;
@@ -210,6 +264,12 @@
 
     async function placeOrder(options: { skipBalanceCheck?: boolean } = {}) {
         if (isPlacingOrder || cart.items.length === 0) return;
+        if (checkoutAvailabilityMessage) {
+            error = checkoutAvailabilityMessage;
+            isConfirmOpen = false;
+            toast.error(error);
+            return;
+        }
         if (!cart.userId) {
             error = "Your account session is still loading. Please try again.";
             return;
@@ -351,6 +411,13 @@
 
         error = "";
         paymentMessage = "";
+
+        if (checkoutAvailabilityMessage) {
+            error = checkoutAvailabilityMessage;
+            isConfirmOpen = false;
+            toast.error(error);
+            return;
+        }
 
         if (!Number.isFinite(amount) || amount <= 0) {
             error =
@@ -601,6 +668,9 @@
                 {#each Object.entries(grouped) as [outlet, items] (outlet)}
                     {@const outletItems = items ?? []}
                     {@const unitCount = outletUnitCount(outletItems)}
+                    {@const outletClosed = closedOutletIds.has(
+                        outletItems[0].outletid,
+                    )}
                     <div
                         class="card overflow-hidden rounded-[28px]"
                         out:collapse={{ duration: 320 }}
@@ -634,6 +704,13 @@
                                     {unitCount === 1 ? "item" : "items"}
                                 </p>
                             </div>
+                            {#if outletClosed}
+                                <span
+                                    class="shrink-0 rounded-circle bg-danger-soft px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-danger"
+                                >
+                                    Closed
+                                </span>
+                            {/if}
                             <button
                                 onclick={() => {
                                     cart.removeByOutlet(outlet);
@@ -725,7 +802,7 @@
                                                         item.available_qty ??
                                                         MAX_QTY,
                                                 })}
-                                            disabled={atMax}
+                                            disabled={atMax || outletClosed}
                                             aria-label={`Add one ${item.itemname}`}
                                         >
                                             <PlusIcon
@@ -775,12 +852,17 @@
                         onclick={openOrderConfirmation}
                         disabled={isPlacingOrder ||
                             isWalletLoading ||
-                            isRecharging}
+                            isRecharging ||
+                            checkoutAvailabilityMessage !== ""}
                     >
                         {#if isPlacingOrder}
                             Placing Order...
                         {:else if isRecharging}
                             Processing...
+                        {:else if areAllStoresClosed}
+                            Stores closed
+                        {:else if checkoutAvailabilityMessage}
+                            Remove closed items
                         {:else}
                             Review Order
                             <ChevronRightIcon class="h-4 w-4" />
