@@ -24,12 +24,12 @@ export const POST: RequestHandler = async (event) => {
     }
 
     const rateLimited = enforceRateLimits(event, [
-        { namespace: "login:ip", limit: 30, windowMs: 15 * 60 * 1000 },
+        { namespace: "login:ip", limit: 30, windowMs: 2 * 60 * 1000 },
         {
             namespace: "login:userid",
             identifier: userId.toUpperCase(),
             limit: 10,
-            windowMs: 15 * 60 * 1000,
+            windowMs: 2 * 60 * 1000,
         },
     ]);
     if (rateLimited) return rateLimited;
