@@ -721,7 +721,7 @@
                                 class="grid h-8 w-8 shrink-0 place-items-center rounded-circle text-ink-faint transition-colors hover:bg-danger-soft hover:text-danger active:scale-90"
                                 aria-label={`Clear all items from ${normalizeStoreName(outlet)}`}
                             >
-                                <Trash01Icon class="h-4 w-4" />
+                                <Trash01Icon class="h-4.5 w-4.5 text-red-500" />
                             </button>
                         </div>
 
