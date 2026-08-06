@@ -6,7 +6,10 @@ import {
 } from "$lib/server/eatright";
 import { EatRightAuthConfigurationError } from "$lib/server/eatright-jwt";
 import { foodcourtApiRequest, FoodcourtApiError } from "$lib/server/foodcourt-api";
-import { enforceRateLimits } from "$lib/server/rate-limit";
+import {
+    DEFAULT_RATE_LIMIT_WINDOW_MS,
+    enforceRateLimits,
+} from "$lib/server/rate-limit";
 
 export const POST: RequestHandler = async (event) => {
     const { request, cookies } = event;
@@ -24,12 +27,12 @@ export const POST: RequestHandler = async (event) => {
     }
 
     const rateLimited = enforceRateLimits(event, [
-        { namespace: "login:ip", limit: 30, windowMs: 2 * 60 * 1000 },
+        { namespace: "login:ip", limit: 30, windowMs: DEFAULT_RATE_LIMIT_WINDOW_MS },
         {
             namespace: "login:userid",
             identifier: userId.toUpperCase(),
             limit: 10,
-            windowMs: 2 * 60 * 1000,
+            windowMs: DEFAULT_RATE_LIMIT_WINDOW_MS,
         },
     ]);
     if (rateLimited) return rateLimited;

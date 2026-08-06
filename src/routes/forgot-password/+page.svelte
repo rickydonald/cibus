@@ -63,7 +63,7 @@
 
             userId = normalizedUserId;
             otp = "";
-            resendSeconds = 90;
+            resendSeconds = 60;
             const nextMessage =
                 data.message ??
                 "Check your registered mobile number for the OTP.";

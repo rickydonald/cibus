@@ -107,10 +107,12 @@
             ? accountDetails.outlets.every((o) => o.isClosed)
             : false,
     );
-    // Keep the cart bar steady while the account loads — gating it on
-    // isAccountLoading makes it flash out and back in (show → hide → show)
-    // on every arrival at home with items in the cart. allOutletsClosed is
-    // already false until the outlets resolve, so nothing is gained by it.
+    const sortedOutlets = $derived.by(() =>
+        [...(accountDetails?.outlets ?? [])].sort(
+            (left, right) => Number(left.isClosed) - Number(right.isClosed),
+        ),
+    );
+
     const hasFloatingCart = $derived(
         cart.totalItems > 0 && !allOutletsClosed,
     );
@@ -271,7 +273,7 @@
                         hasCurrentOrder}
                 >
                     {#if accountDetails}
-                        {#each accountDetails.outlets as outlet}
+                        {#each sortedOutlets as outlet (outlet.id)}
                             {@const isNavigating =
                                 navigatingOutletId === outlet.id}
                             <button
@@ -281,7 +283,7 @@
                                     navigatingOutletId !== null}
                                 aria-busy={isNavigating}
                                 class="group card p-4 text-left transition-all hover:border-line-strong active:scale-[0.99] disabled:cursor-not-allowed"
-                                class:opacity-60={outlet.isClosed ||
+                                class:opacity-75={outlet.isClosed ||
                                     (navigatingOutletId !== null &&
                                         !isNavigating)}
                                 class:border-primary={isNavigating}
@@ -331,10 +333,10 @@
                                             </div>
                                         {:else if outlet.isClosed}
                                             <div
-                                                class="flex items-center gap-1 rounded-circle bg-danger-soft border border-danger/10 px-2.5 py-1"
+                                                class="flex items-center gap-1 rounded-circle bg-danger-soft border border-danger/10 px-4 py-1"
                                             >
                                                 <span
-                                                    class="text-[11px] font-semibold text-danger"
+                                                    class="text-sm font-semibold text-red-700"
                                                     >Closed</span
                                                 >
                                             </div>

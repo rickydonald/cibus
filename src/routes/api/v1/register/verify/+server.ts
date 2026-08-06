@@ -6,7 +6,10 @@ import {
     registrationStatusError,
     validateRegistrationInput,
 } from "$lib/server/registration";
-import { enforceRateLimits } from "$lib/server/rate-limit";
+import {
+    DEFAULT_RATE_LIMIT_WINDOW_MS,
+    enforceRateLimits,
+} from "$lib/server/rate-limit";
 
 const noStore = { "Cache-Control": "no-store" };
 
@@ -33,12 +36,12 @@ export async function POST(event) {
     }
 
     const rateLimited = enforceRateLimits(event, [
-        { namespace: "register-verify:ip", limit: 30, windowMs: 10 * 60 * 1000 },
+        { namespace: "register-verify:ip", limit: 30, windowMs: DEFAULT_RATE_LIMIT_WINDOW_MS },
         {
             namespace: "register-verify:mobile",
             identifier: input.mobile,
             limit: 8,
-            windowMs: 10 * 60 * 1000,
+            windowMs: DEFAULT_RATE_LIMIT_WINDOW_MS,
         },
     ]);
     if (rateLimited) return rateLimited;

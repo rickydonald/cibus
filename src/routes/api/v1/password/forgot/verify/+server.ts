@@ -8,7 +8,10 @@ import {
   foodcourtApiRequest,
   FoodcourtApiError,
 } from "$lib/server/foodcourt-api";
-import { enforceRateLimits } from "$lib/server/rate-limit";
+import {
+  DEFAULT_RATE_LIMIT_WINDOW_MS,
+  enforceRateLimits,
+} from "$lib/server/rate-limit";
 
 const noStore = { "Cache-Control": "no-store" };
 type VerifyResponse = { status?: string; message?: string; resetToken?: unknown };
@@ -34,12 +37,12 @@ export const POST: RequestHandler = async (event) => {
   }
 
   const rateLimited = enforceRateLimits(event, [
-    { namespace: "password-reset-verify:ip", limit: 30, windowMs: 15 * 60 * 1000 },
+    { namespace: "password-reset-verify:ip", limit: 30, windowMs: DEFAULT_RATE_LIMIT_WINDOW_MS },
     {
       namespace: "password-reset-verify:userid",
       identifier: userId,
       limit: 8,
-      windowMs: 15 * 60 * 1000,
+      windowMs: DEFAULT_RATE_LIMIT_WINDOW_MS,
     },
   ]);
   if (rateLimited) return rateLimited;

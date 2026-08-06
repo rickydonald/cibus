@@ -3,7 +3,10 @@ import test from "node:test";
 import type { RequestEvent } from "@sveltejs/kit";
 import { SignJWT } from "jose";
 import { getSafeRedirectPath } from "../src/lib/auth-redirect.ts";
-import { enforceRateLimits } from "../src/lib/server/rate-limit.ts";
+import {
+    enforceRateLimits,
+    formatRetryAfter,
+} from "../src/lib/server/rate-limit.ts";
 import {
     EatRightAuthConfigurationError,
     verifyEatRightJwtWithConfig,
@@ -139,5 +142,16 @@ test("rate limits repeated authentication attempts", async () => {
     const response = enforceRateLimits(event, [rule]);
     assert.equal(response?.status, 429);
     assert.equal(response?.headers.get("Retry-After"), "60");
-    assert.equal((await response?.json()).errorCode, "rate_limited");
+    const payload = await response?.json();
+    assert.equal(payload.errorCode, "rate_limited");
+    assert.equal(payload.retryAfterSeconds, 60);
+    assert.equal(payload.error, "Too many attempts. Try again in 1 minute.");
+});
+
+test("formats the remaining rate-limit wait time", () => {
+    assert.equal(formatRetryAfter(1), "1 second");
+    assert.equal(formatRetryAfter(59), "59 seconds");
+    assert.equal(formatRetryAfter(60), "1 minute");
+    assert.equal(formatRetryAfter(119), "1 minute 59 seconds");
+    assert.equal(formatRetryAfter(120), "2 minutes");
 });

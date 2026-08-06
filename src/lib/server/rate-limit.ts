@@ -3,6 +3,8 @@ import { json, type RequestEvent } from "@sveltejs/kit";
 
 const MAX_BUCKETS = 10_000;
 
+export const DEFAULT_RATE_LIMIT_WINDOW_MS = 2 * 60 * 1000;
+
 type RateLimitBucket = {
     count: number;
     resetAt: number;
@@ -14,6 +16,16 @@ export type RateLimitRule = {
     limit: number;
     windowMs: number;
 };
+
+export function formatRetryAfter(seconds: number): string {
+    const safeSeconds = Math.max(1, Math.ceil(seconds));
+    const minutes = Math.floor(safeSeconds / 60);
+    const remainingSeconds = safeSeconds % 60;
+
+    if (minutes === 0) return `${remainingSeconds} second${remainingSeconds === 1 ? "" : "s"}`;
+    if (remainingSeconds === 0) return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+    return `${minutes} minute${minutes === 1 ? "" : "s"} ${remainingSeconds} second${remainingSeconds === 1 ? "" : "s"}`;
+}
 
 const buckets = new Map<string, RateLimitBucket>();
 
@@ -80,8 +92,9 @@ export function enforceRateLimits(
     if (retryAfter === 0) return null;
     return json(
         {
-            error: "Too many attempts. Try again later.",
+            error: `Too many attempts. Try again in ${formatRetryAfter(retryAfter)}.`,
             errorCode: "rate_limited",
+            retryAfterSeconds: retryAfter,
         },
         {
             status: 429,
