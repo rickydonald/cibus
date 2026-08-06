@@ -2,8 +2,6 @@
     import { onMount } from "svelte";
     import { ArrowLeftIcon } from "@untitled-theme/icons-svelte";
     import {
-        CheckIcon,
-        CopyIcon,
         EyeIcon,
         EyeOffIcon,
         InfoIcon,
@@ -25,7 +23,6 @@
 
     let profile = $state<CachedEatRightProfile | null>(null);
     let profileLoaded = $state(false);
-    let copiedUserId = $state(false);
 
     let currentPassword = $state("");
     let newPassword = $state("");
@@ -58,18 +55,6 @@
             .map((part) => part.charAt(0).toUpperCase())
             .join("");
     });
-
-    async function copyUserId() {
-        if (!profile?.userid) return;
-        try {
-            await navigator.clipboard.writeText(profile.userid);
-            copiedUserId = true;
-            toast.success("User ID copied");
-            setTimeout(() => (copiedUserId = false), 2000);
-        } catch {
-            toast.error("Unable to copy User ID");
-        }
-    }
 
     function validatePasswordForm(): string | null {
         if (!currentPassword) return "Enter your current password.";
@@ -159,7 +144,7 @@
             class="safe-top-offset flex items-center gap-4 px-6 py-4 max-w-md mx-auto lg:max-w-lg"
         >
             <button
-                onclick={() => goto('/view/home')}
+                onclick={() => goto("/view/home")}
                 class="icon-btn"
                 aria-label="Go back"
             >
@@ -209,23 +194,6 @@
                             {profile?.userid || "--"}
                         </p>
                     </div>
-                    {#if profile?.userid}
-                        <button
-                            class="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-line bg-surface text-ink-muted transition-colors hover:text-primary"
-                            onclick={copyUserId}
-                            aria-label="Copy User ID"
-                        >
-                            {#if copiedUserId}
-                                <CheckIcon
-                                    size={14}
-                                    strokeWidth={2.5}
-                                    class="text-success"
-                                />
-                            {:else}
-                                <CopyIcon size={14} />
-                            {/if}
-                        </button>
-                    {/if}
                 </div>
             </div>
         </section>
