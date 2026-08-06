@@ -7,6 +7,7 @@
         SearchMdIcon,
         PlusIcon,
         MinusIcon,
+        XCloseIcon,
     } from "@untitled-theme/icons-svelte";
     import FloatingCartBar from "$lib/components/custom/FloatingCartBar.svelte";
     import Spinner from "$lib/components/custom/Spinner.svelte";
@@ -45,6 +46,7 @@
     };
 
     let query = $state("");
+    let searchInput: HTMLInputElement;
     let allItems = $state<SearchItem[]>([]);
     let isLoading = $state(true);
     let loadError = $state<string | null>(null);
@@ -171,6 +173,11 @@
         if (!Number.isFinite(amount)) return "--";
         return Number.isInteger(amount) ? String(amount) : amount.toFixed(2);
     }
+
+    function clearSearch() {
+        query = "";
+        searchInput?.focus();
+    }
 </script>
 
 <div class="min-h-screen text-ink antialiased">
@@ -182,6 +189,7 @@
             <SearchMdIcon class="h-5 w-5 shrink-0 text-ink-faint" />
 
             <input
+                bind:this={searchInput}
                 bind:value={query}
                 placeholder="Search food across all outlets..."
                 class="w-full bg-transparent text-sm font-medium outline-none placeholder:text-ink-faint"
@@ -189,6 +197,18 @@
 
             {#if isLoading}
                 <Spinner size={20} class="shrink-0 text-primary" />
+            {/if}
+
+            {#if query.length > 0}
+                <button
+                    type="button"
+                    onclick={clearSearch}
+                    class="flex h-5 w-5 p-1 shrink-0 items-center justify-center rounded-full bg-line/70 text-ink-muted transition-colors hover:bg-line hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                    aria-label="Clear search"
+                    title="Clear search"
+                >
+                    <XCloseIcon class="h-6 w-6" />
+                </button>
             {/if}
         </div>
     </div>

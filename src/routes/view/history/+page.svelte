@@ -297,10 +297,10 @@
                     <button
                         type="button"
                         onclick={() => (activeFilter = filter.id)}
-                        class={`h-8 shrink-0 rounded-circle px-4 text-xs font-semibold transition-all active:scale-95 ${
+                        class={`h-8 shrink-0 rounded-circle px-4 text-xs font-semibold transition-all active:scale-95 border border-line ${
                             activeFilter === filter.id
                                 ? "bg-primary text-white"
-                                : "border border-line bg-surface text-ink-muted hover:bg-canvas"
+                                : "bg-surface text-ink-muted hover:bg-canvas"
                         }`}
                     >
                         {filter.label}

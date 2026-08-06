@@ -21,6 +21,7 @@
     } from "$lib/utils/visibility-poller";
     import { normalizeStoreName } from "$lib/utils/display-text";
     import { contentReveal } from "$lib/utils/transitions";
+    import { ORDER_TIME_ZONE, parseOrderDate } from "$lib/utils/orders";
 
     type OrderItem = {
         order_item_id: number;
@@ -71,17 +72,13 @@
 
     function formatOrderDate(value?: string | null) {
         if (!value) return "Date unavailable";
-
-        const normalized = /^\d{4}-\d{2}-\d{2} /.test(value)
-            ? value.replace(" ", "T")
-            : value;
-        const date = new Date(normalized);
-
-        if (Number.isNaN(date.getTime())) return value;
+        const date = parseOrderDate(value);
+        if (!date) return "Date unavailable";
 
         return new Intl.DateTimeFormat("en-IN", {
             dateStyle: "medium",
             timeStyle: "short",
+            timeZone: ORDER_TIME_ZONE,
         }).format(date);
     }
 
