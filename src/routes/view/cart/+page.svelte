@@ -328,6 +328,17 @@
                 return;
             }
 
+            // Captured before the cart is emptied — the confirmation page
+            // shows these in its celebration while the receipt loads.
+            const placedCounters = Array.isArray(data.orders)
+                ? data.orders.length
+                : 1;
+            const placedTotal =
+                typeof data.grandTotal === "number" && data.grandTotal > 0
+                    ? data.grandTotal
+                    : cart.totalAmount;
+            const placedItems = cart.totalItems;
+
             clearPendingOrderCheckout(cart.userId);
             cart.clear();
             clearPendingCheckoutRecharge();
@@ -336,6 +347,15 @@
                 typeof data.redirectUrl === "string"
                     ? data.redirectUrl
                     : "/view/history",
+                {
+                    state: {
+                        orderPlaced: {
+                            total: placedTotal,
+                            counters: Math.max(placedCounters, 1),
+                            items: placedItems,
+                        },
+                    },
+                },
             );
         } catch {
             error = "Unable to reach EatRight. Please try again.";

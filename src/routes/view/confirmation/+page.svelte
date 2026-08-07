@@ -1,10 +1,11 @@
 <script lang="ts">
-    import { goto } from "$app/navigation";
+    import { goto, replaceState } from "$app/navigation";
     import {
         fetchEatRight,
         redirectIfEatRightConnectRequired,
     } from "$lib/utils/eatright-client";
     import { page } from "$app/state";
+    import OrderPlacedOverlay from "$lib/components/custom/OrderPlacedOverlay.svelte";
     import {
         CheckIcon,
         ReceiptTextIcon,
@@ -20,7 +21,7 @@
         type VisibilityPoller,
     } from "$lib/utils/visibility-poller";
     import { normalizeStoreName } from "$lib/utils/display-text";
-    import { contentReveal } from "$lib/utils/transitions";
+    import { contentReveal, slideDown } from "$lib/utils/transitions";
     import { ORDER_TIME_ZONE, parseOrderDate } from "$lib/utils/orders";
 
     type OrderItem = {
@@ -60,6 +61,20 @@
     let lastStatusCheck = $state<Date | null>(null);
     let liveStatusUnavailable = $state(false);
     let statusPoller: VisibilityPoller | null = null;
+
+    // Only a fresh checkout hands this over (see the cart's placeOrder). It is
+    // read once at init so the veil is up before the first paint, then cleared
+    // from the history entry in onMount so a refresh or a trip back through
+    // history goes straight to the receipt.
+    const checkoutSummary = page.state.orderPlaced;
+    const arrivedFromCheckout = Boolean(checkoutSummary);
+    let isCelebrating = $state(arrivedFromCheckout);
+
+    // Once the veil lifts, the receipt drops in from above and its sections
+    // cascade. Arriving any other way keeps the plain crossfade.
+    function dropDelay(step: number) {
+        return arrivedFromCheckout ? step * 85 : 0;
+    }
 
     function pickupCode(orderNo: string) {
         const match = orderNo.match(/(\d{3})$/);
@@ -378,6 +393,7 @@
     }
 
     onMount(() => {
+        if (arrivedFromCheckout) replaceState("", {});
         void loadOrderDetails();
         statusPoller = createVisibilityPoller({
             intervalMs: 30_000,
@@ -393,9 +409,22 @@
     });
 </script>
 
+{#if isCelebrating && checkoutSummary}
+    <OrderPlacedOverlay
+        total={checkoutSummary.total}
+        counters={checkoutSummary.counters}
+        items={checkoutSummary.items}
+        ready={!isLoading}
+        onDone={() => (isCelebrating = false)}
+    />
+{/if}
+
 <div class="min-h-screen text-ink antialiased">
     <div class="px-4 pb-12 pt-4 max-w-md mx-auto">
-        {#if isLoading}
+        {#if isCelebrating}
+            <!-- Held back so the receipt starts its drop as the veil lifts,
+                 rather than having already landed behind it. -->
+        {:else if isLoading}
             <!-- Skeleton Ticket -->
             <div class="space-y-5 pt-4">
                 <div class="flex flex-col items-center pt-4 pb-2">
@@ -440,7 +469,7 @@
         {:else if error}
             <div
                 class="flex min-h-[60vh] flex-col items-center justify-center text-center px-4"
-                in:contentReveal={{ duration: 320 }}
+                in:contentReveal={{ duration: 500 }}
             >
                 <div
                     class="h-12 w-12 rounded-circle bg-danger-soft flex items-center justify-center text-danger mb-3"
@@ -472,68 +501,12 @@
                 </button>
             </div>
         {:else}
-            <div
-                class="space-y-5 pt-2"
-                in:contentReveal={{ duration: 280 }}
-            >
-                <!-- Lightweight live status: one list request every 30 seconds
-                     while an undelivered order is visible. -->
-                <!-- <div
-                    class={`flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-card transition-colors ${
-                        allDelivered
-                            ? "border-success/20 bg-success-soft"
-                            : liveStatusUnavailable
-                              ? "border-warning/20 bg-warning-soft"
-                              : "border-line bg-surface"
-                    }`}
-                    role="status"
-                >
-                    <div class="min-w-0 flex-1">
-                        <p
-                            class={`text-xs font-bold ${
-                                allDelivered
-                                    ? "text-success"
-                                    : liveStatusUnavailable
-                                      ? "text-warning"
-                                      : "text-ink"
-                            }`}
-                        >
-                            {allDelivered
-                                ? "Delivery confirmed"
-                                : liveStatusUnavailable
-                                  ? "Live updates paused"
-                                  : "Live order status"}
-                        </p>
-                        <p
-                            class="mt-0.5 truncate text-[10px] font-medium text-ink-muted"
-                        >
-                            {liveStatusUnavailable
-                                ? "Tap refresh to try again"
-                                : allDelivered
-                                  ? lastCheckedLabel
-                                  : `${lastCheckedLabel} · Auto every 30 sec`}
-                        </p>
-                    </div>
-
-                    <button
-                        type="button"
-                        class="grid h-9 w-9 shrink-0 place-items-center rounded-circle border border-line bg-surface text-ink-muted shadow-sm transition-all hover:text-ink active:scale-95 disabled:opacity-60"
-                        onclick={manuallyRefreshStatus}
-                        disabled={isStatusRefreshing}
-                        aria-label="Refresh delivery status"
-                    >
-                        <RefreshCwIcon
-                            size={16}
-                            strokeWidth={2.4}
-                            class={isStatusRefreshing ? "animate-spin" : ""}
-                        />
-                    </button>
-                </div> -->
-
+            <div class="space-y-5 pt-2">
                 <!-- Receipts -->
-                {#each orders as order}
+                {#each orders as order, index (order.order_no)}
                     <article
                         class={`filter-[drop-shadow(0_1px_2px_rgb(26_30_38/0.05))_drop-shadow(0_14px_28px_rgb(26_30_38/0.10))] transition-opacity ${isDelivered(order) ? "opacity-75 grayscale" : ""}`}
+                        in:slideDown={{ delay: dropDelay(index) }}
                     >
                         <div class="rounded-t-xl bg-surface px-6 pt-7 pb-6">
                             <!-- Receipt header -->
@@ -826,6 +799,7 @@
                 {#if orders.length > 1}
                     <div
                         class="flex items-center justify-between rounded-2xl border border-line bg-surface px-5 py-3.5 shadow-card"
+                        in:slideDown={{ delay: dropDelay(orders.length) }}
                     >
                         <span class="text-sm font-semibold text-ink-muted">
                             Total across {orders.length} counters
@@ -840,7 +814,14 @@
                 {/if}
 
                 <!-- Actions -->
-                <div class="grid grid-cols-2 gap-3 pt-1">
+                <div
+                    class="grid grid-cols-2 gap-3 pt-1"
+                    in:slideDown={{
+                        delay: dropDelay(
+                            orders.length + (orders.length > 1 ? 1 : 0),
+                        ),
+                    }}
+                >
                     <button
                         class="btn-quiet py-3.5 text-sm"
                         onclick={() => goto("/view/history")}
