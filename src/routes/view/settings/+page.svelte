@@ -2,16 +2,18 @@
     import { onMount } from "svelte";
     import { ArrowLeftIcon, PasscodeLockIcon } from "@untitled-theme/icons-svelte";
     import {
+        DownloadIcon,
         EyeIcon,
         EyeOffIcon,
         InfoIcon,
         LogOutIcon,
         MessageSquareTextIcon,
-        RectangleEllipsisIcon,
         UserIcon,
     } from "@lucide/svelte";
     import MenuList from "$lib/components/custom/MenuList.svelte";
     import MenuRow from "$lib/components/custom/MenuRow.svelte";
+    import InstallSheet from "$lib/components/custom/InstallSheet.svelte";
+    import { install } from "$lib/client/install.svelte";
     import { toast } from "svelte-sonner";
     import {
         clearCachedEatRightProfile,
@@ -143,6 +145,8 @@
 
     // Change Password Bottom Sheet Controller
     let changePasswordBottomSheetController = $state<boolean>(false);
+
+    let installSheetOpen = $state<boolean>(false);
 </script>
 
 <div class="min-h-screen text-ink antialiased">
@@ -226,6 +230,15 @@
                     icon={MessageSquareTextIcon}
                     href="/view/feedback"
                 />
+
+                {#if install.isOfferable}
+                    <MenuRow
+                        title="Add to Home Screen"
+                        hint="Open Eat Right like an app"
+                        icon={DownloadIcon}
+                        onclick={() => (installSheetOpen = true)}
+                    />
+                {/if}
                 <MenuRow
                     title="Change password"
                     hint="Update your sign-in password"
@@ -376,3 +389,5 @@
         </form>
     </section>
 </Sheet>
+
+<InstallSheet bind:open={installSheetOpen} />

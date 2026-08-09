@@ -8,10 +8,14 @@
     import OrderPlacedOverlay from "$lib/components/custom/OrderPlacedOverlay.svelte";
     import {
         CheckIcon,
+        DownloadIcon,
         ReceiptTextIcon,
         RefreshCwIcon,
         TimerOffIcon,
     } from "@lucide/svelte";
+    import { XCloseIcon } from "@untitled-theme/icons-svelte";
+    import InstallSheet from "$lib/components/custom/InstallSheet.svelte";
+    import { install } from "$lib/client/install.svelte";
     import { toast } from "svelte-sonner";
     import { scale } from "svelte/transition";
     import { onMount } from "svelte";
@@ -392,8 +396,19 @@
         previewDeadline = Date.now() + PREVIEW_TTL_MS;
     }
 
+    let installSheetOpen = $state(false);
+    let showInstallNudge = $state(false);
+
     onMount(() => {
         if (arrivedFromCheckout) replaceState("", {});
+
+        // Only on a genuinely fresh order — never when this receipt is
+        // reopened from history.
+        if (arrivedFromCheckout && install.shouldNudge) {
+            showInstallNudge = true;
+            install.countNudge();
+        }
+
         void loadOrderDetails();
         statusPoller = createVisibilityPoller({
             intervalMs: 30_000,
@@ -813,6 +828,55 @@
                     </div>
                 {/if}
 
+                <!-- Add to home screen — asked here because the order just
+                     proved the app works, and only until it's acted on. -->
+                {#if showInstallNudge}
+                    <div
+                        class="flex items-center gap-3.5 rounded-2xl border border-line bg-surface p-4 shadow-card"
+                        in:slideDown={{
+                            delay: dropDelay(
+                                orders.length + (orders.length > 1 ? 1 : 0),
+                            ),
+                        }}
+                    >
+                        <span
+                            class="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary-soft text-primary"
+                        >
+                            <DownloadIcon size={18} />
+                        </span>
+                        <div class="min-w-0 flex-1">
+                            <p
+                                class="text-sm font-semibold tracking-tight text-ink"
+                            >
+                                Order faster next time
+                            </p>
+                            <p
+                                class="mt-0.5 text-xs font-medium leading-4 text-ink-muted"
+                            >
+                                Add Eat Right to your home screen.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            class="btn-primary h-9 shrink-0 px-3.5 text-xs"
+                            onclick={() => (installSheetOpen = true)}
+                        >
+                            Add
+                        </button>
+                        <button
+                            type="button"
+                            class="grid h-8 w-8 shrink-0 place-items-center rounded-circle text-ink-faint transition-colors hover:bg-canvas hover:text-ink"
+                            aria-label="Dismiss"
+                            onclick={() => {
+                                install.dismiss();
+                                showInstallNudge = false;
+                            }}
+                        >
+                            <XCloseIcon class="h-4 w-4" />
+                        </button>
+                    </div>
+                {/if}
+
                 <!-- Actions -->
                 <div
                     class="grid grid-cols-2 gap-3 pt-1"
@@ -840,3 +904,5 @@
         {/if}
     </div>
 </div>
+
+<InstallSheet bind:open={installSheetOpen} />

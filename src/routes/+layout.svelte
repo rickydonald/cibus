@@ -7,10 +7,17 @@
 	import { onNavigate } from "$app/navigation";
 	import { dev } from "$app/environment";
 	import { isHubRoute } from "$lib/nav";
+	import { install } from "$lib/client/install.svelte";
 
 	let { children } = $props();
 
+	// Not in onMount: a child's onMount runs before its parent's, so pages
+	// asking about install state on mount would beat the listener into place.
+	// start() is browser-guarded and idempotent, so init is the safe spot.
+	install.start();
+
 	onMount(() => {
+
 		// Remove authenticated API responses cached by older service workers.
 		if ("caches" in window) {
 			void caches.delete("api-cache");
