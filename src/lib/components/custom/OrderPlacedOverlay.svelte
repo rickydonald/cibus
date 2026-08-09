@@ -113,11 +113,6 @@
         {amount}{detail ? ` · ${detail}` : ""}
     </p>
 
-    {#if minimumElapsed && !ready}
-        <p class="waiting mt-6 text-xs font-medium text-ink-faint">
-            Preparing your receipt…
-        </p>
-    {/if}
 </div>
 
 <style>
@@ -175,10 +170,6 @@
         animation: rise 420ms cubic-bezier(0.22, 1, 0.36, 1) 460ms both;
     }
 
-    .waiting {
-        animation: rise 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
-    }
-
     @keyframes rise {
         from {
             opacity: 0;
@@ -195,8 +186,7 @@
         .disc-group,
         .check,
         .headline,
-        .amount,
-        .waiting {
+        .amount {
             animation-duration: 1ms !important;
             animation-delay: 0ms !important;
         }
