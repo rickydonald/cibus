@@ -12,7 +12,11 @@
         SmartphoneIcon,
         StoreIcon,
     } from "@lucide/svelte";
-    import { RefreshCw01Icon, XCloseIcon } from "@untitled-theme/icons-svelte";
+    import {
+        ArrowLeftIcon,
+        RefreshCw01Icon,
+        XCloseIcon,
+    } from "@untitled-theme/icons-svelte";
     import helpers from "$lib/helpers";
     import { normalizeStoreName } from "$lib/utils/display-text";
     import { contentReveal } from "$lib/utils/transitions";
@@ -227,24 +231,38 @@
 </script>
 
 <MainContainer>
-    <div class="safe-top-offset text-ink antialiased">
-        <div class="min-h-screen w-full">
-            <ContentWrapper>
-                <div class="px-5 pt-1 max-w-md mx-auto lg:max-w-2xl">
-                    <!-- Page header -->
-                    <div class="px-1">
-                        <h1 class="text-xl font-bold tracking-tight text-ink">
-                            Feedback
-                        </h1>
-                        <p class="mt-0.5 text-xs font-medium text-ink-muted">
-                            Tell us what's working and what isn't
-                        </p>
-                    </div>
+    <div class="min-h-screen text-ink antialiased">
+        <!-- Header -->
+        <div class="page-header">
+            <div
+                class="safe-top-offset flex items-center gap-4 px-6 py-4 max-w-md mx-auto lg:max-w-2xl"
+            >
+                <a
+                    href="/view/settings"
+                    class="icon-btn"
+                    aria-label="Back to settings"
+                >
+                    <ArrowLeftIcon class="h-4 w-4" />
+                </a>
 
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-ink">
+                        Feedback
+                    </h1>
+                    <p class="text-xs font-medium text-ink-muted">
+                        Tell us what's working and what isn't
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <ContentWrapper>
+                <div class="px-5 pb-12 pt-4 max-w-md mx-auto lg:max-w-2xl">
                     {#if isSubmitted}
                         <!-- Confirmation -->
                         <section
-                            class="card mt-6 flex flex-col items-center px-6 py-10 text-center"
+                            class="card flex flex-col items-center px-6 py-10 text-center"
                             in:contentReveal={{ duration: 320 }}
                         >
                             <div
@@ -307,7 +325,7 @@
                             </div>
                         {/snippet}
 
-                        <form class="mt-6 space-y-4" onsubmit={handleSubmit}>
+                        <form class="space-y-4" onsubmit={handleSubmit}>
                             <!-- Step 1 — category -->
                             <section class="card p-5">
                                 <p class="section-label">Step 1</p>
@@ -697,13 +715,6 @@
                                             Submit feedback
                                         {/if}
                                     </button>
-
-                                    <p
-                                        class="px-2 text-center text-xs font-medium leading-5 text-ink-faint"
-                                    >
-                                        Feedback is shared with the Eat Right
-                                        team only.
-                                    </p>
                                 </div>
                             {/if}
                         </form>

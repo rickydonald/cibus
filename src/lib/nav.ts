@@ -5,7 +5,6 @@ export const HUB_ROUTES = [
     "/view/search",
     "/view/history",
     "/view/wallet",
-    "/view/feedback"
 ] as const;
 
 export function isHubRoute(pathname: string): boolean {

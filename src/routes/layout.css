@@ -119,6 +119,43 @@
     }
 
     /*
+     * Grouped menu list — settings-style rows sharing one rounded card.
+     * The separator lives on the row body rather than the row itself, so it
+     * starts at the label and the leading icon sits outside it. Rows press
+     * with a background fill instead of a scale, so a tapped row doesn't
+     * detach from the group.
+     */
+    .menu-list {
+        @apply overflow-hidden rounded-3xl border border-line bg-surface shadow-card;
+    }
+    .menu-row {
+        @apply flex w-full items-stretch gap-3.5 pl-4 text-left transition-colors hover:bg-canvas active:bg-line/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-45;
+    }
+    .menu-row-icon {
+        @apply my-auto grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary-soft text-primary;
+    }
+    /* Carries the row's trailing padding so the separator above it reaches
+       the card edge while still starting at the label. */
+    .menu-row-body {
+        @apply flex min-w-0 flex-1 items-center gap-3 py-3.5 pr-4;
+    }
+    .menu-row + .menu-row > .menu-row-body {
+        @apply border-t border-line;
+    }
+    .menu-row-title {
+        @apply block truncate text-[15px] font-semibold tracking-tight text-ink;
+    }
+    .menu-row-hint {
+        @apply mt-0.5 block truncate text-xs font-medium text-ink-muted;
+    }
+    .menu-row-value {
+        @apply shrink-0 text-sm font-medium tabular-nums text-ink-faint;
+    }
+    .menu-row-chevron {
+        @apply shrink-0 text-ink-faint transition-transform duration-200 group-hover:translate-x-0.5;
+    }
+
+    /*
      * Auth surfaces — login / register / forgot-password.
      * Editorial serif headings over labelled porcelain fields.
      */

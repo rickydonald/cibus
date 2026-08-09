@@ -1,5 +1,6 @@
 <script lang="ts">
 	import "./layout.css";
+	import "@ricky-donald/hades/styles.css"
 	import favicon from "$lib/assets/logos/icon.png";
 	import { Toaster } from "svelte-sonner";
 	import { onMount } from "svelte";

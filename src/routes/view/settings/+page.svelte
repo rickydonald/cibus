@@ -1,13 +1,17 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { ArrowLeftIcon } from "@untitled-theme/icons-svelte";
+    import { ArrowLeftIcon, PasscodeLockIcon } from "@untitled-theme/icons-svelte";
     import {
         EyeIcon,
         EyeOffIcon,
         InfoIcon,
-        KeyRoundIcon,
         LogOutIcon,
+        MessageSquareTextIcon,
+        RectangleEllipsisIcon,
+        UserIcon,
     } from "@lucide/svelte";
+    import MenuList from "$lib/components/custom/MenuList.svelte";
+    import MenuRow from "$lib/components/custom/MenuRow.svelte";
     import { toast } from "svelte-sonner";
     import {
         clearCachedEatRightProfile,
@@ -189,7 +193,7 @@
 
             <div class="divide-y divide-line/70 border-t border-line">
                 <div class="flex items-center gap-3 px-5 py-3.5">
-                    <KeyRoundIcon size={16} class="shrink-0 text-ink-faint" />
+                    <UserIcon size={16} class="shrink-0 text-ink-faint" />
                     <div class="min-w-0 flex-1">
                         <p class="section-label">User ID</p>
                         <p
@@ -215,187 +219,160 @@
         {/if}
 
         {#if profileLoaded && !isGuestAccount}
-            <section class="card">
-                <button class="card-option">
-                    <h2 class="text-base font-bold tracking-tight text-ink">
-                        Change password
-                    </h2>
-                    <p class="mt-1 text-xs font-medium text-ink-muted">
-                        Use at least 6 characters. You'll sign in with the new
-                        password next time.
-                    </p>
-                </button>
-                <button class="card-option">
-                    <h2 class="text-base font-bold tracking-tight text-ink">
-                        Passkeys
-                    </h2>
-                    <p class="mt-1 text-xs font-medium text-ink-muted">
-                        Use Passkeys
-                    </p>
-                </button>
-            </section>
-
-            <!-- Change Password -->
-            <section class="card p-5">
-                <h2 class="text-base font-bold tracking-tight text-ink">
-                    Change password
-                </h2>
-                <p class="mt-1 text-xs font-medium text-ink-muted">
-                    Use at least 6 characters. You'll sign in with the new
-                    password next time.
-                </p>
-
-                <form
-                    class="mt-5 flex flex-col gap-4"
-                    onsubmit={handleChangePassword}
-                >
-                    <div class="flex flex-col gap-1.5">
-                        <label
-                            for="current-password"
-                            class="pl-1 text-sm font-medium text-ink-muted"
-                        >
-                            Current password
-                        </label>
-                        <div class="relative">
-                            <input
-                                id="current-password"
-                                type={showCurrent ? "text" : "password"}
-                                bind:value={currentPassword}
-                                placeholder="Enter your current password"
-                                autocomplete="current-password"
-                                class="field-input pr-12"
-                                disabled={isUpdatingPassword}
-                            />
-                            <button
-                                type="button"
-                                class="absolute right-3 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg text-ink-faint transition-colors hover:text-ink"
-                                onclick={() => (showCurrent = !showCurrent)}
-                                aria-label={showCurrent
-                                    ? "Hide current password"
-                                    : "Show current password"}
-                            >
-                                {#if showCurrent}
-                                    <EyeOffIcon size={16} />
-                                {:else}
-                                    <EyeIcon size={16} />
-                                {/if}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-col gap-1.5">
-                        <label
-                            for="new-password"
-                            class="pl-1 text-sm font-medium text-ink-muted"
-                        >
-                            New password
-                        </label>
-                        <div class="relative">
-                            <input
-                                id="new-password"
-                                type={showNew ? "text" : "password"}
-                                bind:value={newPassword}
-                                placeholder="At least 6 characters"
-                                autocomplete="new-password"
-                                maxlength={128}
-                                class="field-input pr-12"
-                                disabled={isUpdatingPassword}
-                            />
-                            <button
-                                type="button"
-                                class="absolute right-3 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg text-ink-faint transition-colors hover:text-ink"
-                                onclick={() => (showNew = !showNew)}
-                                aria-label={showNew
-                                    ? "Hide new password"
-                                    : "Show new password"}
-                            >
-                                {#if showNew}
-                                    <EyeOffIcon size={16} />
-                                {:else}
-                                    <EyeIcon size={16} />
-                                {/if}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-col gap-1.5">
-                        <label
-                            for="confirm-password"
-                            class="pl-1 text-sm font-medium text-ink-muted"
-                        >
-                            Confirm new password
-                        </label>
-                        <input
-                            id="confirm-password"
-                            type={showNew ? "text" : "password"}
-                            bind:value={confirmPassword}
-                            placeholder="Re-enter the new password"
-                            autocomplete="new-password"
-                            maxlength={128}
-                            class="field-input"
-                            disabled={isUpdatingPassword}
-                        />
-                    </div>
-
-                    {#if formError}
-                        <div
-                            class="rounded-xl border border-danger/10 bg-danger-soft px-4 py-3 text-sm font-medium text-danger"
-                        >
-                            {formError}
-                        </div>
-                    {/if}
-
-                    {#if formMessage}
-                        <div
-                            class="flex items-start gap-2.5 rounded-xl border border-primary/10 bg-primary-soft px-4 py-3 text-sm font-medium text-primary"
-                        >
-                            <InfoIcon size={16} class="mt-0.5 shrink-0" />
-                            <span>{formMessage}</span>
-                        </div>
-                    {/if}
-
-                    <button
-                        type="submit"
-                        class="btn-primary mt-1 h-12 text-sm"
-                        disabled={isUpdatingPassword}
-                    >
-                        {isUpdatingPassword
-                            ? "Updating password..."
-                            : "Update password"}
-                    </button>
-                </form>
-            </section>
+            <MenuList label="Account">
+                <MenuRow
+                    title="Feedback"
+                    hint="Rate a counter or report a bug"
+                    icon={MessageSquareTextIcon}
+                    href="/view/feedback"
+                />
+                <MenuRow
+                    title="Change password"
+                    hint="Update your sign-in password"
+                    icon={PasscodeLockIcon}
+                    onclick={() => (changePasswordBottomSheetController = true)}
+                />
+                <MenuRow
+                    title="Logout"
+                    hint="Sign out of your Eat Right account"
+                    icon={LogOutIcon}
+                    tone="danger"
+                    chevron={false}
+                    loading={isSigningOut}
+                    onclick={signOut}
+                    disabled={isSigningOut}
+                />
+            </MenuList>
         {/if}
-
-        <!-- Sign out -->
-        <section class="card flex flex-col gap-4 p-5">
-            <div class="min-w-0">
-                <h2 class="text-base font-bold tracking-tight text-ink">
-                    Sign out
-                </h2>
-                <p class="mt-1 text-xs font-medium text-ink-muted">
-                    You'll need your User ID and password to sign in back to Eat
-                    Right.
-                </p>
-            </div>
-            <button
-                class="flex h-11 shrink-0 items-center justify-center gap-2 rounded-2xl border border-danger/15 bg-danger-soft px-4 text-sm font-semibold text-danger transition-all hover:bg-danger hover:text-white active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45"
-                onclick={signOut}
-                disabled={isSigningOut}
-            >
-                <LogOutIcon size={16} />
-                {isSigningOut ? "Signing out..." : "Sign out"}
-            </button>
-        </section>
     </div>
 </div>
 
 <!-- Bottom Sheet: Change Password -->
-<Sheet bind:open={changePasswordBottomSheetController}>Hello world</Sheet>
+<Sheet bind:open={changePasswordBottomSheetController} showClose>
+    <section>
+        <h2 class="text-lg font-bold tracking-tight text-ink">
+            Change password
+        </h2>
+        <p class="mt-1 text-xs font-medium text-ink-muted">
+            Use at least 6 characters. You'll sign in with the new password next
+            time.
+        </p>
 
+        <form class="mt-5 flex flex-col gap-4" onsubmit={handleChangePassword}>
+            <div class="flex flex-col gap-1.5">
+                <label
+                    for="current-password"
+                    class="pl-1 text-sm font-medium text-ink-muted"
+                >
+                    Current password
+                </label>
+                <div class="relative">
+                    <input
+                        id="current-password"
+                        type={showCurrent ? "text" : "password"}
+                        bind:value={currentPassword}
+                        placeholder="Enter your current password"
+                        autocomplete="current-password"
+                        class="field-input pr-12"
+                        disabled={isUpdatingPassword}
+                    />
+                    <button
+                        type="button"
+                        class="absolute right-3 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg text-ink-faint transition-colors hover:text-ink"
+                        onclick={() => (showCurrent = !showCurrent)}
+                        aria-label={showCurrent
+                            ? "Hide current password"
+                            : "Show current password"}
+                    >
+                        {#if showCurrent}
+                            <EyeOffIcon size={16} />
+                        {:else}
+                            <EyeIcon size={16} />
+                        {/if}
+                    </button>
+                </div>
+            </div>
 
-<style>
-    .card-option {
-        
-    }
-</style>
+            <div class="flex flex-col gap-1.5">
+                <label
+                    for="new-password"
+                    class="pl-1 text-sm font-medium text-ink-muted"
+                >
+                    New password
+                </label>
+                <div class="relative">
+                    <input
+                        id="new-password"
+                        type={showNew ? "text" : "password"}
+                        bind:value={newPassword}
+                        placeholder="At least 6 characters"
+                        autocomplete="new-password"
+                        maxlength={128}
+                        class="field-input pr-12"
+                        disabled={isUpdatingPassword}
+                    />
+                    <button
+                        type="button"
+                        class="absolute right-3 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg text-ink-faint transition-colors hover:text-ink"
+                        onclick={() => (showNew = !showNew)}
+                        aria-label={showNew
+                            ? "Hide new password"
+                            : "Show new password"}
+                    >
+                        {#if showNew}
+                            <EyeOffIcon size={16} />
+                        {:else}
+                            <EyeIcon size={16} />
+                        {/if}
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+                <label
+                    for="confirm-password"
+                    class="pl-1 text-sm font-medium text-ink-muted"
+                >
+                    Confirm new password
+                </label>
+                <input
+                    id="confirm-password"
+                    type={showNew ? "text" : "password"}
+                    bind:value={confirmPassword}
+                    placeholder="Re-enter the new password"
+                    autocomplete="new-password"
+                    maxlength={128}
+                    class="field-input"
+                    disabled={isUpdatingPassword}
+                />
+            </div>
+
+            {#if formError}
+                <div
+                    class="rounded-xl border border-danger/10 bg-danger-soft px-4 py-3 text-sm font-medium text-danger"
+                >
+                    {formError}
+                </div>
+            {/if}
+
+            {#if formMessage}
+                <div
+                    class="flex items-start gap-2.5 rounded-xl border border-primary/10 bg-primary-soft px-4 py-3 text-sm font-medium text-primary"
+                >
+                    <InfoIcon size={16} class="mt-0.5 shrink-0" />
+                    <span>{formMessage}</span>
+                </div>
+            {/if}
+
+            <button
+                type="submit"
+                class="btn-primary mt-1 h-12 text-sm"
+                disabled={isUpdatingPassword}
+            >
+                {isUpdatingPassword
+                    ? "Updating password..."
+                    : "Update password"}
+            </button>
+        </form>
+    </section>
+</Sheet>
