@@ -103,7 +103,8 @@ export function registrationStatusError(statusValue: unknown): { message: string
     if (status === "EXISTS") return { message: "This mobile number is already registered", status: 409 };
     if (status === "INVALID_MOBILE" || status === "INVALID_INPUT") return { message: "The registration details are invalid", status: 400 };
     if (status === "SMS_FAILED") return { message: "Unable to send the OTP. Please try again.", status: 502 };
-    if (status === "OTP_EXPIRED") return { message: "The OTP has expired. Request a new code.", status: 410 };
+    if (status === "OTP_EXPIRED" || status === "NO_OTP_FOUND") return { message: "The OTP has expired. Request a new code.", status: 410 };
+    if (status === "TOO_MANY_ATTEMPTS") return { message: "Too many incorrect attempts. Request a new code.", status: 429 };
     if (status === "SESSION_EXPIRED") return { message: "The verification session expired. Request a new code.", status: 410 };
     if (status === "INVALID" || status === "INVALID_OTP") return { message: "The OTP is incorrect", status: 400 };
     return { message: "Unable to complete registration", status: 502 };

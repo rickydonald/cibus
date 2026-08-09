@@ -339,10 +339,7 @@
                     : cart.totalAmount;
             const placedItems = cart.totalItems;
 
-            clearPendingOrderCheckout(cart.userId);
-            cart.clear();
-            clearPendingCheckoutRecharge();
-            isConfirmOpen = false;
+            const placedUserId = cart.userId;
             await goto(
                 typeof data.redirectUrl === "string"
                     ? data.redirectUrl
@@ -357,6 +354,13 @@
                     },
                 },
             );
+
+            // Keep the completed cart rendered behind the placing-order veil
+            // until navigation has finished. Clearing it earlier briefly shows
+            // the empty-cart screen on slower connections.
+            clearPendingOrderCheckout(placedUserId);
+            cart.clear();
+            clearPendingCheckoutRecharge();
         } catch {
             error = "Unable to reach EatRight. Please try again.";
         } finally {
@@ -1089,6 +1093,34 @@
                         Go back
                     </button>
                 </div>
+            </div>
+        </div>
+    {/if}
+
+    {#if isPlacingOrder}
+        <div
+            class="fixed inset-0 z-70 flex min-h-dvh items-center justify-center bg-canvas px-6 text-center"
+            role="status"
+            aria-live="assertive"
+            aria-label="Order is being placed"
+            in:fade={{ duration: 160 }}
+        >
+            <div class="flex flex-col items-center">
+                <div
+                    class="relative grid h-16 w-16 place-items-center rounded-circle bg-primary-soft text-primary"
+                    aria-hidden="true"
+                >
+                    <ReceiptCheckIcon class="h-7 w-7" />
+                    <span
+                        class="absolute inset-0 rounded-circle border-2 border-transparent border-t-primary motion-safe:animate-spin"
+                    ></span>
+                </div>
+                <h2 class="mt-5 text-lg font-bold text-ink">
+                    Order is being placed
+                </h2>
+                <p class="mt-1.5 text-sm font-medium text-ink-muted">
+                    Please keep this page open
+                </p>
             </div>
         </div>
     {/if}
