@@ -20,6 +20,7 @@
     import { goto } from "$app/navigation";
     import { normalizePersonName } from "$lib/utils/person-name";
     import { isGuestUserId } from "$lib/password-reset";
+    import { Sheet } from "@ricky-donald/hades";
 
     let profile = $state<CachedEatRightProfile | null>(null);
     let profileLoaded = $state(false);
@@ -135,6 +136,9 @@
             isSigningOut = false;
         }
     }
+
+    // Change Password Bottom Sheet Controller
+    let changePasswordBottomSheetController = $state<boolean>(false);
 </script>
 
 <div class="min-h-screen text-ink antialiased">
@@ -211,6 +215,26 @@
         {/if}
 
         {#if profileLoaded && !isGuestAccount}
+            <section class="card">
+                <button class="card-option">
+                    <h2 class="text-base font-bold tracking-tight text-ink">
+                        Change password
+                    </h2>
+                    <p class="mt-1 text-xs font-medium text-ink-muted">
+                        Use at least 6 characters. You'll sign in with the new
+                        password next time.
+                    </p>
+                </button>
+                <button class="card-option">
+                    <h2 class="text-base font-bold tracking-tight text-ink">
+                        Passkeys
+                    </h2>
+                    <p class="mt-1 text-xs font-medium text-ink-muted">
+                        Use Passkeys
+                    </p>
+                </button>
+            </section>
+
             <!-- Change Password -->
             <section class="card p-5">
                 <h2 class="text-base font-bold tracking-tight text-ink">
@@ -365,3 +389,13 @@
         </section>
     </div>
 </div>
+
+<!-- Bottom Sheet: Change Password -->
+<Sheet bind:open={changePasswordBottomSheetController}>Hello world</Sheet>
+
+
+<style>
+    .card-option {
+        
+    }
+</style>
