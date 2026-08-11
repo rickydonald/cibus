@@ -15,11 +15,22 @@ export type OrderState =
     | "payment-pending"
     | "preparing";
 
+/**
+ * The only fields state depends on. Kept structural so the confirmation
+ * page's richer receipt shape can be classified by the same rules as the
+ * history list, without having to be an `EatRightOrder`.
+ */
+export type OrderStatusFields = {
+    order_status?: string | null;
+    payment_status?: string | null;
+    delivered?: string | null;
+};
+
 export const ORDER_TIME_ZONE = "Asia/Kolkata";
 
 const INDIA_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 
-export function orderState(order: EatRightOrder): OrderState {
+export function orderState(order: OrderStatusFields): OrderState {
     const status = order.order_status?.toUpperCase() ?? "";
     const payment = order.payment_status?.toUpperCase() ?? "";
 
@@ -35,7 +46,7 @@ export function orderState(order: EatRightOrder): OrderState {
     return "preparing";
 }
 
-export function isActiveOrder(order: EatRightOrder): boolean {
+export function isActiveOrder(order: OrderStatusFields): boolean {
     const state = orderState(order);
     return state === "preparing" || state === "payment-pending";
 }

@@ -25,6 +25,14 @@ export type WalletTransaction = {
   sort_time?: number;
 };
 
+export type WalletTransactionPage = {
+  transactions: WalletTransaction[];
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+  total: number;
+};
+
 export type MenuItem = {
   id: number;
   itemname: string;
@@ -49,7 +57,7 @@ type OutletResponse = {
 
 const accountCache = new TtlCache<AccountSummary>(20 * 1000);
 const menuCache = new TtlCache<MenuItem[]>(20 * 1000);
-const walletTransactionsCache = new TtlCache<WalletTransaction[]>(20 * 1000);
+const walletTransactionsCache = new TtlCache<WalletTransactionPage>(20 * 1000);
 
 function sessionKey(accessToken: string) {
   return hashCacheKey(accessToken);
@@ -88,17 +96,34 @@ export async function getAccountSummary(auth: EatRightAuthSession): Promise<Acco
  * @param accessToken 
  * @returns 
  */
-export async function getWalletTransactions(accessToken: string): Promise<WalletTransaction[]> {
-  return walletTransactionsCache.getOrSet(sessionKey(accessToken), async () => {
-    const payload = await foodcourtApiRequest<unknown>("/ajax/api/getUserWalletTransactions.jsp", {
-      accessToken,
-    });
-    if (Array.isArray(payload)) return payload as WalletTransaction[];
+export async function getWalletTransactions(
+  accessToken: string,
+  page: number,
+): Promise<WalletTransactionPage> {
+  const safePage = Math.max(1, Math.trunc(page));
+  const cacheKey = `${sessionKey(accessToken)}:${safePage}`;
+  return walletTransactionsCache.getOrSet(cacheKey, async () => {
+    const payload = await foodcourtApiRequest<unknown>(
+      `/ajax/api/getUserWalletTransactions.jsp?page=${safePage}&pageSize=25`,
+      { accessToken },
+    );
     if (payload && typeof payload === "object") {
-      const transactions = (payload as Record<string, unknown>).transactions;
-      if (Array.isArray(transactions)) return transactions as WalletTransaction[];
+      const value = payload as Record<string, unknown>;
+      const transactions = Array.isArray(value.transactions)
+        ? value.transactions as WalletTransaction[]
+        : [];
+      const pagination = value.pagination && typeof value.pagination === "object"
+        ? value.pagination as Record<string, unknown>
+        : {};
+      return {
+        transactions,
+        page: Number(pagination.page ?? safePage),
+        pageSize: Number(pagination.pageSize ?? 25),
+        hasMore: pagination.hasMore === true,
+        total: Number(pagination.total ?? transactions.length),
+      };
     }
-    return [];
+    return { transactions: [], page: safePage, pageSize: 25, hasMore: false, total: 0 };
   });
 }
 
@@ -134,5 +159,5 @@ export function clearEatRightDataCache(accessToken: string) {
   const key = sessionKey(accessToken);
   accountCache.delete(key);
   menuCache.deletePrefix(`${key}:`);
-  walletTransactionsCache.delete(key);
+  walletTransactionsCache.deletePrefix(`${key}:`);
 }

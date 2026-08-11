@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { orderTime, parseOrderDate } from "../src/lib/utils/orders.ts";
+import {
+    isActiveOrder,
+    orderState,
+    orderTime,
+    parseOrderDate,
+} from "../src/lib/utils/orders.ts";
 
 test("parses the JSP day-first order timestamp in Indian time", () => {
     assert.equal(
@@ -40,5 +45,78 @@ test("formats order time in Indian time", () => {
             outletname: "Test",
         }),
         "10:31 am",
+    );
+});
+
+// The confirmation page classifies a receipt, which carries only the three
+// status fields — getOrderDetails.jsp has no outlet/list metadata.
+test("classifies a receipt-shaped order without list metadata", () => {
+    assert.equal(
+        orderState({ payment_status: "PAID", delivered: "N" }),
+        "preparing",
+    );
+    assert.equal(
+        orderState({ payment_status: "PAID", delivered: "Y" }),
+        "delivered",
+    );
+    assert.equal(
+        orderState({ payment_status: "PENDING", delivered: "N" }),
+        "payment-pending",
+    );
+});
+
+// getOrderDetails.jsp can still report PAID for an order the list has
+// already cancelled, which is why order_status is merged in from the list.
+test("cancellation from the order list wins over a paid receipt", () => {
+    assert.equal(
+        orderState({
+            order_status: "CANCELLED",
+            payment_status: "PAID",
+            delivered: "N",
+        }),
+        "cancelled",
+    );
+});
+
+test("cancellation outranks a delivered flag", () => {
+    assert.equal(
+        orderState({
+            order_status: "CANCELLED",
+            payment_status: "PAID",
+            delivered: "Y",
+        }),
+        "cancelled",
+    );
+});
+
+test("a failed payment reads as cancelled", () => {
+    assert.equal(
+        orderState({ payment_status: "FAILED", delivered: "N" }),
+        "cancelled",
+    );
+});
+
+test("a missing order_status does not cancel an order", () => {
+    assert.equal(
+        orderState({ order_status: null, payment_status: "PAID", delivered: "N" }),
+        "preparing",
+    );
+});
+
+// The confirmation page stops polling once nothing is active, so a
+// cancelled counter must not keep the 30-second poll alive.
+test("cancelled and delivered orders are not active", () => {
+    assert.equal(
+        isActiveOrder({ order_status: "CANCELLED", payment_status: "CANCELLED", delivered: "N" }),
+        false,
+    );
+    assert.equal(
+        isActiveOrder({ payment_status: "PAID", delivered: "Y" }),
+        false,
+    );
+    assert.equal(isActiveOrder({ payment_status: "PAID", delivered: "N" }), true);
+    assert.equal(
+        isActiveOrder({ payment_status: "PENDING", delivered: "N" }),
+        true,
     );
 });

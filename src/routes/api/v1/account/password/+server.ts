@@ -3,7 +3,10 @@ import {
     foodcourtApiRequest,
     FoodcourtApiError,
 } from "$lib/server/foodcourt-api";
-import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
+import {
+    clearEatRightSessionCookie,
+    resolveEatRightSessionFromEvent,
+} from "$lib/server/eatright";
 
 const noStore = { "Cache-Control": "no-store" };
 
@@ -73,8 +76,13 @@ export const POST: RequestHandler = async (event) => {
             );
         }
 
+        clearEatRightSessionCookie(event.cookies, event.url);
         return json(
-            { success: true, message: payload.message ?? "Password updated successfully" },
+            {
+                success: true,
+                reauthenticate: true,
+                message: payload.message ?? "Password updated successfully",
+            },
             { headers: noStore },
         );
     } catch (error) {

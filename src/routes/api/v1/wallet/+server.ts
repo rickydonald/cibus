@@ -39,11 +39,10 @@ export async function GET(event) {
   }
 
   try {
-    const [transactions, account] = await Promise.all([
-      getWalletTransactions(session.accessToken),
+    const [transactionPage, account] = await Promise.all([
+      getWalletTransactions(session.accessToken, page),
       getAccountSummary(session),
     ]);
-    const transactionPage = paginateWalletTransactions(transactions, page);
     return json({
       transactions: transactionPage.transactions,
       walletBalance: account.walletBalance,

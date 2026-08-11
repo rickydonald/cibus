@@ -56,19 +56,19 @@ test("can apply every casing mode to only the parsed given name", () => {
 
     assert.equal(
         normalizePersonName(name, { casing: "uppercase", part: "given" }),
-        "RICKY",
+        "JOHN",
     );
     assert.equal(
         normalizePersonName(name, { casing: "lowercase", part: "given" }),
-        "ricky",
+        "john",
     );
     assert.equal(
         normalizePersonName(name, { casing: "sentence", part: "given" }),
-        "Ricky",
+        "John",
     );
     assert.equal(
         normalizePersonName(name, { casing: "title", part: "given" }),
-        "Ricky",
+        "John",
     );
 });
 

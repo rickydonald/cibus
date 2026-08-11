@@ -1,6 +1,7 @@
 import { FOODCOURT_API_BASE_URL } from "$lib/server/foodcourt-api";
 
 export const REGISTRATION_SESSION_COOKIE = "CibusRegistrationSession";
+const REGISTRATION_API_TIMEOUT_MS = 20_000;
 
 export type RegistrationUserType = "student" | "staff" | "guest";
 export type RegistrationPayload = Record<string, unknown>;
@@ -57,6 +58,7 @@ export async function foodcourtRegistrationRequest(
         body: form.toString(),
         cache: "no-store",
         redirect: "error",
+        signal: AbortSignal.timeout(REGISTRATION_API_TIMEOUT_MS),
     });
     const payload = parsePayload(await response.text());
     const sessionId = extractSessionId(response.headers);

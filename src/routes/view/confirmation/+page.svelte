@@ -26,7 +26,12 @@
     } from "$lib/utils/visibility-poller";
     import { normalizeStoreName } from "$lib/utils/display-text";
     import { contentReveal, slideDown } from "$lib/utils/transitions";
-    import { ORDER_TIME_ZONE, parseOrderDate } from "$lib/utils/orders";
+    import {
+        ORDER_TIME_ZONE,
+        isActiveOrder,
+        orderState,
+        parseOrderDate,
+    } from "$lib/utils/orders";
 
     type OrderItem = {
         order_item_id: number;
@@ -44,6 +49,8 @@
         delivereddate: string | null;
         orderid: number;
         payment_status: string;
+        // Only the order list reports this reliably; it is merged in below.
+        order_status?: string | null;
         outletid: number;
         delivered: string;
         grand_total: number;
@@ -55,6 +62,8 @@
         order_no: string;
         created_on?: string | null;
         delivered?: string;
+        order_status?: string | null;
+        payment_status?: string | null;
     };
 
     let orders = $state<OrderDetails[]>([]);
@@ -86,7 +95,17 @@
     }
 
     function isDelivered(order: OrderDetails) {
-        return order.delivered?.toUpperCase() === "Y";
+        return orderState(order) === "delivered";
+    }
+
+    function isCancelled(order: OrderDetails) {
+        return orderState(order) === "cancelled";
+    }
+
+    // A cancelled order keeps its receipt for the record, but nothing on it
+    // is actionable any more — no pickup code, no live proof, no polling.
+    function isVoided(order: OrderDetails) {
+        return isCancelled(order) || isDelivered(order);
     }
 
     function formatOrderDate(value?: string | null) {
@@ -164,12 +183,18 @@
         orders.length > 0 && orders.every(isDelivered),
     );
 
-    const hasActiveOrders = $derived(
-        orders.length > 0 && orders.some((order) => !isDelivered(order)),
+    const hasActiveOrders = $derived(orders.some(isActiveOrder));
+
+    const anyCancelled = $derived(orders.some(isCancelled));
+
+    // A cancelled counter was never charged, so it must not inflate the
+    // combined total shown across a multi-counter checkout.
+    const chargedOrders = $derived(
+        orders.filter((order) => !isCancelled(order)),
     );
 
     const totalPaid = $derived(
-        orders.reduce((sum, o) => sum + Number(o.grand_total ?? 0), 0),
+        chargedOrders.reduce((sum, o) => sum + Number(o.grand_total ?? 0), 0),
     );
 
     async function loadOrderDetails() {
@@ -224,15 +249,21 @@
             );
 
             const history = await historyPromise;
-            const orderDates = new Map(
-                history.map((order) => [order.order_no, order.created_on]),
+            const historyByOrderNo = new Map(
+                history.map((order) => [order.order_no, order]),
             );
 
-            orders = responses.flat().map((order) => ({
-                ...order,
-                created_on:
-                    order.created_on ?? orderDates.get(order.order_no) ?? null,
-            }));
+            orders = responses.flat().map((order) => {
+                const listed = historyByOrderNo.get(order.order_no);
+                return {
+                    ...order,
+                    created_on:
+                        order.created_on ?? listed?.created_on ?? null,
+                    // getOrderDetails.jsp does not always carry order_status,
+                    // so a cancellation may only be visible on the list.
+                    order_status: order.order_status ?? listed?.order_status,
+                };
+            });
             lastStatusCheck = new Date();
             liveStatusUnavailable = false;
         } catch (err) {
@@ -272,8 +303,14 @@
         if (hydrated.size > 0) {
             orders = orders.map((order) => {
                 const detail = hydrated.get(order.order_no);
+                // Both fields were merged in from the order list and are not
+                // reliably present on a details response — keep them.
                 return detail
-                    ? { ...detail, created_on: order.created_on }
+                    ? {
+                          ...detail,
+                          created_on: order.created_on,
+                          order_status: detail.order_status ?? order.order_status,
+                      }
                     : order;
             });
         }
@@ -298,22 +335,42 @@
                 latestOrders.map((order) => [order.order_no, order]),
             );
             const newlyDelivered = new Set<string>();
+            const newlyCancelled = new Set<string>();
 
             orders = orders.map((order) => {
                 const latest = latestByOrderNo.get(order.order_no);
-                if (!latest?.delivered) return order;
+                if (!latest) return order;
 
-                const delivered = latest.delivered.toUpperCase();
-                if (!isDelivered(order) && delivered === "Y") {
+                const next: OrderDetails = {
+                    ...order,
+                    delivered:
+                        latest.delivered?.toUpperCase() ?? order.delivered,
+                    order_status: latest.order_status ?? order.order_status,
+                    payment_status:
+                        latest.payment_status ?? order.payment_status,
+                };
+
+                const nextState = orderState(next);
+                if (orderState(order) === nextState) return order;
+
+                if (nextState === "delivered") {
                     newlyDelivered.add(order.order_no);
+                } else if (nextState === "cancelled") {
+                    newlyCancelled.add(order.order_no);
                 }
-                return delivered === order.delivered?.toUpperCase()
-                    ? order
-                    : { ...order, delivered };
+                return next;
             });
 
             lastStatusCheck = new Date();
             liveStatusUnavailable = false;
+
+            if (newlyCancelled.size > 0) {
+                toast.error(
+                    newlyCancelled.size === 1
+                        ? "Your order was cancelled"
+                        : `${newlyCancelled.size} orders were cancelled`,
+                );
+            }
 
             if (newlyDelivered.size > 0) {
                 // Fetch details just once at the transition so the delivery
@@ -519,8 +576,9 @@
             <div class="space-y-5 pt-2">
                 <!-- Receipts -->
                 {#each orders as order, index (order.order_no)}
+                    {@const cancelled = isCancelled(order)}
                     <article
-                        class={`filter-[drop-shadow(0_1px_2px_rgb(26_30_38/0.05))_drop-shadow(0_14px_28px_rgb(26_30_38/0.10))] transition-opacity ${isDelivered(order) ? "opacity-75 grayscale" : ""}`}
+                        class={`filter-[drop-shadow(0_1px_2px_rgb(26_30_38/0.05))_drop-shadow(0_14px_28px_rgb(26_30_38/0.10))] transition-opacity ${isVoided(order) ? "opacity-75 grayscale" : ""}`}
                         in:slideDown={{ delay: dropDelay(index) }}
                     >
                         <div class="rounded-t-xl bg-surface px-6 pt-7 pb-6">
@@ -541,7 +599,14 @@
                                 >
                                     Ordered {formatOrderDate(order.created_on)}
                                 </p>
-                                {#if isDelivered(order)}
+                                {#if cancelled}
+                                    <span
+                                        class="mt-2 inline-flex items-center gap-1.5 rounded-circle bg-danger-soft px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-danger"
+                                    >
+                                        <XCloseIcon class="h-3 w-3" />
+                                        Cancelled
+                                    </span>
+                                {:else if isDelivered(order)}
                                     <span
                                         class="mt-2 inline-flex items-center gap-1.5 rounded-circle bg-line px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-ink-muted"
                                     >
@@ -571,9 +636,23 @@
 
                             <!-- Pickup code -->
                             <div
-                                class={`mt-5 overflow-hidden rounded-2xl border-2 border-dashed text-center ${isDelivered(order) ? "border-line bg-canvas px-4 py-4" : isPreviewExpired ? "border-line-strong bg-canvas px-4 py-5" : "border-line-strong bg-surface"}`}
+                                class={`mt-5 overflow-hidden rounded-2xl border-2 border-dashed text-center ${cancelled ? "border-danger/25 bg-danger-soft px-4 py-4" : isDelivered(order) ? "border-line bg-canvas px-4 py-4" : isPreviewExpired ? "border-line-strong bg-canvas px-4 py-5" : "border-line-strong bg-surface"}`}
                             >
-                                {#if isDelivered(order)}
+                                {#if cancelled}
+                                    <XCloseIcon
+                                        class="mx-auto h-7 w-7 text-danger"
+                                    />
+                                    <p
+                                        class="mt-2 text-sm font-bold uppercase tracking-[0.12em] text-danger"
+                                    >
+                                        Cancelled
+                                    </p>
+                                    <!-- <p
+                                        class="mt-1 text-[10px] font-medium uppercase tracking-[0.14em] text-danger/70"
+                                    >
+                                        This order will not be prepared
+                                    </p> -->
+                                {:else if isDelivered(order)}
                                     <CheckIcon
                                         class="mx-auto text-ink-faint"
                                         size={28}
@@ -774,17 +853,21 @@
                                 </div>
                             </div>
 
-                            <!-- Barcode / order reference -->
+                            <!-- Barcode / order reference. A cancelled order
+                                 keeps its reference but drops the barcode —
+                                 there is nothing left to scan at a counter. -->
                             <button
                                 class="mt-5 block w-full border-t border-dashed border-line-strong pt-5 text-center transition-opacity"
                                 aria-label="Copy order reference"
                             >
-                                <svg
-                                    use:orderBarcode={order.order_no}
-                                    class="mx-auto h-10 w-4/5 text-ink"
-                                    role="img"
-                                    aria-label={`Barcode for order ${order.order_no}`}
-                                ></svg>
+                                {#if !cancelled}
+                                    <svg
+                                        use:orderBarcode={order.order_no}
+                                        class="mx-auto h-10 w-4/5 text-ink"
+                                        role="img"
+                                        aria-label={`Barcode for order ${order.order_no}`}
+                                    ></svg>
+                                {/if}
                                 <p
                                     class="mt-2 break-all font-geist-mono text-[11px] tracking-[0.2em] text-ink-muted font-semibold"
                                 >
@@ -795,7 +878,9 @@
                             <p
                                 class="mt-6 text-center text-[10px] font-bold uppercase tracking-[0.24em] text-ink-faint"
                             >
-                                · Thank you · Eat well ·
+                                {cancelled
+                                    ? "· Order cancelled ·"
+                                    : "· Thank you · Eat well ·"}
                             </p>
                         </div>
                         <!-- Torn edge -->
@@ -810,14 +895,15 @@
                     </article>
                 {/each}
 
-                <!-- Combined Total (multi-counter checkout) -->
-                {#if orders.length > 1}
+                <!-- Combined Total (multi-counter checkout). Counts only the
+                     counters actually charged, so a cancelled one drops out. -->
+                {#if chargedOrders.length > 1}
                     <div
                         class="flex items-center justify-between rounded-2xl border border-line bg-surface px-5 py-3.5 shadow-card"
                         in:slideDown={{ delay: dropDelay(orders.length) }}
                     >
                         <span class="text-sm font-semibold text-ink-muted">
-                            Total across {orders.length} counters
+                            Total across {chargedOrders.length} counters
                         </span>
                         <span class="text-lg font-bold text-ink tabular-nums">
                             ₹{splitPrice(totalPaid).main}.<span
@@ -830,12 +916,13 @@
 
                 <!-- Add to home screen — asked here because the order just
                      proved the app works, and only until it's acted on. -->
-                {#if showInstallNudge}
+                {#if showInstallNudge && !anyCancelled}
                     <div
                         class="flex items-center gap-3.5 rounded-2xl border border-line bg-surface p-4 shadow-card"
                         in:slideDown={{
                             delay: dropDelay(
-                                orders.length + (orders.length > 1 ? 1 : 0),
+                                orders.length +
+                                    (chargedOrders.length > 1 ? 1 : 0),
                             ),
                         }}
                     >
@@ -882,7 +969,7 @@
                     class="grid grid-cols-2 gap-3 pt-1"
                     in:slideDown={{
                         delay: dropDelay(
-                            orders.length + (orders.length > 1 ? 1 : 0),
+                            orders.length + (chargedOrders.length > 1 ? 1 : 0),
                         ),
                     }}
                 >

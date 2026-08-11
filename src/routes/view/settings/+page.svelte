@@ -1,6 +1,9 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { ArrowLeftIcon, PasscodeLockIcon } from "@untitled-theme/icons-svelte";
+    import {
+        ArrowLeftIcon,
+        PasscodeLockIcon,
+    } from "@untitled-theme/icons-svelte";
     import {
         DownloadIcon,
         EyeIcon,
@@ -117,6 +120,11 @@
             showNew = false;
             formMessage = data?.message ?? "Password updated successfully.";
             toast.success(formMessage);
+            clearPendingOrderCheckout(cart.userId);
+            clearPendingPayment();
+            cart.disconnect();
+            clearCachedEatRightProfile();
+            await goto("/login");
         } catch {
             formError =
                 "Unable to update your password. Check your connection and try again.";
@@ -222,7 +230,7 @@
             </section>
         {/if}
 
-        {#if profileLoaded && !isGuestAccount}
+        {#if profileLoaded}
             <MenuList label="Account">
                 <MenuRow
                     title="Feedback"
@@ -239,12 +247,15 @@
                         onclick={() => (installSheetOpen = true)}
                     />
                 {/if}
-                <MenuRow
-                    title="Change password"
-                    hint="Update your sign-in password"
-                    icon={PasscodeLockIcon}
-                    onclick={() => (changePasswordBottomSheetController = true)}
-                />
+                {#if !isGuestAccount}
+                    <MenuRow
+                        title="Change password"
+                        hint="Update your sign-in password"
+                        icon={PasscodeLockIcon}
+                        onclick={() =>
+                            (changePasswordBottomSheetController = true)}
+                    />
+                {/if}
                 <MenuRow
                     title="Logout"
                     hint="Sign out of your Eat Right account"

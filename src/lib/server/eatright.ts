@@ -1,4 +1,5 @@
 import { json, type Cookies, type RequestEvent } from "@sveltejs/kit";
+import { dev } from "$app/environment";
 import {
     EatRightAuthConfigurationError,
     verifyEatRightJwt,
@@ -22,6 +23,7 @@ export type EatRightSession = {
 export type EatRightIdentity = {
     name: string;
     userid: string;
+    tokenVersion: number;
 };
 
 export type EatRightAuthSession = EatRightIdentity & {
@@ -66,7 +68,7 @@ function sessionCookieOptions(url: URL) {
         path: "/",
         httpOnly: true,
         sameSite: "lax" as const,
-        secure: false,
+        secure: !dev,
     };
 }
 

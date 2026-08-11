@@ -27,6 +27,7 @@ export type VerifiedEatRightJwt = {
     name: string;
     userid: string;
     expiresAt: number;
+    tokenVersion: number;
 };
 
 export class EatRightAuthConfigurationError extends Error {
@@ -106,7 +107,7 @@ export async function verifyEatRightJwtWithConfig(
         typ: "JWT",
         clockTolerance: EXPIRY_SKEW_SECONDS,
         maxTokenAge: "7d",
-        requiredClaims: ["exp", "iat", "sub", "name"],
+        requiredClaims: ["exp", "iat", "sub", "name", "jti", "ver"],
         ...(config.issuer && config.audience
             ? { issuer: config.issuer, audience: config.audience }
             : {}),
@@ -119,16 +120,21 @@ export async function verifyEatRightJwtWithConfig(
         const { payload } = await jwtVerify(accessToken, key, options);
         const name = typeof payload.name === "string" ? payload.name.trim() : "";
         const userid = typeof payload.sub === "string" ? payload.sub.trim() : "";
+        const tokenId = typeof payload.jti === "string" ? payload.jti.trim() : "";
+        const tokenVersion = typeof payload.ver === "number" ? payload.ver : -1;
 
         if (
             !name ||
             !userid ||
+            !tokenId ||
+            !Number.isSafeInteger(tokenVersion) ||
+            tokenVersion < 0 ||
             typeof payload.iat !== "number" ||
             typeof payload.exp !== "number"
         ) {
             return null;
         }
-        return { name, userid, expiresAt: payload.exp };
+        return { name, userid, expiresAt: payload.exp, tokenVersion };
     } catch (error) {
         if (error instanceof EatRightAuthConfigurationError) throw error;
         if (error instanceof errors.JOSEError) return null;

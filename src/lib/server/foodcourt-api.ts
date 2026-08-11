@@ -4,6 +4,8 @@ export const FOODCOURT_API_BASE_URL = (
    env.FOODCOURT_API_BASE_URL
 ).replace(/\/$/, "");
 
+const FOODCOURT_API_TIMEOUT_MS = 15_000;
+
 export class FoodcourtApiError extends Error {
     constructor(
         message: string,
@@ -45,6 +47,7 @@ export async function foodcourtApiRequest<T>(
         headers,
         body: options.body?.toString(),
         cache: "no-store",
+        signal: AbortSignal.timeout(FOODCOURT_API_TIMEOUT_MS),
     });
     const payload = parsePayload(await response.text());
 

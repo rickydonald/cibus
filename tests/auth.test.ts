@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { RequestEvent } from "@sveltejs/kit";
-import { SignJWT } from "jose";
+import { exportSPKI, generateKeyPair, SignJWT } from "jose";
 import { getSafeRedirectPath } from "../src/lib/auth-redirect.ts";
 import {
     enforceRateLimits,
@@ -24,6 +24,8 @@ async function createToken(overrides: Record<string, unknown> = {}) {
     return new SignJWT({
         sub: "TEST001",
         name: "Test User",
+        jti: "test-token-id",
+        ver: 0,
         ...overrides,
     })
         .setProtectedHeader({ alg: "HS256", typ: "JWT" })
@@ -36,6 +38,33 @@ test("accepts a correctly signed EatRight JWT", async () => {
     const result = await verifyEatRightJwtWithConfig(await createToken(), config);
     assert.equal(result?.name, "Test User");
     assert.equal(result?.userid, "TEST001");
+    assert.equal(result?.tokenVersion, 0);
+});
+
+test("accepts an RS256 token using only its public verification key", async () => {
+    const now = Math.floor(Date.now() / 1000);
+    const { privateKey, publicKey } = await generateKeyPair("RS256");
+    const token = await new SignJWT({
+        sub: "TEST001",
+        name: "Test User",
+        jti: "rsa-test-token-id",
+        ver: 4,
+    })
+        .setProtectedHeader({ alg: "RS256", typ: "JWT" })
+        .setIssuer("cibus-rdmw")
+        .setAudience("cibus")
+        .setIssuedAt(now)
+        .setExpirationTime(now + 300)
+        .sign(privateKey);
+
+    const result = await verifyEatRightJwtWithConfig(token, {
+        algorithm: "RS256",
+        issuer: "cibus-rdmw",
+        audience: "cibus",
+        publicKey: await exportSPKI(publicKey),
+    });
+    assert.equal(result?.userid, "TEST001");
+    assert.equal(result?.tokenVersion, 4);
 });
 
 test("rejects a JWT with a modified signature", async () => {
@@ -61,7 +90,9 @@ test("rejects JWTs without the JSP subject claim", async () => {
 
 test("rejects JWTs without the JSP JWT token type", async () => {
     const now = Math.floor(Date.now() / 1000);
-    const token = await new SignJWT({ sub: "TEST001", name: "Test User" })
+    const token = await new SignJWT({
+        sub: "TEST001", name: "Test User", jti: "test-token-id", ver: 0,
+    })
         .setProtectedHeader({ alg: "HS256" })
         .setIssuedAt(now)
         .setExpirationTime(now + 300)
@@ -71,7 +102,9 @@ test("rejects JWTs without the JSP JWT token type", async () => {
 
 test("rejects expired JWTs", async () => {
     const now = Math.floor(Date.now() / 1000);
-    const token = await new SignJWT({ sub: "TEST001", name: "Test User" })
+    const token = await new SignJWT({
+        sub: "TEST001", name: "Test User", jti: "test-token-id", ver: 0,
+    })
         .setProtectedHeader({ alg: "HS256", typ: "JWT" })
         .setIssuedAt(now - 120)
         .setExpirationTime(now - 60)
@@ -81,7 +114,9 @@ test("rejects expired JWTs", async () => {
 
 test("rejects JWTs older than the seven-day session lifetime", async () => {
     const now = Math.floor(Date.now() / 1000);
-    const token = await new SignJWT({ sub: "TEST001", name: "Test User" })
+    const token = await new SignJWT({
+        sub: "TEST001", name: "Test User", jti: "test-token-id", ver: 0,
+    })
         .setProtectedHeader({ alg: "HS256", typ: "JWT" })
         .setIssuedAt(now - 8 * 24 * 60 * 60)
         .setExpirationTime(now + 300)
