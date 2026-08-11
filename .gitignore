@@ -1,5 +1,6 @@
 node_modules
 decompiled
+artifacts
 
 # Output
 .output
