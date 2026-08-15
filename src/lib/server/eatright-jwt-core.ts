@@ -46,9 +46,9 @@ function validateConfig(config: EatRightJwtVerifierConfig) {
         );
     }
 
-    if (!!config.issuer !== !!config.audience) {
+    if (!config.issuer || !config.audience) {
         throw new EatRightAuthConfigurationError(
-            "Configure both EatRight JWT issuer and audience, or neither",
+            "EatRight JWT issuer and audience must both be configured",
         );
     }
 
@@ -108,9 +108,8 @@ export async function verifyEatRightJwtWithConfig(
         clockTolerance: EXPIRY_SKEW_SECONDS,
         maxTokenAge: "7d",
         requiredClaims: ["exp", "iat", "sub", "name", "jti", "ver"],
-        ...(config.issuer && config.audience
-            ? { issuer: config.issuer, audience: config.audience }
-            : {}),
+        issuer: config.issuer,
+        audience: config.audience,
     };
 
     try {

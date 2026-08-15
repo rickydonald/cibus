@@ -16,6 +16,8 @@ import {
 const secret = "test-eatright-jwt-secret-that-is-at-least-32-bytes";
 const config: EatRightJwtVerifierConfig = {
     algorithm: "HS256",
+    issuer: "foodcourt-test",
+    audience: "cibus-test",
     secret,
 };
 
@@ -29,6 +31,8 @@ async function createToken(overrides: Record<string, unknown> = {}) {
         ...overrides,
     })
         .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+        .setIssuer("foodcourt-test")
+        .setAudience("cibus-test")
         .setIssuedAt(now)
         .setExpirationTime(now + 300)
         .sign(new TextEncoder().encode(secret));
@@ -94,6 +98,8 @@ test("rejects JWTs without the JSP JWT token type", async () => {
         sub: "TEST001", name: "Test User", jti: "test-token-id", ver: 0,
     })
         .setProtectedHeader({ alg: "HS256" })
+        .setIssuer("foodcourt-test")
+        .setAudience("cibus-test")
         .setIssuedAt(now)
         .setExpirationTime(now + 300)
         .sign(new TextEncoder().encode(secret));
@@ -106,6 +112,8 @@ test("rejects expired JWTs", async () => {
         sub: "TEST001", name: "Test User", jti: "test-token-id", ver: 0,
     })
         .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+        .setIssuer("foodcourt-test")
+        .setAudience("cibus-test")
         .setIssuedAt(now - 120)
         .setExpirationTime(now - 60)
         .sign(new TextEncoder().encode(secret));
@@ -118,6 +126,8 @@ test("rejects JWTs older than the seven-day session lifetime", async () => {
         sub: "TEST001", name: "Test User", jti: "test-token-id", ver: 0,
     })
         .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+        .setIssuer("foodcourt-test")
+        .setAudience("cibus-test")
         .setIssuedAt(now - 8 * 24 * 60 * 60)
         .setExpirationTime(now + 300)
         .sign(new TextEncoder().encode(secret));
@@ -125,25 +135,16 @@ test("rejects JWTs older than the seven-day session lifetime", async () => {
 });
 
 test("validates issuer and audience when both are configured", async () => {
-    const scopedConfig = {
-        ...config,
-        issuer: "foodcourt-test",
-        audience: "cibus-test",
-    };
-    const accepted = await createToken({
-        iss: "foodcourt-test",
-        aud: "cibus-test",
-    });
-    const rejected = await createToken({
-        iss: "foodcourt-test",
-        aud: "another-app",
-    });
+    const accepted = await createToken();
 
     assert.equal(
-        (await verifyEatRightJwtWithConfig(accepted, scopedConfig))?.userid,
+        (await verifyEatRightJwtWithConfig(accepted, config))?.userid,
         "TEST001",
     );
-    assert.equal(await verifyEatRightJwtWithConfig(rejected, scopedConfig), null);
+    assert.equal(await verifyEatRightJwtWithConfig(accepted, {
+        ...config,
+        audience: "another-app",
+    }), null);
 });
 
 test("fails closed when JWT verification is misconfigured", async () => {
@@ -151,6 +152,13 @@ test("fails closed when JWT verification is misconfigured", async () => {
         verifyEatRightJwtWithConfig(await createToken(), {
             ...config,
             secret: "short",
+        }),
+        EatRightAuthConfigurationError,
+    );
+    await assert.rejects(
+        verifyEatRightJwtWithConfig(await createToken(), {
+            algorithm: "HS256",
+            secret,
         }),
         EatRightAuthConfigurationError,
     );

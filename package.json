@@ -29,6 +29,8 @@
 	"dependencies": {
 		"@lucide/svelte": "^1.21.0",
 		"@ricky-donald/hades": "^1.0.0",
+		"@simplewebauthn/browser": "^13.3.0",
+		"@simplewebauthn/server": "^13.3.2",
 		"@untitled-theme/icons-svelte": "^0.14.2",
 		"fuse.js": "^7.5.0",
 		"jose": "^6.2.3",
@@ -41,5 +43,8 @@
 		"workbox-precaching": "^7.4.1",
 		"workbox-routing": "^7.4.1",
 		"workbox-strategies": "^7.4.1"
+	},
+	"overrides": {
+		"cookie": "0.7.2"
 	}
 }

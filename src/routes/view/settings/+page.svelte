@@ -9,6 +9,7 @@
         EyeIcon,
         EyeOffIcon,
         InfoIcon,
+        KeyRoundIcon,
         LogOutIcon,
         MessageSquareTextIcon,
         UserIcon,
@@ -16,6 +17,7 @@
     import MenuList from "$lib/components/custom/MenuList.svelte";
     import MenuRow from "$lib/components/custom/MenuRow.svelte";
     import InstallSheet from "$lib/components/custom/InstallSheet.svelte";
+    import PasskeySheet from "$lib/components/custom/PasskeySheet.svelte";
     import { install } from "$lib/client/install.svelte";
     import { toast } from "svelte-sonner";
     import {
@@ -155,6 +157,7 @@
     let changePasswordBottomSheetController = $state<boolean>(false);
 
     let installSheetOpen = $state<boolean>(false);
+    let passkeySheetOpen = $state<boolean>(false);
 </script>
 
 <div class="min-h-screen text-ink antialiased">
@@ -231,6 +234,27 @@
         {/if}
 
         {#if profileLoaded}
+            <MenuList
+                label="Security"
+                footnote="Passkeys are protected by your device and can be removed at any time."
+            >
+                <MenuRow
+                    title="Passkeys"
+                    hint="Sign in with your face, fingerprint, or device PIN"
+                    icon={KeyRoundIcon}
+                    onclick={() => (passkeySheetOpen = true)}
+                />
+                {#if !isGuestAccount}
+                    <MenuRow
+                        title="Change password"
+                        hint="Update your sign-in password"
+                        icon={PasscodeLockIcon}
+                        onclick={() =>
+                            (changePasswordBottomSheetController = true)}
+                    />
+                {/if}
+            </MenuList>
+
             <MenuList label="Account">
                 <MenuRow
                     title="Feedback"
@@ -245,15 +269,6 @@
                         hint="Open Eat Right like an app"
                         icon={DownloadIcon}
                         onclick={() => (installSheetOpen = true)}
-                    />
-                {/if}
-                {#if !isGuestAccount}
-                    <MenuRow
-                        title="Change password"
-                        hint="Update your sign-in password"
-                        icon={PasscodeLockIcon}
-                        onclick={() =>
-                            (changePasswordBottomSheetController = true)}
                     />
                 {/if}
                 <MenuRow
@@ -402,3 +417,4 @@
 </Sheet>
 
 <InstallSheet bind:open={installSheetOpen} />
+<PasskeySheet bind:open={passkeySheetOpen} {isGuestAccount} />
