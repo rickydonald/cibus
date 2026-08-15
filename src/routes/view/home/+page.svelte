@@ -191,9 +191,9 @@
                     <div
                         class="relative overflow-hidden rounded-[28px] bg-primary p-6 text-white shadow-card"
                     >
-                        <!-- light same-hue gradient wash -->
+                        <!-- Light same-hue wash adds depth without adding a new color. -->
                         <div
-                            class="absolute inset-0 bg-[linear-gradient(140deg,rgba(255,255,255,0.18),rgba(255,255,255,0.04)_35%,rgba(255,255,255,0)_55%),linear-gradient(320deg,rgba(10,54,86,0.28),rgba(10,54,86,0)_50%)]"
+                            class="absolute inset-0 bg-[linear-gradient(140deg,rgba(255,255,255,0.18),rgba(255,255,255,0.04)_35%,rgba(255,255,255,0)_55%),linear-gradient(320deg,rgba(120,26,4,0.30),rgba(120,26,4,0)_50%)]"
                         ></div>
 
                         <div class="relative z-10">
@@ -245,7 +245,7 @@
                                 <button
                                     onclick={() =>
                                         goto("/view/wallet?action=add-money")}
-                                    class="flex-1 h-11 rounded-circle bg-white px-3 text-sm text-primary flex items-center justify-center gap-2 font-bold hover:bg-primary-soft active:scale-98 transition whitespace-nowrap"
+                                    class="flex-1 h-11 rounded-circle bg-surface px-3 text-sm text-primary-ink flex items-center justify-center gap-2 font-bold hover:bg-primary-soft active:scale-98 transition whitespace-nowrap"
                                     aria-label="Add Money to Wallet"
                                 >
                                     <WalletIcon size="18" />
@@ -327,7 +327,7 @@
                                     <div>
                                         {#if isNavigating}
                                             <div
-                                                class="flex h-7 w-7 items-center justify-center rounded-circle bg-primary-soft border border-primary/10 text-primary"
+                                                class="flex h-7 w-7 items-center justify-center rounded-circle bg-primary-soft border border-primary/10 text-primary-ink"
                                             >
                                                 <Spinner size={16} />
                                             </div>
@@ -336,7 +336,7 @@
                                                 class="flex items-center gap-1 rounded-circle bg-danger-soft border border-danger/10 px-4 py-1"
                                             >
                                                 <span
-                                                    class="text-sm font-semibold text-red-700"
+                                                    class="text-sm font-semibold text-danger"
                                                     >Closed</span
                                                 >
                                             </div>
@@ -345,7 +345,7 @@
                                                 class="flex h-7 w-7 items-center justify-center rounded-circle bg-canvas border border-line group-hover:bg-primary-soft transition-colors"
                                             >
                                                 <ChevronRightIcon
-                                                    class="h-4 w-4 text-ink-faint transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
+                                                    class="h-4 w-4 text-ink-faint transition-transform group-hover:translate-x-0.5 group-hover:text-primary-ink"
                                                 />
                                             </div>
                                         {/if}

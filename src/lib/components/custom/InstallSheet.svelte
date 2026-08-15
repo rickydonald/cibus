@@ -69,7 +69,7 @@
                         class="flex items-center gap-3.5 rounded-2xl border border-line bg-canvas p-3.5"
                     >
                         <span
-                            class="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary-soft text-primary"
+                            class="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary-soft text-primary-ink"
                         >
                             <step.icon size={17} />
                         </span>

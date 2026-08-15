@@ -63,8 +63,8 @@
         },
         preparing: {
             icon: ClockIcon,
-            chip: "bg-primary-soft text-primary",
-            text: "text-primary",
+            chip: "bg-primary-soft text-primary-ink",
+            text: "text-primary-ink",
             label: "Preparing",
             filter: "active",
         },
@@ -271,7 +271,7 @@
                 in:contentReveal={{ duration: 360 }}
             >
                 <div
-                    class="grid h-14 w-14 place-items-center rounded-circle bg-primary-soft text-primary"
+                    class="grid h-14 w-14 place-items-center rounded-circle bg-primary-soft text-primary-ink"
                 >
                     <ReceiptTextIcon class="h-6 w-6" />
                 </div>

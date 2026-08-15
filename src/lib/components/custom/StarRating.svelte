@@ -58,7 +58,7 @@
                         {size}
                         strokeWidth={1.6}
                         class="transition-colors duration-150 {filled
-                            ? 'fill-current text-yellow-400'
+                            ? 'fill-current text-accent'
                             : 'text-line-strong'}"
                     />
                 </span>

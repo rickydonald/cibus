@@ -44,33 +44,75 @@
 }
 
 /*
- * Eat Right design tokens
- * Cool porcelain neutrals on a soft canvas, one deep oxford-navy primary,
- * muted semantic tones. Every page pulls from this palette only.
+ * Eat Right design tokens — "Vivid Chilli"
+ *
+ * Appetite lives on the warm end of the wheel: long-wavelength reds and
+ * oranges are what food photography and food packaging lean on, and cool
+ * blues are what read as inedible. But warmth alone is not the point —
+ * saturation is. A warm hue that is too dark reads as rust, and a warm
+ * neutral pushed too far reads as dusty beige. Both look stale, not hungry.
+ *
+ *   surface     pure white, canvas a whisper of warm grey — food needs a
+ *               clean plate; tinting every surface cream muddies the photos
+ *   ink         warm near-black, crisp rather than brown
+ *   primary     vivid chilli red-orange — the fresh-tomato hue
+ *   accent      saffron; delight only (ratings, badges), never a state
+ *   success     herb green — the freshness cue that sells produce
+ *   danger      crimson-rose, deliberately swung to the far side of red
+ *
+ * Two decisions carry this palette:
+ *
+ * 1. Fill and text are separate tokens. `primary` is the brand FILL and is
+ *    tuned as bright as WCAG AA allows under a white label; `primary-ink` is
+ *    the darker sibling that carries text on light surfaces (prices, links,
+ *    ADD labels). Collapsing these into one token is what forces the brand
+ *    colour dark enough to satisfy small text on a tint — and that is exactly
+ *    how a vivid brand turns to rust.
+ *
+ * 2. `primary` and `danger` sit 24° apart on the hue wheel. They used to sit
+ *    5° apart, which made "Add to cart" and "Cancel order" the same colour.
+ *
+ * Every foreground pairing below is WCAG AA or better on the surface it is
+ * used on; every non-text signal (dots, focus rings) clears 3:1.
  */
 @theme {
-    --color-canvas: #f5f6f8;
+    --color-canvas: #f8f7f4;
     --color-surface: #ffffff;
-    --color-line: #e6e8ed;
-    --color-line-strong: #d4d8e0;
+    --color-line: #eae7e1;
+    --color-line-strong: #d5d1c9;
 
-    --color-ink: #1a1e26;
-    --color-ink-muted: #626a78;
-    --color-ink-faint: #979fad;
+    --color-ink: #1c1917;
+    --color-ink-muted: #56504a;
+    --color-ink-faint: #736c65;
 
-    --color-primary: #137ec1;
-    --color-primary-strong: #1a3452;
-    --color-primary-soft: #e9eef5;
+    /* Brand fill — as vivid as a white label permits. */
+    --color-primary: #e1320e;
+    --color-primary-strong: #b52709;
+    /* Brand text on light surfaces. Never use as a fill. */
+    --color-primary-ink: #c22c0a;
+    --color-primary-soft: #ffece7;
 
-    --color-success: #2c7a55;
-    --color-success-soft: #eaf3ee;
-    --color-warning: #94660e;
-    --color-warning-soft: #f7f0dc;
-    --color-danger: #b0413e;
-    --color-danger-soft: #f9edeb;
+    --color-accent: #ffb020;
+    --color-accent-soft: #fff3d9;
 
-    --shadow-card: 0 1px 2px rgb(26 30 38 / 0.04), 0 8px 24px rgb(26 30 38 / 0.04);
-    --shadow-float: 0 18px 44px rgb(26 30 38 / 0.24);
+    --color-success: #0b7844;
+    --color-success-soft: #e2f4ea;
+    --color-warning: #b05305;
+    --color-warning-soft: #fdf1d8;
+    --color-danger: #cf1743;
+    --color-danger-soft: #ffe8ee;
+
+    /*
+     * The same semantics lightened for the dark ink pill (toasts, the current
+     * order banner). The base tones are tuned for white and go muddy on ink.
+     */
+    --color-on-ink-primary: #ff8a5c;
+    --color-on-ink-success: #45d18a;
+    --color-on-ink-warning: #ffc76b;
+    --color-on-ink-danger: #ff8fa8;
+
+    --shadow-card: 0 1px 2px rgb(28 25 23 / 0.04), 0 8px 24px rgb(28 25 23 / 0.06);
+    --shadow-float: 0 18px 44px rgb(28 25 23 / 0.24);
 
     --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
@@ -132,7 +174,7 @@
         @apply flex w-full items-stretch gap-3.5 pl-4 text-left transition-colors hover:bg-canvas active:bg-line/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-45;
     }
     .menu-row-icon {
-        @apply my-auto grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary-soft text-primary;
+        @apply my-auto grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary-soft text-primary-ink;
     }
     /* Carries the row's trailing padding so the separator above it reaches
        the card edge while still starting at the label. */
@@ -178,16 +220,16 @@
         @apply flex h-13.5 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-semibold text-white transition-all duration-200 hover:bg-primary-strong active:scale-[0.985] disabled:pointer-events-none disabled:opacity-45;
         background-image: linear-gradient(180deg, rgb(255 255 255 / 0.16), rgb(255 255 255 / 0) 55%);
         box-shadow:
-            0 10px 24px -10px rgb(19 126 193 / 0.55),
+            0 10px 24px -10px rgb(225 50 14 / 0.5),
             inset 0 1px 0 rgb(255 255 255 / 0.14);
     }
     .btn-auth:hover {
         box-shadow:
-            0 14px 30px -12px rgb(26 52 82 / 0.55),
+            0 14px 30px -12px rgb(181 39 9 / 0.52),
             inset 0 1px 0 rgb(255 255 255 / 0.1);
     }
     .auth-link {
-        @apply font-bold text-primary transition-colors hover:text-primary-strong;
+        @apply font-bold text-primary-ink transition-colors hover:text-primary-strong;
     }
     .auth-alert-success {
         @apply flex items-center gap-2.5 rounded-2xl border border-success/15 bg-success-soft px-4 py-3 text-[13px] font-medium leading-5 text-success;
@@ -370,8 +412,7 @@ html [data-sonner-toaster] {
 }
 
 html [data-sonner-toast].eatright-toast[data-styled="true"] {
-    /* bright-on-dark semantic tints */
-    --toast-tint: #6db3e8;
+    --toast-tint: var(--color-on-ink-primary);
     min-height: 4rem;
     align-items: center;
     gap: 0.875rem;
@@ -384,22 +425,22 @@ html [data-sonner-toast].eatright-toast[data-styled="true"] {
         color-mix(in srgb, var(--color-ink) 94%, transparent);
     color: #fff;
     box-shadow:
-        0 1px 1px rgb(26 30 38 / 0.12),
-        0 16px 40px rgb(26 30 38 / 0.35);
+        0 1px 1px rgb(28 25 23 / 0.12),
+        0 16px 40px rgb(28 25 23 / 0.35);
     backdrop-filter: blur(16px) saturate(1.4);
     -webkit-backdrop-filter: blur(16px) saturate(1.4);
 }
 
 html [data-sonner-toast].eatright-toast[data-styled="true"][data-type="success"] {
-    --toast-tint: #5fd39a;
+    --toast-tint: var(--color-on-ink-success);
 }
 
 html [data-sonner-toast].eatright-toast[data-styled="true"][data-type="error"] {
-    --toast-tint: #f08e8b;
+    --toast-tint: var(--color-on-ink-danger);
 }
 
 html [data-sonner-toast].eatright-toast[data-styled="true"][data-type="warning"] {
-    --toast-tint: #e8bd66;
+    --toast-tint: var(--color-on-ink-warning);
 }
 
 html [data-sonner-toast].eatright-toast[data-styled="true"] [data-icon].eatright-toast-icon {

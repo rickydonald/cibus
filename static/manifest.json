@@ -2,8 +2,8 @@
     "name": "Eat Right",
     "short_name": "Eat Right",
     "description": "Order food directly from your favorite outlets in Eat Right.",
-    "theme_color": "#f5f6f8",
-    "background_color": "#f5f6f8",
+    "theme_color": "#f8f7f4",
+    "background_color": "#f8f7f4",
     "display": "standalone",
     "display_override": [
         "standalone",

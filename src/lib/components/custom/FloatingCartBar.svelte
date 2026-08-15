@@ -39,9 +39,9 @@
         style="view-transition-name: floating-cart;"
         aria-label={`View cart, ${cart.totalItems} ${itemLabel}, ₹${cart.totalAmount}`}
     >
-        <!-- directional depth toward the deep-navy edge -->
+        <!-- Directional depth toward the deep garnet edge. -->
         <span
-            class="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(255,255,255,0.12),rgba(255,255,255,0)_30%,rgba(26,52,82,0.35))]"
+            class="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,rgba(255,255,255,0.12),rgba(255,255,255,0)_30%,rgba(120,26,4,0.35))]"
             aria-hidden="true"
         ></span>
 
@@ -49,7 +49,7 @@
         <span class="relative z-10 flex shrink-0 -space-x-2.5">
             {#each shownAvatars as icon}
                 <span
-                    class="grid h-9 w-9 place-items-center overflow-hidden rounded-circle bg-white ring-2 ring-primary"
+                    class="grid h-9 w-9 place-items-center overflow-hidden rounded-circle bg-surface ring-2 ring-primary"
                 >
                     <img src={icon} alt="" class="h-5.5 w-5.5 object-contain" />
                 </span>
@@ -74,9 +74,9 @@
             </span>
         </span>
 
-        <!-- action pill: white on blue for a clear focal CTA -->
+        <!-- Warm-white action pill keeps the cart CTA as the clear focal point. -->
         <span
-            class="relative z-10 flex h-10 shrink-0 items-center gap-1.5 rounded-circle bg-white pl-4 pr-3 text-[13px] font-bold text-primary shadow-[0_4px_12px_-4px_rgba(26,30,38,0.35)]"
+            class="relative z-10 flex h-10 shrink-0 items-center gap-1.5 rounded-circle bg-surface pl-4 pr-3 text-[13px] font-bold text-primary-ink shadow-[0_4px_12px_-4px_rgba(28,25,23,0.35)]"
         >
             View cart
             <ArrowRightIcon size={16} strokeWidth={2.6} />
@@ -87,7 +87,7 @@
 <style>
     .cart-bar {
         box-shadow:
-            0 14px 30px -12px rgb(19 126 193 / 0.6),
-            0 2px 6px rgb(26 30 38 / 0.1);
+            0 14px 30px -12px rgb(225 50 14 / 0.56),
+            0 2px 6px rgb(28 25 23 / 0.1);
     }
 </style>

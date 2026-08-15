@@ -141,7 +141,7 @@
             >
                 {#if isDeliveredNotice}
                     <span
-                        class="grid h-5 w-5 shrink-0 place-items-center rounded-circle bg-[#65c18c]/20 text-[#7ad9a3]"
+                        class="grid h-5 w-5 shrink-0 place-items-center rounded-circle bg-on-ink-success/20 text-on-ink-success"
                     >
                         <CheckIcon class="h-3 w-3" />
                     </span>
@@ -149,13 +149,13 @@
                     <span class="relative flex h-2 w-2 shrink-0">
                         <span
                             class="absolute inset-0 animate-ping rounded-circle {isPaymentPending
-                                ? 'bg-[#e8bd66]/50'
-                                : 'bg-[#6db3e8]/50'}"
+                                ? 'bg-on-ink-warning/50'
+                                : 'bg-on-ink-primary/50'}"
                         ></span>
                         <span
                             class="relative h-2 w-2 rounded-circle {isPaymentPending
-                                ? 'bg-[#e8bd66]'
-                                : 'bg-[#6db3e8]'}"
+                                ? 'bg-on-ink-warning'
+                                : 'bg-on-ink-primary'}"
                         ></span>
                     </span>
                 {/if}
@@ -167,9 +167,9 @@
                 </p>
                 <span
                     class="font-medium text-[13px] {isDeliveredNotice
-                        ? 'text-[#7ad9a3]'
+                        ? 'text-on-ink-success'
                         : isPaymentPending
-                          ? 'text-[#e8bd66]'
+                          ? 'text-on-ink-warning'
                           : 'text-white/50'}"
                 >
                     {isDeliveredNotice

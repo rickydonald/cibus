@@ -187,7 +187,7 @@
         <section class="card overflow-hidden">
             <div class="flex items-center gap-4 px-5 pt-5 pb-4">
                 <div
-                    class="grid h-14 w-14 shrink-0 place-items-center rounded-circle bg-primary-soft text-lg font-bold text-primary"
+                    class="grid h-14 w-14 shrink-0 place-items-center rounded-circle bg-primary-soft text-lg font-bold text-primary-ink"
                 >
                     {initials}
                 </div>
@@ -381,7 +381,7 @@
 
             {#if formMessage}
                 <div
-                    class="flex items-start gap-2.5 rounded-xl border border-primary/10 bg-primary-soft px-4 py-3 text-sm font-medium text-primary"
+                    class="flex items-start gap-2.5 rounded-xl border border-primary/10 bg-primary-soft px-4 py-3 text-sm font-medium text-primary-ink"
                 >
                     <InfoIcon size={16} class="mt-0.5 shrink-0" />
                     <span>{formMessage}</span>

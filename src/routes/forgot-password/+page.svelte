@@ -338,7 +338,7 @@
             >
                 <button
                     type="button"
-                    class="text-ink-muted transition-colors hover:text-primary disabled:opacity-50"
+                    class="text-ink-muted transition-colors hover:text-primary-ink disabled:opacity-50"
                     disabled={resendSeconds > 0 || isSubmitting}
                     onclick={resendOtp}
                 >
@@ -348,7 +348,7 @@
                 </button>
                 <button
                     type="button"
-                    class="text-ink-muted transition-colors hover:text-primary"
+                    class="text-ink-muted transition-colors hover:text-primary-ink"
                     onclick={backToAccount}
                 >
                     Change user ID
@@ -380,7 +380,7 @@
                     />
                     <button
                         type="button"
-                        class="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-2xl text-ink-faint transition-colors hover:text-primary focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-primary"
+                        class="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-2xl text-ink-faint transition-colors hover:text-primary-ink focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-primary"
                         onclick={() => (showPassword = !showPassword)}
                         aria-label={showPassword
                             ? "Hide password"
@@ -413,7 +413,7 @@
                     />
                     <button
                         type="button"
-                        class="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-2xl text-ink-faint transition-colors hover:text-primary focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-primary"
+                        class="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-2xl text-ink-faint transition-colors hover:text-primary-ink focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-primary"
                         onclick={() => (showConfirmation = !showConfirmation)}
                         aria-label={showConfirmation
                             ? "Hide password confirmation"

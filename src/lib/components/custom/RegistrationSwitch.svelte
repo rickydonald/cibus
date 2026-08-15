@@ -60,8 +60,8 @@
         border-radius: 0.75rem;
 
         box-shadow:
-            0 2px 8px rgba(26, 52, 82, 0.12),
-            0 1px 2px rgba(26, 52, 82, 0.08);
+            0 2px 8px rgba(42, 30, 23, 0.12),
+            0 1px 2px rgba(42, 30, 23, 0.08);
 
         transition:
             transform 300ms cubic-bezier(0.22, 1, 0.36, 1),

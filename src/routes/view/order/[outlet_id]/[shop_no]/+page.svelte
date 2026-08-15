@@ -229,7 +229,7 @@
 
 <div class="min-h-dvh text-ink antialiased">
     <div
-        class={`sticky top-0 z-40 border-b border-line/80 bg-canvas/95 shadow-[0_1px_0_rgba(26,30,38,0.02)] backdrop-blur-xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${
+        class={`sticky top-0 z-40 border-b border-line/80 bg-canvas/95 shadow-[0_1px_0_rgba(28,25,23,0.02)] backdrop-blur-xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${
             isHeaderCollapsed && !isLoading
                 ? "-translate-y-[calc(100%+1px)]"
                 : "translate-y-0"
@@ -316,7 +316,7 @@
                             class={`category-chip h-9 shrink-0 whitespace-nowrap rounded-circle px-4 text-[13px] font-semibold transition-all duration-200 active:scale-95 ${
                                 isSelected
                                     ? "category-chip-active bg-primary text-white"
-                                    : "bg-surface text-ink-muted ring-1 ring-inset ring-line hover:text-primary hover:ring-primary/30"
+                                    : "bg-surface text-ink-muted ring-1 ring-inset ring-line hover:text-primary-ink hover:ring-primary/30"
                             }`}
                         >
                             {category}
@@ -402,7 +402,7 @@
                 in:contentReveal={{ duration: 240 }}
             >
                 <div
-                    class="grid h-14 w-14 place-items-center rounded-circle bg-primary-soft text-primary"
+                    class="grid h-14 w-14 place-items-center rounded-circle bg-primary-soft text-primary-ink"
                 >
                     <ShoppingBag01Icon class="h-6 w-6" />
                 </div>
@@ -445,7 +445,7 @@
                         </h2>
 
                         <div
-                            class="mt-2 overflow-hidden rounded-lg border border-line bg-surface shadow-[0_1px_2px_rgba(26,30,38,0.025)] lg:grid lg:grid-cols-2"
+                            class="mt-2 overflow-hidden rounded-lg border border-line bg-surface shadow-[0_1px_2px_rgba(28,25,23,0.025)] lg:grid lg:grid-cols-2"
                         >
                             {#each group.items as item, index (`${item.outletid}-${item.id}`)}
                                 {@const selectedItem = cartEntry(item)}
@@ -574,7 +574,7 @@
                                             <button
                                                 type="button"
                                                 onclick={() => addItem(item)}
-                                                class="h-10 w-24 rounded-lg border border-primary/25 bg-primary-soft text-xs font-bold text-primary transition-[background-color,color,transform] hover:bg-primary hover:text-white active:scale-95"
+                                                class="h-10 w-24 rounded-lg border border-primary/25 bg-primary-soft text-xs font-bold text-primary-ink transition-[background-color,color,transform] hover:bg-primary hover:text-white active:scale-95"
                                                 aria-label={`Add ${item.displayName} to cart`}
                                             >
                                                 Add
@@ -618,7 +618,7 @@
             rgb(255 255 255 / 0) 55%
         );
         box-shadow:
-            0 8px 18px -8px rgb(19 126 193 / 0.6),
+            0 8px 18px -8px rgb(225 50 14 / 0.56),
             inset 0 1px 0 rgb(255 255 255 / 0.14);
     }
 </style>

@@ -196,7 +196,7 @@
             />
 
             {#if isLoading}
-                <Spinner size={20} class="shrink-0 text-primary" />
+                <Spinner size={20} class="shrink-0 text-primary-ink" />
             {/if}
 
             {#if query.length > 0}
@@ -220,7 +220,7 @@
     >
         {#if results.length > 0}
             <div
-                class="overflow-hidden rounded-lg border border-line bg-surface shadow-[0_1px_2px_rgba(26,30,38,0.025)] lg:grid lg:grid-cols-2"
+                class="overflow-hidden rounded-lg border border-line bg-surface shadow-[0_1px_2px_rgba(28,25,23,0.025)] lg:grid lg:grid-cols-2"
             >
                 {#each results as item, index (`${item.outletid}-${item.id}`)}
                     {@const cartItem = cartEntry(item)}
@@ -328,7 +328,7 @@
                                 <button
                                     type="button"
                                     onclick={() => addItem(item)}
-                                    class="h-10 w-24 rounded-lg border border-primary/25 bg-primary-soft text-xs font-bold text-primary transition-[background-color,color,transform] hover:bg-primary hover:text-white active:scale-95"
+                                    class="h-10 w-24 rounded-lg border border-primary/25 bg-primary-soft text-xs font-bold text-primary-ink transition-[background-color,color,transform] hover:bg-primary hover:text-white active:scale-95"
                                     aria-label={`Add ${item.displayName} to cart`}
                                 >
                                     Add
@@ -344,7 +344,7 @@
             >
                 <p class="text-sm text-ink-muted">{loadError}</p>
                 <button
-                    class="mt-3 rounded-xl border border-primary/20 bg-primary-soft px-4 py-2 text-xs font-bold text-primary transition-all hover:bg-primary hover:text-white active:scale-[0.96]"
+                    class="mt-3 rounded-xl border border-primary/20 bg-primary-soft px-4 py-2 text-xs font-bold text-primary-ink transition-all hover:bg-primary hover:text-white active:scale-[0.96]"
                     onclick={loadAllItems}
                 >
                     Retry
@@ -364,7 +364,7 @@
                 class="flex flex-col items-center justify-center pt-20 text-center"
             >
                 <div
-                    class="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-soft border border-primary/10 text-primary mb-3"
+                    class="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-soft border border-primary/10 text-primary-ink mb-3"
                 >
                     <SearchMdIcon class="h-5 w-5" />
                 </div>

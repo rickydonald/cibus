@@ -578,7 +578,7 @@
                 {#each orders as order, index (order.order_no)}
                     {@const cancelled = isCancelled(order)}
                     <article
-                        class={`filter-[drop-shadow(0_1px_2px_rgb(26_30_38/0.05))_drop-shadow(0_14px_28px_rgb(26_30_38/0.10))] transition-opacity ${isVoided(order) ? "opacity-75 grayscale" : ""}`}
+                        class={`filter-[drop-shadow(0_1px_2px_rgb(28_25_23/0.05))_drop-shadow(0_14px_28px_rgb(28_25_23/0.10))] transition-opacity ${isVoided(order) ? "opacity-75 grayscale" : ""}`}
                         in:slideDown={{ delay: dropDelay(index) }}
                     >
                         <div class="rounded-t-xl bg-surface px-6 pt-7 pb-6">
@@ -927,7 +927,7 @@
                         }}
                     >
                         <span
-                            class="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary-soft text-primary"
+                            class="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary-soft text-primary-ink"
                         >
                             <DownloadIcon size={18} />
                         </span>

@@ -105,7 +105,7 @@
     <!-- Brand -->
     <a href="/view/home" class="flex items-center gap-3.5 px-6 pb-7 pt-8">
         <span
-            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-line bg-white"
+            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-line bg-surface"
         >
             <img
                 src={LoyolaCollegeLogo}
@@ -151,7 +151,7 @@
                     data-active={isActive}
                     aria-current={isActive ? "page" : undefined}
                     class="{itemClass} {isActive
-                        ? 'font-bold text-primary'
+                        ? 'font-bold text-primary-ink'
                         : 'font-semibold text-ink-muted hover:bg-canvas hover:text-ink'}"
                 >
                     <tab.icon size={18} strokeWidth={isActive ? 2.4 : 2} />
@@ -166,7 +166,7 @@
                 data-active={isCartActive}
                 aria-current={isCartActive ? "page" : undefined}
                 class="{itemClass} {isCartActive
-                    ? 'font-bold text-primary'
+                    ? 'font-bold text-primary-ink'
                     : 'font-semibold text-ink-muted hover:bg-canvas hover:text-ink'}"
             >
                 <ShoppingCartIcon
@@ -224,7 +224,7 @@
                     : 'border-line hover:bg-canvas'}"
             >
                 <span
-                    class="flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-circle font-display text-[15px] font-semibold text-primary {isSettingsActive
+                    class="flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-circle font-display text-[15px] font-semibold text-primary-ink {isSettingsActive
                         ? 'bg-surface'
                         : 'bg-primary-soft'}"
                 >
@@ -246,7 +246,7 @@
                     size={17}
                     strokeWidth={2}
                     class="mr-1 shrink-0 transition-all duration-300 group-hover:rotate-45 {isSettingsActive
-                        ? 'text-primary'
+                        ? 'text-primary-ink'
                         : 'text-ink-faint group-hover:text-ink'}"
                 />
             </a>
@@ -279,6 +279,6 @@
             rgb(255 255 255 / 0.14),
             rgb(255 255 255 / 0) 55%
         );
-        box-shadow: 0 10px 24px -10px rgb(19 126 193 / 0.5);
+        box-shadow: 0 10px 24px -10px rgb(225 50 14 / 0.5);
     }
 </style>

@@ -361,7 +361,7 @@
                                             >
                                                 <span
                                                     class="flex h-11 w-11 items-center justify-center rounded-xl border transition-colors {isSelected
-                                                        ? 'border-primary/10 bg-surface text-primary'
+                                                        ? 'border-primary/10 bg-surface text-primary-ink'
                                                         : 'border-line bg-canvas text-ink-faint'}"
                                                 >
                                                     <option.icon
@@ -615,7 +615,7 @@
                                                 >
                                                     <span
                                                         class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-colors {isSelected
-                                                            ? 'border-primary/10 bg-surface text-primary'
+                                                            ? 'border-primary/10 bg-surface text-primary-ink'
                                                             : 'border-line bg-canvas text-ink-faint'}"
                                                     >
                                                         <topic.icon

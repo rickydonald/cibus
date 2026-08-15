@@ -115,7 +115,7 @@
                 {#if !isGuestAccount}
                     <a
                         href={constructForgotPasswordUrl()}
-                        class="text-xs font-semibold text-ink-muted transition-colors hover:text-primary"
+                        class="text-xs font-semibold text-ink-muted transition-colors hover:text-primary-ink"
                         >Forgot password?</a
                     >
                 {/if}
@@ -133,7 +133,7 @@
                 <button
                     type="button"
                     onclick={() => (showPassword = !showPassword)}
-                    class="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-2xl text-ink-faint transition-colors hover:text-primary focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-primary"
+                    class="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-2xl text-ink-faint transition-colors hover:text-primary-ink focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-primary"
                     aria-label={showPassword
                         ? "Hide password"
                         : "Show password"}

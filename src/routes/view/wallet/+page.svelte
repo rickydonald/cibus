@@ -501,7 +501,7 @@
                             class={`h-9 rounded-circle text-[13px] font-semibold transition-all active:scale-95 disabled:opacity-50 ${
                                 Number(amount) === value
                                     ? "bg-primary text-white"
-                                    : "bg-primary-soft text-primary hover:bg-primary/15"
+                                    : "bg-primary-soft text-primary-ink hover:bg-primary/15"
                             }`}
                         >
                             ₹{value}
@@ -641,7 +641,7 @@
                         <div class="border-t border-line/70 p-2">
                             <button
                                 type="button"
-                                class="flex h-10 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-primary transition-colors hover:bg-primary-soft disabled:cursor-wait disabled:opacity-60"
+                                class="flex h-10 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-primary-ink transition-colors hover:bg-primary-soft disabled:cursor-wait disabled:opacity-60"
                                 onclick={loadMoreTransactions}
                                 disabled={isLoadingMore}
                             >

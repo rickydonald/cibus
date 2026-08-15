@@ -119,7 +119,7 @@
 	/>
 	<link rel="icon" href={favicon} />
 	<link rel="manifest" href="/manifest.json" />
-	<meta name="theme-color" content="#f5f6f8" />
+	<meta name="theme-color" content="#f8f7f4" />
 	<meta
 		name="viewport"
 		content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no"

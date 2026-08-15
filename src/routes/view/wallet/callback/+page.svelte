@@ -145,7 +145,7 @@
             <div
                 class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-soft border border-primary/10"
             >
-                <Spinner size={24} class="text-primary" />
+                <Spinner size={24} class="text-primary-ink" />
             </div>
             <h1 class="mt-4 text-lg font-bold tracking-tight">
                 Verifying payment…
@@ -203,7 +203,7 @@
                 Checking again automatically…
             </p>
             <button
-                class="mt-4 rounded-xl border border-primary/20 bg-primary-soft px-4 py-2 text-xs font-bold text-primary transition-all hover:bg-primary hover:text-white active:scale-[0.96]"
+                class="mt-4 rounded-xl border border-primary/20 bg-primary-soft px-4 py-2 text-xs font-bold text-primary-ink transition-all hover:bg-primary hover:text-white active:scale-[0.96]"
                 onclick={() => verifyPayment()}
             >
                 Check again

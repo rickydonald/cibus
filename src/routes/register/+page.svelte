@@ -353,7 +353,7 @@
             >
                 <button
                     type="button"
-                    class="text-ink-muted transition-colors hover:text-primary disabled:opacity-50"
+                    class="text-ink-muted transition-colors hover:text-primary-ink disabled:opacity-50"
                     disabled={resendSeconds > 0 || isSubmitting || isVerifying}
                     onclick={() => void resendOtp()}
                 >
@@ -365,7 +365,7 @@
                 </button>
                 <button
                     type="button"
-                    class="text-ink-muted transition-colors hover:text-primary"
+                    class="text-ink-muted transition-colors hover:text-primary-ink"
                     disabled={isVerifying}
                     onclick={backToDetails}
                 >

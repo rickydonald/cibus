@@ -632,7 +632,7 @@
                         <span
                             class="grid h-6 w-6 place-items-center rounded-circle bg-primary-soft"
                         >
-                            <WalletIcon class="h-3.5 w-3.5 text-primary" />
+                            <WalletIcon class="h-3.5 w-3.5 text-primary-ink" />
                         </span>
                         <span
                             class="text-sm font-semibold text-ink tabular-nums"
@@ -745,7 +745,9 @@
                                 class="grid h-8 w-8 shrink-0 place-items-center rounded-circle text-ink-faint transition-colors hover:bg-danger-soft hover:text-danger active:scale-90"
                                 aria-label={`Clear all items from ${normalizeStoreName(outlet)}`}
                             >
-                                <Trash01Icon class="h-4.5 w-4.5 text-red-500" />
+                                <!-- Inherits currentColor so the button's
+                                     ink-faint → danger hover actually lands. -->
+                                <Trash01Icon class="h-4.5 w-4.5" />
                             </button>
                         </div>
 
@@ -813,7 +815,7 @@
                                         </span>
 
                                         <button
-                                            class="grid h-7 w-7 place-items-center rounded-circle text-primary transition-all hover:bg-surface active:scale-90 disabled:text-ink-faint disabled:opacity-40"
+                                            class="grid h-7 w-7 place-items-center rounded-circle text-primary-ink transition-all hover:bg-surface active:scale-90 disabled:text-ink-faint disabled:opacity-40"
                                             onclick={() =>
                                                 cart.add({
                                                     id: item.id,
@@ -853,7 +855,7 @@
     <!-- Order Bar Summary Footer -->
     {#if cart.items.length > 0}
         <div
-            class="fixed bottom-0 left-0 right-0 z-40 border-t border-line bg-surface/95 backdrop-blur-xl shadow-[0_-8px_24px_rgba(26,30,38,0.06)] lg:left-68"
+            class="fixed bottom-0 left-0 right-0 z-40 border-t border-line bg-surface/95 backdrop-blur-xl shadow-[0_-8px_24px_rgba(28,25,23,0.06)] lg:left-68"
             style="padding-right: var(--safe-area-inset-right); padding-bottom: var(--safe-area-inset-bottom); padding-left: var(--safe-area-inset-left);"
         >
             <div class="mx-auto max-w-md px-5 pt-4 pb-8 lg:max-w-lg">
@@ -930,7 +932,7 @@
                     <div
                         class="mx-auto flex h-13 w-13 items-center justify-center rounded-2xl {hasInsufficientBalance
                             ? 'bg-warning-soft text-warning'
-                            : 'bg-primary-soft text-primary'}"
+                            : 'bg-primary-soft text-primary-ink'}"
                     >
                         {#if hasInsufficientBalance}
                             <WalletIcon class="h-5 w-5" />
@@ -957,7 +959,7 @@
                             <p
                                 class="text-[10px] font-bold uppercase tracking-[0.18em] {hasInsufficientBalance
                                     ? 'text-warning'
-                                    : 'text-primary'}"
+                                    : 'text-primary-ink'}"
                             >
                                 {hasInsufficientBalance
                                     ? "Amount Short"
@@ -1107,7 +1109,7 @@
         >
             <div class="flex flex-col items-center">
                 <div
-                    class="relative grid h-16 w-16 place-items-center rounded-circle bg-primary-soft text-primary"
+                    class="relative grid h-16 w-16 place-items-center rounded-circle bg-primary-soft text-primary-ink"
                     aria-hidden="true"
                 >
                     <ReceiptCheckIcon class="h-7 w-7" />

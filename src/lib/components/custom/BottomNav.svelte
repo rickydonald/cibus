@@ -18,7 +18,7 @@
 </script>
 
 <nav
-    class="fixed bottom-0 left-0 right-0 z-40 border-t border-line bg-surface shadow-[0_-8px_24px_rgba(26,30,38,0.04)] lg:hidden"
+    class="fixed bottom-0 left-0 right-0 z-40 border-t border-line bg-surface shadow-[0_-8px_24px_rgba(28,25,23,0.04)] lg:hidden"
     style="padding-right: var(--safe-area-inset-right); padding-bottom: var(--safe-area-inset-bottom); padding-left: var(--safe-area-inset-left);"
     aria-label="Main navigation"
 >
@@ -28,7 +28,7 @@
             <a
                 href={tab.href}
                 class="flex flex-1 flex-col items-center justify-center gap-1 transition-colors {isActive
-                    ? 'text-primary'
+                    ? 'text-primary-ink'
                     : 'text-ink-faint hover:text-ink-muted'}"
                 aria-current={isActive ? "page" : undefined}
             >
