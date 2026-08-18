@@ -151,6 +151,38 @@ export function validatePasskeyRelyingPartyConfig(input: {
     return { rpID, rpName, origins };
 }
 
+/**
+ * The Foodcourt JSP uses the secret's bytes verbatim as the HMAC key, so both
+ * sides must agree on exact bytes. A raw-binary secret cannot survive a UTF-8
+ * environment variable — invalid sequences become U+FFFD — so a `base64:`
+ * prefix carries those bytes losslessly. Anything else is read as UTF-8 text.
+ */
+export function decodePasskeySecretValue(value: string): Uint8Array {
+    if (!value.startsWith("base64:")) {
+        return Uint8Array.from(Buffer.from(value, "utf8"));
+    }
+
+    const encoded = value.slice("base64:".length).trim();
+    // Accept either alphabet, with or without padding, then canonicalise so a
+    // truncated or mistyped secret fails loudly here instead of at signing time.
+    const normalized = encoded
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+    if (!normalized || !BASE64URL.test(normalized)) {
+        throw new PasskeyConfigurationError(
+            "Passkey internal secret is not valid base64",
+        );
+    }
+    const bytes = Buffer.from(normalized, "base64url");
+    if (bytes.toString("base64url") !== normalized) {
+        throw new PasskeyConfigurationError(
+            "Passkey internal secret is not valid base64",
+        );
+    }
+    return Uint8Array.from(bytes);
+}
+
 export function passkeyBodyHash(rawBody: string): string {
     return createHash("sha256").update(rawBody, "utf8").digest("hex");
 }

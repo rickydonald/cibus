@@ -11,6 +11,14 @@ type RegistrationOptionsJSON = Parameters<
     typeof startRegistration
 >[0]["optionsJSON"];
 
+/**
+ * Accounts are limited to a single passkey. The authoritative check lives in
+ * the Foodcourt JSP (PASSKEY_MAX_ACTIVE_CREDENTIALS), inside the transaction
+ * that inserts the credential; this mirror only keeps the UI from offering a
+ * setup flow that would reach the device prompt and then fail with a 409.
+ */
+export const MAX_PASSKEYS_PER_ACCOUNT = 1;
+
 export type PasskeySummary = {
     id: string;
     name: string;

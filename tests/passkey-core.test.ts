@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
     createPasskeyInternalSignature,
+    decodePasskeySecretValue,
     extractPasskeyLookup,
     normalizePasskeyBackendBaseUrl,
     normalizePasskeyName,
@@ -158,4 +159,56 @@ test("compares opaque passkey user handles in constant time", () => {
     assert.equal(samePasskeyUserHandle(handle, handle), true);
     assert.equal(samePasskeyUserHandle(handle, otherHandle), false);
     assert.equal(samePasskeyUserHandle(handle, "not-canonical="), false);
+});
+
+test("carries a raw-binary passkey secret through a base64 environment value", () => {
+    // The bytes a random file secret actually contains: not valid UTF-8.
+    const raw = Buffer.from([0x00, 0xff, 0x80, 0xc3, 0x28, 0xfe, ...Array(42).fill(0x7f)]);
+    assert.equal(raw.byteLength, 48);
+    assert.notEqual(Buffer.from(raw.toString("utf8"), "utf8").toString("hex"), raw.toString("hex"));
+
+    const fromUrlAlphabet = decodePasskeySecretValue(`base64:${raw.toString("base64url")}`);
+    const fromStandardAlphabet = decodePasskeySecretValue(`base64:${raw.toString("base64")}`);
+    assert.deepEqual(Buffer.from(fromUrlAlphabet), raw);
+    assert.deepEqual(Buffer.from(fromStandardAlphabet), raw);
+
+    // The same bytes must sign identically however the secret was supplied.
+    const signed = (secret: string | Uint8Array) =>
+        createPasskeyInternalSignature({
+            secret,
+            timestamp: "1700000000000",
+            nonce: "abcdefghijklmnopqrstuv",
+            rawBody: '{"action":"list"}',
+        });
+    assert.equal(signed(fromUrlAlphabet), signed(raw));
+});
+
+test("reads a passkey secret without the base64 marker as UTF-8 text", () => {
+    const text = "a".repeat(48);
+    assert.deepEqual(
+        Buffer.from(decodePasskeySecretValue(text)),
+        Buffer.from(text, "utf8"),
+    );
+});
+
+test("rejects a truncated or mistyped base64 passkey secret", () => {
+    assert.throws(
+        () => decodePasskeySecretValue("base64:not valid base64!!"),
+        PasskeyConfigurationError,
+    );
+    // Trailing bits that no canonical encoder would emit: "YWJjZB" decodes to
+    // the same four bytes as "YWJjZA", so silently accepting it would let a
+    // corrupted secret through.
+    assert.throws(
+        () => decodePasskeySecretValue("base64:YWJjZB"),
+        PasskeyConfigurationError,
+    );
+    assert.throws(() => decodePasskeySecretValue("base64:"), PasskeyConfigurationError);
+
+    // Padding is normalised away rather than rejected, so a secret copied from
+    // a standard-base64 tool still works.
+    assert.deepEqual(
+        Buffer.from(decodePasskeySecretValue("base64:YWJjZA====")),
+        Buffer.from("abcd", "utf8"),
+    );
 });

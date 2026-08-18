@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { dev } from "$app/environment";
 import { env } from "$env/dynamic/private";
 import {
+    decodePasskeySecretValue,
     normalizePasskeyBackendBaseUrl,
     PasskeyConfigurationError,
     validatePasskeyRelyingPartyConfig,
@@ -33,7 +34,7 @@ async function loadInternalSecret(): Promise<Uint8Array> {
             "Configure PASSKEY_INTERNAL_SECRET or PASSKEY_INTERNAL_SECRET_FILE, not both",
         );
     }
-    if (direct) return validateSecret(Buffer.from(direct, "utf8"));
+    if (direct) return validateSecret(decodePasskeySecretValue(direct));
     if (!file) {
         throw new PasskeyConfigurationError(
             "PASSKEY_INTERNAL_SECRET or PASSKEY_INTERNAL_SECRET_FILE must be configured",

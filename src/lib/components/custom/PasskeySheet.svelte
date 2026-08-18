@@ -20,6 +20,7 @@
     import Spinner from "$lib/components/custom/Spinner.svelte";
     import { redirectIfEatRightConnectRequired } from "$lib/client/eatright-client";
     import {
+        MAX_PASSKEYS_PER_ACCOUNT,
         PasskeyApiError,
         formatPasskeyDate,
         formatPasskeyDateCompact,
@@ -71,7 +72,16 @@
     const isBusy = $derived(isRegistering || isRevoking);
     const mutationDisabled = $derived(isLoading || isBusy);
     const showSkeleton = $derived(isLoading && !hasLoaded && !loadError);
-    const canAddPasskey = $derived(passkeysSupported && !showSkeleton);
+    /**
+     * Only gate on a list we actually have. Treating an unloaded list as "at
+     * the limit" would disable setup for someone whose list request failed.
+     */
+    const atPasskeyLimit = $derived(
+        hasLoaded && passkeys.length >= MAX_PASSKEYS_PER_ACCOUNT,
+    );
+    const canAddPasskey = $derived(
+        passkeysSupported && !showSkeleton && !atPasskeyLimit,
+    );
 
     let refreshRequestId = 0;
     /**
@@ -258,7 +268,7 @@
     }
 
     async function beginRegistration() {
-        if (mutationDisabled) return;
+        if (mutationDisabled || atPasskeyLimit) return;
 
         revokeReturnFocus = null;
         passkeyToRevoke = null;
@@ -432,7 +442,7 @@
     bind:open
     title="Passkeys"
     showClose
-    detents={['full']}
+    maxHeight="auto" 
     dismissible={!isBusy}
     onopen={refreshPasskeys}
     onclose={resetSensitiveFields}
@@ -474,7 +484,7 @@
                         {#if showSkeleton}
                             <section aria-busy="true" aria-live="polite">
                                 <div class="flex items-center gap-2 px-1 pb-2">
-                                    <h3 class="section-label">Saved passkeys</h3>
+                                    <h3 class="section-label">Your passkey</h3>
                                 </div>
                                 <div
                                     class="overflow-hidden rounded-3xl border border-line bg-surface"
@@ -573,7 +583,7 @@
                                         tabindex="-1"
                                         bind:this={savedPasskeysHeading}
                                     >
-                                        Saved passkeys
+                                        Your passkey
                                     </h3>
                                     {#if isLoading}
                                         <span
@@ -742,9 +752,9 @@
                                                                 class="font-bold text-danger"
                                                                 >Remove this passkey?</span
                                                             >
-                                                            It stops working immediately.
-                                                            Your password and other passkeys
-                                                            are unaffected.
+                                                            It stops working immediately and
+                                                            your password takes over. You can
+                                                            set up a new one straight after.
                                                         </p>
 
                                                         <div class="flex flex-col gap-1.5">
@@ -809,6 +819,22 @@
                                             </div>
                                         {/each}
                                     </div>
+                                {/if}
+
+                                <!--
+                                    The footer action is disabled at the limit,
+                                    so say why and say what to do instead — a
+                                    dead control with no explanation is a
+                                    dead end.
+                                -->
+                                {#if atPasskeyLimit}
+                                    <p
+                                        class="mt-2.5 px-1 text-[11.5px] font-medium leading-4 text-ink-faint"
+                                        transition:collapse={{ duration: EXIT_MS }}
+                                    >
+                                        Your account can have one passkey. Remove this one
+                                        to set up a different device.
+                                    </p>
                                 {/if}
                             </section>
                         {/if}
