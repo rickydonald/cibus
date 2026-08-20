@@ -1,4 +1,3 @@
-import { readFile } from "node:fs/promises";
 import { dev } from "$app/environment";
 import { env } from "$env/dynamic/private";
 import {
@@ -26,28 +25,16 @@ function validateSecret(secret: Uint8Array): Uint8Array {
     return secret;
 }
 
-async function loadInternalSecret(): Promise<Uint8Array> {
-    const direct = env.PASSKEY_INTERNAL_SECRET;
-    const file = env.PASSKEY_INTERNAL_SECRET_FILE?.trim();
-    if (direct && file) {
-        throw new PasskeyConfigurationError(
-            "Configure PASSKEY_INTERNAL_SECRET or PASSKEY_INTERNAL_SECRET_FILE, not both",
-        );
+// The secret is carried in the environment as a string. The Java side reads the
+// same variable and decodes it identically (passkeyDecodeSecretValue in
+// ajax/api/passkeys.jsp) — the two are one contract, and a mismatch surfaces
+// only as a failed HMAC at request time.
+function loadInternalSecret(): Uint8Array {
+    const direct = env.PASSKEY_INTERNAL_SECRET?.trim();
+    if (!direct) {
+        throw new PasskeyConfigurationError("PASSKEY_INTERNAL_SECRET must be configured");
     }
-    if (direct) return validateSecret(decodePasskeySecretValue(direct));
-    if (!file) {
-        throw new PasskeyConfigurationError(
-            "PASSKEY_INTERNAL_SECRET or PASSKEY_INTERNAL_SECRET_FILE must be configured",
-        );
-    }
-
-    let secret: Uint8Array;
-    try {
-        secret = await readFile(file);
-    } catch {
-        throw new PasskeyConfigurationError("Unable to read PASSKEY_INTERNAL_SECRET_FILE");
-    }
-    return validateSecret(secret);
+    return validateSecret(decodePasskeySecretValue(direct));
 }
 
 export async function getPasskeyRuntimeConfig(): Promise<PasskeyRuntimeConfig> {
@@ -60,6 +47,6 @@ export async function getPasskeyRuntimeConfig(): Promise<PasskeyRuntimeConfig> {
         env.PASSKEY_FOODCOURT_API_BASE_URL || env.FOODCOURT_API_BASE_URL,
         { allowInsecureTransport: dev },
     );
-    const internalSecret = await loadInternalSecret();
+    const internalSecret = loadInternalSecret();
     return { ...relyingParty, backendBaseUrl, internalSecret };
 }
