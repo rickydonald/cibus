@@ -717,7 +717,7 @@
                                         <p
                                             class="mt-2 text-[10px] font-medium uppercase tracking-[0.14em] text-ink-faint"
                                         >
-                                            Show this live code at the counter
+                                            Show this pickup code at the counter
                                         </p>
                                     </div>
 
@@ -753,7 +753,7 @@
                                                     Code hides in
                                                 </p>
                                                 <p
-                                                    class={`mt-0.5 font-geist-mono text-[26px] font-bold leading-none tracking-tight tabular-nums ${isPreviewEnding ? "text-warning" : "text-ink"}`}
+                                                    class={`mt-0.5 font-geist-mono text-[22px] font-bold leading-none tracking-tight tabular-nums ${isPreviewEnding ? "text-warning" : "text-ink"}`}
                                                     aria-label={`${previewCountdown} remaining`}
                                                 >
                                                     {previewCountdown}

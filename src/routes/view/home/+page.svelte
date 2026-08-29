@@ -170,7 +170,7 @@
                             {/if}
                         </h1>
                         <p class="text-xs font-medium text-ink-muted mt-0.5">
-                            What are you eating today?
+                            It's Thursday, Day Order 6
                         </p>
                     </div>
                     <a

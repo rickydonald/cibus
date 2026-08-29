@@ -788,7 +788,7 @@
                                             class="grid h-7 w-7 place-items-center rounded-circle transition-all active:scale-90 {item.qty ===
                                             1
                                                 ? 'text-danger hover:bg-danger-soft'
-                                                : 'text-ink-muted hover:bg-surface hover:text-ink'}"
+                                                : 'text-primary-ink hover:bg-surface hover:text-ink'}"
                                             onclick={() =>
                                                 cart.remove(
                                                     item.id,
@@ -815,7 +815,7 @@
                                         </span>
 
                                         <button
-                                            class="grid h-7 w-7 place-items-center rounded-circle text-primary-ink transition-all hover:bg-surface active:scale-90 disabled:text-ink-faint disabled:opacity-40"
+                                            class="grid h-7 w-7 place-items-center rounded-circle transition-all text-ink-muted hover:bg-surface active:scale-90 disabled:text-ink-faint disabled:opacity-40"
                                             onclick={() =>
                                                 cart.add({
                                                     id: item.id,
