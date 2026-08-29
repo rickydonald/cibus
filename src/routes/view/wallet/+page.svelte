@@ -11,10 +11,7 @@
         type CachedEatRightProfile,
     } from "$lib/client/eatright-profile";
     import { onMount, onDestroy } from "svelte";
-    import {
-        fetchEatRight,
-        redirectIfEatRightConnectRequired,
-    } from "$lib/utils/eatright-client";
+    import { redirectIfEatRightConnectRequired } from "$lib/client/eatright-client";
     import { toast } from "svelte-sonner";
     import { browser } from "$app/env";
     import Spinner from "$lib/components/custom/Spinner.svelte";
@@ -87,8 +84,8 @@
 
         try {
             const [accountResponse, walletResponse] = await Promise.all([
-                fetchEatRight("/api/v1/account/show"),
-                fetchEatRight("/api/v1/wallet"),
+                fetch("/api/v1/account/show"),
+                fetch("/api/v1/wallet"),
             ]);
 
             const accountData = await accountResponse.json();
@@ -148,7 +145,7 @@
 
         isFetchFlightActive = true;
         try {
-            const res = await fetchEatRight("/api/v1/account/show");
+            const res = await fetch("/api/v1/account/show");
             const data = await res.json();
 
             if (res.ok && !data.error && isPolling) {
@@ -272,7 +269,7 @@
         paymentTabRef = window.open("", "tpsl_payment");
 
         try {
-            const response = await fetchEatRight("/api/v1/wallet", {
+            const response = await fetch("/api/v1/wallet", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -335,7 +332,7 @@
         if (pending) {
             try {
                 const { balance } = JSON.parse(pending);
-                fetchEatRight("/api/v1/account/show").then(async (res) => {
+                fetch("/api/v1/account/show").then(async (res) => {
                     const data = await res.json();
                     if (res.ok && !data.error) {
                         const newBalance = Number(data.walletBalance ?? 0);

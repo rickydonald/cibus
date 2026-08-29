@@ -18,10 +18,3 @@ export async function redirectIfEatRightConnectRequired(
     await goto("/login");
     return true;
 }
-
-export async function fetchEatRight(
-    input: RequestInfo | URL,
-    init?: RequestInit,
-): Promise<Response> {
-    return fetch(input, init);
-}

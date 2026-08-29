@@ -1,9 +1,6 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
-    import {
-        fetchEatRight,
-        redirectIfEatRightConnectRequired,
-    } from "$lib/utils/eatright-client";
+    import { redirectIfEatRightConnectRequired } from "$lib/client/eatright-client";
     import {
         ArrowLeftIcon,
         Wallet02Icon,
@@ -13,7 +10,7 @@
         RefreshCw01Icon,
         ReceiptCheckIcon,
     } from "@untitled-theme/icons-svelte";
-    import { cart, MAX_QTY } from "$lib/stores/cart.svelte";
+    import { cart, MAX_QTY } from "$lib/store/cart.svelte";
     import { onDestroy, onMount } from "svelte";
     import { browser } from "$app/environment";
     import helpers from "$lib/helpers";
@@ -81,7 +78,7 @@
         error = "";
 
         try {
-            const response = await fetchEatRight("/api/v1/account/show");
+            const response = await fetch("/api/v1/account/show");
             const data = await response.json();
 
             if (!response.ok || data.error) {
@@ -142,7 +139,7 @@
         success = "";
 
         try {
-            const response = await fetchEatRight("/api/v1/order", {
+            const response = await fetch("/api/v1/order", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -323,7 +320,7 @@
         paymentTabRef = window.open("", "tpsl_payment");
 
         try {
-            const response = await fetchEatRight("/api/v1/wallet", {
+            const response = await fetch("/api/v1/wallet", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

@@ -1,7 +1,3 @@
-import { json } from "@sveltejs/kit";
-import { clearEatRightSessionCookie } from "$lib/server/eatright";
+import { eatRight } from "$lib/server/eatright";
 
-export function POST({ cookies }) {
-    clearEatRightSessionCookie(cookies);
-    return json({ success: true });
-}
+export const POST = eatRight.handler("disconnect");

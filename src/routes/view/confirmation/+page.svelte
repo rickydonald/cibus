@@ -1,9 +1,6 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
-    import {
-        fetchEatRight,
-        redirectIfEatRightConnectRequired,
-    } from "$lib/utils/eatright-client";
+    import { redirectIfEatRightConnectRequired } from "$lib/client/eatright-client";
     import { page } from "$app/state";
     import { ArrowLeftIcon } from "@untitled-theme/icons-svelte";
     import { CheckIcon, ReceiptTextIcon } from "@lucide/svelte";
@@ -107,7 +104,7 @@
             const responses = await Promise.all(
                 orderNos.map(async (orderNo, index) => {
                     const outletId = outletIds[index] ?? outletIds[0];
-                    const response = await fetchEatRight(
+                    const response = await fetch(
                         `/api/v1/order/details?order_no=${encodeURIComponent(orderNo)}&outletid=${encodeURIComponent(outletId)}`,
                     );
                     const data = await response.json();

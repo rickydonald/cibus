@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { PageProps } from "./$types";
-    import { cart, MAX_QTY } from "$lib/stores/cart.svelte";
+    import { cart, MAX_QTY } from "$lib/store/cart.svelte";
     import { onMount } from "svelte";
     import {
         ArrowLeftIcon,
@@ -9,10 +9,7 @@
         MinusIcon,
         ShoppingBag01Icon,
     } from "@untitled-theme/icons-svelte";
-    import {
-        fetchEatRight,
-        redirectIfEatRightConnectRequired,
-    } from "$lib/utils/eatright-client";
+    import { redirectIfEatRightConnectRequired } from "$lib/client/eatright-client";
     import FloatingCartBar from "$lib/components/custom/FloatingCartBar.svelte";
 
     let { params }: PageProps = $props();
@@ -61,7 +58,7 @@
     async function getItems() {
         isLoading = true;
         try {
-            const response = await fetchEatRight(
+            const response = await fetch(
                 `/api/v1/outlets/menu/${params.outlet_id}/${params.shop_no}`,
             );
             const data = await response.json();

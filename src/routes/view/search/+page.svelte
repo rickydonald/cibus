@@ -1,11 +1,8 @@
 <script lang="ts">
-    import { cart, MAX_QTY } from "$lib/stores/cart.svelte";
+    import { cart, MAX_QTY } from "$lib/store/cart.svelte";
     import { ArrowLeftIcon, SearchMdIcon } from "@untitled-theme/icons-svelte";
     import FloatingCartBar from "$lib/components/custom/FloatingCartBar.svelte";
-    import {
-        fetchEatRight,
-        redirectIfEatRightConnectRequired,
-    } from "$lib/utils/eatright-client";
+    import { redirectIfEatRightConnectRequired } from "$lib/client/eatright-client";
 
     type SearchItem = {
         id: number;
@@ -37,7 +34,7 @@
         isSearching = true;
 
         try {
-            const res = await fetchEatRight(
+            const res = await fetch(
                 `/api/v1/search?q=${encodeURIComponent(q)}`,
             );
             const data = await res.json();

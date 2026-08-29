@@ -1,9 +1,6 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
-    import {
-        fetchEatRight,
-        redirectIfEatRightConnectRequired,
-    } from "$lib/utils/eatright-client";
+    import { redirectIfEatRightConnectRequired } from "$lib/client/eatright-client";
     import { ArrowLeftIcon } from "@untitled-theme/icons-svelte";
     import { onMount } from "svelte";
 
@@ -48,7 +45,7 @@
         error = "";
 
         try {
-            const response = await fetchEatRight("/api/v1/orders");
+            const response = await fetch("/api/v1/orders");
             const data = await response.json();
 
             if (!response.ok || data.error) {

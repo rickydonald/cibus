@@ -4,13 +4,28 @@
 	import { Toaster } from "svelte-sonner";
 	import { onMount } from "svelte";
 	import { onNavigate } from "$app/navigation";
+	import { dev } from "$app/environment";
 
 	let { children } = $props();
 
 	onMount(() => {
-		if ("serviceWorker" in navigator) {
-			navigator.serviceWorker.register("/service-worker.js");
+		if (!("serviceWorker" in navigator)) return;
+
+		if (dev) {
+			void navigator.serviceWorker
+				.getRegistrations()
+				.then((registrations) =>
+					Promise.all(registrations.map((registration) => registration.unregister())),
+				)
+				.catch((error) => {
+					console.error("Failed to clear development service workers:", error);
+				});
+			return;
 		}
+
+		void navigator.serviceWorker.register("/service-worker.js").catch((error) => {
+			console.error("Failed to register the service worker:", error);
+		});
 	});
 
 	onNavigate((navigation) => {

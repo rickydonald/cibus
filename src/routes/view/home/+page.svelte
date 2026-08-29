@@ -1,7 +1,4 @@
 <script lang="ts">
-    import ContentWrapper from "$lib/components/ui/ContentWrapper.svelte";
-    import MainContainer from "$lib/components/ui/MainContainer.svelte";
-
     import { BottomSheet } from "svelte-bottom-sheet";
     import {
         ChevronRightIcon,
@@ -12,10 +9,7 @@
 
     import { goto } from "$app/navigation";
     import { onMount } from "svelte";
-    import {
-        fetchEatRight,
-        redirectIfEatRightConnectRequired,
-    } from "$lib/utils/eatright-client";
+    import { redirectIfEatRightConnectRequired } from "$lib/client/eatright-client";
     import {
         cacheEatRightProfileFromUser,
         clearCachedEatRightProfile,
@@ -71,7 +65,7 @@
     async function getAccountDetails() {
         try {
             isAccountLoading = true;
-            const response = await fetchEatRight("/api/v1/account/show");
+            const response = await fetch("/api/v1/account/show");
             const data = await response.json();
 
             if (!response.ok || data.error) {
@@ -115,10 +109,9 @@
     );
 </script>
 
-<MainContainer>
-    <div class="safe-top-offset antialiased">
+<div class="safe-top-offset antialiased">
         <div class="min-h-screen w-full">
-            <ContentWrapper>
+            <div class="mx-auto w-full max-w-2xl">
                 <!-- Greeting Header -->
                 <div
                     class="flex items-center justify-between px-5 pt-1 max-w-md mx-auto"
@@ -325,15 +318,14 @@
                         {/each}
                     {/if}
                 </div>
-            </ContentWrapper>
+            </div>
         </div>
 
         <!-- Sticky Bottom Floating Action Overlay Tray -->
         {#if cart.totalItems > 0 && !allOutletsClosed && !isAccountLoading}
             <FloatingCartBar />
         {/if}
-    </div>
-</MainContainer>
+</div>
 
 <BottomSheet
     bind:isSheetOpen={isAccountSheetOpen}
