@@ -2,7 +2,6 @@
     import { goto } from "$app/navigation";
     import { page } from "$app/state";
     import { clearCachedEatRightProfile } from "$lib/client/eatright-profile";
-    import LoyolaCollegeLogo from "$lib/assets/logos/loyola-logo.webp";
     import Spinner from "$lib/components/custom/Spinner.svelte";
     import {
         ArrowRightIcon,
@@ -80,13 +79,7 @@
         ></div>
 
         <div class="relative flex items-center gap-3">
-            <div class="flex h-14 w-14 items-center justify-center bg-white">
-                <img
-                    src={LoyolaCollegeLogo}
-                    alt="Loyola College"
-                    class="h-12 w-auto object-contain"
-                />
-            </div>
+            <div class="h-10 w-1 bg-accent"></div>
             <div>
                 <p class="text-sm font-extrabold tracking-tight">Eat Right</p>
                 <p
@@ -129,12 +122,7 @@
         <div class="w-full max-w-md">
             <div class="mb-10 flex items-center justify-between lg:hidden">
                 <div class="flex items-center gap-3">
-                    <img
-                        src={LoyolaCollegeLogo}
-                        alt="Loyola College"
-                        class="h-14 w-auto object-contain"
-                    />
-                    <div class="h-8 w-px bg-line"></div>
+                    <div class="h-7 w-1 bg-ink"></div>
                     <span
                         class="text-lg font-extrabold tracking-tight text-ink"
                     >
@@ -240,24 +228,6 @@
                     </span>
                 </button>
             </form>
-
-            <div class="mt-9 flex items-center gap-4">
-                <div class="h-px flex-1 bg-hairline"></div>
-                <span class="section-label">New to Eat Right?</span>
-                <div class="h-px flex-1 bg-hairline"></div>
-            </div>
-
-            <a
-                href="/register"
-                class="np-elevate mt-5 block w-full"
-                style="--np-face:var(--color-surface);--np-ink:var(--color-ink);--np-edge-right:var(--color-np-white-50);--np-edge-bottom:var(--color-np-black-50)"
-            >
-                <span
-                    class="np-face flex h-14 items-center justify-center border border-line text-sm font-extrabold uppercase tracking-[0.14em]"
-                >
-                    Create an account
-                </span>
-            </a>
         </div>
     </section>
 </main>
