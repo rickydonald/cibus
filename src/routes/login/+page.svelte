@@ -66,33 +66,31 @@
 <main
     class="min-h-screen bg-canvas lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(480px,0.95fr)]"
 >
+    <!--
+      Desktop brand panel. Flat black with a single accent rule and a hard
+      grid — no radial gradients or blurred rings, which are the exact devices
+      NeoPop replaces with geometry.
+    -->
     <section
-        class="relative hidden min-h-screen overflow-hidden bg-primary px-12 py-10 text-white lg:flex lg:flex-col lg:justify-between xl:px-16 xl:py-14"
+        class="relative hidden min-h-screen overflow-hidden bg-ink px-12 py-10 text-white lg:flex lg:flex-col lg:justify-between xl:px-16 xl:py-14"
     >
         <div
-            class="absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(255,255,255,0.13),transparent_30%),radial-gradient(circle_at_90%_85%,rgba(255,255,255,0.08),transparent_32%)]"
-        ></div>
-        <div
-            class="absolute -right-32 top-1/4 h-80 w-80 rounded-full border border-white/10"
-        ></div>
-        <div
-            class="absolute -right-20 top-1/3 h-52 w-52 rounded-full border border-white/10"
+            class="pointer-events-none absolute inset-0 opacity-[0.07]"
+            style="background-image:linear-gradient(to right,#fff 1px,transparent 1px),linear-gradient(to bottom,#fff 1px,transparent 1px);background-size:48px 48px"
         ></div>
 
         <div class="relative flex items-center gap-3">
-            <div
-                class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white"
-            >
+            <div class="flex h-14 w-14 items-center justify-center bg-white">
                 <img
                     src={LoyolaCollegeLogo}
                     alt="Loyola College"
-                    class="h-14 w-auto object-contain"
+                    class="h-12 w-auto object-contain"
                 />
             </div>
             <div>
-                <p class="text-sm font-bold tracking-tight">Eat Right</p>
+                <p class="text-sm font-extrabold tracking-tight">Eat Right</p>
                 <p
-                    class="text-[10px] font-bold uppercase tracking-[0.16em] text-white/55"
+                    class="text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/50"
                 >
                     Loyola College
                 </p>
@@ -101,23 +99,26 @@
 
         <div class="relative max-w-xl pb-8">
             <p
-                class="mb-5 text-xs font-bold uppercase tracking-[0.18em] text-white/55"
+                class="mb-6 text-[10px] font-extrabold uppercase tracking-[0.24em] text-white/50"
             >
                 Your campus food court
             </p>
             <h1
-                class="max-w-lg text-5xl font-bold leading-[1.06] tracking-[-0.04em] xl:text-6xl"
+                class="max-w-lg text-5xl font-extrabold leading-[1.04] tracking-[-0.04em] xl:text-6xl"
             >
-                Good food,<br />without the queue.
+                Good food,<br />without <span class="text-accent">the queue.</span>
             </h1>
-            <p class="mt-6 max-w-md text-base leading-7 text-white/65">
+            <p class="mt-7 max-w-md text-base leading-7 text-white/60">
                 Browse the day’s menu, order ahead, and pay directly from your
                 campus wallet.
             </p>
+            <div class="mt-8 h-1 w-24 bg-accent"></div>
         </div>
 
-        <div class="relative flex items-center gap-3 text-sm text-white/60">
-            <ShieldCheckIcon size="18" strokeWidth="1.8" />
+        <div
+            class="relative flex items-center gap-2.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-white/50"
+        >
+            <ShieldCheckIcon size="16" strokeWidth="2.4" />
             <span>Secure access through your Eat Right account</span>
         </div>
     </section>
@@ -131,24 +132,27 @@
                     <img
                         src={LoyolaCollegeLogo}
                         alt="Loyola College"
-                        class="h-15 w-auto object-contain"
+                        class="h-14 w-auto object-contain"
                     />
-                    <div class="h-7 w-px bg-line-strong"></div>
-                    <span class="text-lg font-bold tracking-tight text-primary">
+                    <div class="h-8 w-px bg-line"></div>
+                    <span
+                        class="text-lg font-extrabold tracking-tight text-ink"
+                    >
                         Eat Right
                     </span>
                 </div>
             </div>
 
-            <div class="mb-8">
+            <div class="mb-9">
                 <p class="section-label mb-3">Welcome back</p>
                 <h2
-                    class="text-[2rem] font-bold leading-tight tracking-[-0.035em] text-ink sm:text-4xl"
+                    class="text-[2rem] font-extrabold leading-tight tracking-[-0.035em] text-ink sm:text-4xl"
                 >
                     Sign in to Eat Right
                 </h2>
-                <p class="mt-2.5 text-[15px] leading-6 text-ink-muted">
-                    Use the same details you use for your campus food court account.
+                <p class="mt-3 text-[15px] leading-6 text-ink-muted">
+                    Use the same details you use for your campus food court
+                    account.
                 </p>
             </div>
 
@@ -161,9 +165,7 @@
                 }}
             >
                 <div class="flex flex-col gap-2">
-                    <label
-                        for="user-id"
-                        class="pl-1 text-sm font-semibold text-ink"
+                    <label for="user-id" class="section-label text-ink"
                         >User ID</label
                     >
                     <input
@@ -179,9 +181,7 @@
                 </div>
 
                 <div class="flex flex-col gap-2">
-                    <label
-                        for="password"
-                        class="pl-1 text-sm font-semibold text-ink"
+                    <label for="password" class="section-label text-ink"
                         >Password</label
                     >
                     <div class="relative">
@@ -197,15 +197,15 @@
                         <button
                             type="button"
                             onclick={() => (showPassword = !showPassword)}
-                            class="absolute inset-y-0 right-1 flex w-12 items-center justify-center rounded-xl text-ink-muted transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-primary"
+                            class="absolute inset-y-0 right-0 flex w-13 items-center justify-center border-l border-line text-ink-muted transition-colors active:bg-ink active:text-white"
                             aria-label={showPassword
                                 ? "Hide password"
                                 : "Show password"}
                         >
                             {#if showPassword}
-                                <EyeOffIcon size="19" strokeWidth="1.8" />
+                                <EyeOffIcon size="18" strokeWidth="2.2" />
                             {:else}
-                                <EyeIcon size="19" strokeWidth="1.8" />
+                                <EyeIcon size="18" strokeWidth="2.2" />
                             {/if}
                         </button>
                     </div>
@@ -214,38 +214,50 @@
                 {#if error}
                     <div
                         role="alert"
-                        class="rounded-2xl border border-danger/15 bg-danger-soft px-4 py-3.5 text-sm font-medium leading-5 text-danger"
+                        class="border-l-3 border-danger bg-danger-soft px-4 py-3.5 text-[13px] font-bold leading-5 text-danger"
                     >
                         {error}
                     </div>
                 {/if}
 
+                <!-- Commit action: paccha owns the action that completes the task. -->
                 <button
                     type="submit"
-                    class="btn-primary mt-1 h-14 w-full px-5 text-sm"
+                    class="np-elevate mt-1 block w-full cursor-pointer border-0 bg-transparent p-0 disabled:pointer-events-none disabled:opacity-40"
+                    style="--np-face:var(--color-accent);--np-ink:var(--color-ink);--np-edge-right:var(--color-accent-edge);--np-edge-bottom:var(--color-accent-deep)"
                     disabled={isLoginButtonDisabled || isLoginLoading}
                 >
-                    {#if isLoginLoading}
-                        <Spinner />
-                    {/if}
-                    <span>{isLoginLoading ? "Signing in…" : "Sign in"}</span>
-                    {#if !isLoginLoading}
-                        <ArrowRightIcon size="18" strokeWidth="2" />
-                    {/if}
+                    <span
+                        class="np-face flex h-14 items-center justify-center gap-2.5 text-sm font-extrabold uppercase tracking-[0.14em]"
+                    >
+                        {#if isLoginLoading}
+                            <Spinner />
+                        {/if}
+                        <span>{isLoginLoading ? "Signing in" : "Sign in"}</span>
+                        {#if !isLoginLoading}
+                            <ArrowRightIcon size="17" strokeWidth="2.6" />
+                        {/if}
+                    </span>
                 </button>
             </form>
 
-            <div class="mt-8 flex items-center gap-3">
-                <div class="h-px flex-1 bg-line"></div>
-                <span class="text-xs font-medium text-ink-faint"
-                    >New to Eat Right?</span
-                >
-                <div class="h-px flex-1 bg-line"></div>
+            <div class="mt-9 flex items-center gap-4">
+                <div class="h-px flex-1 bg-hairline"></div>
+                <span class="section-label">New to Eat Right?</span>
+                <div class="h-px flex-1 bg-hairline"></div>
             </div>
 
-            <a href="/register" class="btn-quiet mt-5 h-13 w-full text-sm"
-                >Create an account</a
+            <a
+                href="/register"
+                class="np-elevate mt-5 block w-full"
+                style="--np-face:var(--color-surface);--np-ink:var(--color-ink);--np-edge-right:var(--color-np-white-50);--np-edge-bottom:var(--color-np-black-50)"
             >
+                <span
+                    class="np-face flex h-14 items-center justify-center border border-line text-sm font-extrabold uppercase tracking-[0.14em]"
+                >
+                    Create an account
+                </span>
+            </a>
         </div>
     </section>
 </main>

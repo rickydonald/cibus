@@ -17,8 +17,17 @@
     const activePath = $derived(page.url.pathname);
 </script>
 
+<!--
+  A hard black bar, CRED-style. It is chrome, so it never carries the
+  extrusion — the black itself does the separating and no top rule is needed.
+
+  The active tab is a solid accent block behind the icon rather than a tint:
+  on black, a low-opacity wash of a colour this bright turns to mud, while a
+  filled shape stays unambiguous. Inactive tabs sit at 45% white, which is the
+  body-text step of the opacity hierarchy.
+-->
 <nav
-    class="fixed bottom-0 left-0 right-0 z-40 border-t border-line bg-surface shadow-[0_-8px_24px_rgba(26,30,38,0.04)]"
+    class="fixed bottom-0 left-0 right-0 z-40 bg-ink"
     style="padding-right: var(--safe-area-inset-right); padding-bottom: var(--safe-area-inset-bottom); padding-left: var(--safe-area-inset-left);"
     aria-label="Main navigation"
 >
@@ -27,22 +36,22 @@
             {@const isActive = activePath === tab.href}
             <a
                 href={tab.href}
-                class="flex flex-1 flex-col items-center justify-center gap-1 transition-colors {isActive
-                    ? 'text-primary'
-                    : 'text-ink-faint hover:text-ink-muted'}"
+                class="flex flex-1 flex-col items-center justify-center gap-1.5 transition-colors {isActive
+                    ? 'text-white'
+                    : 'text-white/45'}"
                 aria-current={isActive ? "page" : undefined}
             >
                 <span
-                    class="flex h-8 w-14 items-center justify-center rounded-full transition-colors {isActive
-                        ? 'bg-primary-soft'
+                    class="flex h-7 w-12 items-center justify-center transition-colors {isActive
+                        ? 'bg-accent text-ink'
                         : ''}"
                 >
-                    <tab.icon size={19} strokeWidth={isActive ? 2.4 : 2} />
+                    <tab.icon size={18} strokeWidth={isActive ? 2.6 : 2} />
                 </span>
                 <span
-                    class="text-[10px] {isActive
-                        ? 'font-bold'
-                        : 'font-semibold'}"
+                    class="text-[9px] uppercase tracking-[0.14em] {isActive
+                        ? 'font-extrabold'
+                        : 'font-bold'}"
                 >
                     {tab.label}
                 </span>

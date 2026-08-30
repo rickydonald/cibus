@@ -1,5 +1,6 @@
 import type { Cookies, RequestEvent } from "@sveltejs/kit";
 import { describe, expect, it } from "vitest";
+import { EatRightError } from "./contract";
 import { createEatRightFixtureAdapter } from "./fixture";
 import { createEatRightModule } from "./module";
 
@@ -72,6 +73,77 @@ describe("Eat Right module interface", () => {
       walletBalance: "250.00",
       reauthenticated: false,
     });
+  });
+
+  it("shares one account inspection across login and concurrent protected requests", async () => {
+    const remote = createEatRightFixtureAdapter();
+    const inspect = remote.inspect.bind(remote);
+    let inspections = 0;
+    remote.inspect = async (session) => {
+      inspections += 1;
+      return inspect(session);
+    };
+    const module = createEatRightModule({
+      remote,
+      sessionSecret: "test-secret",
+      secureCookies: false,
+    });
+    const { cookies } = createCookies();
+
+    await module.handler("login")(event({
+      cookies,
+      method: "POST",
+      body: { userId: "student", password: "password" },
+    }));
+    const [account, wallet] = await Promise.all([
+      module.handler("account")(event({ cookies })),
+      module.handler("wallet")(event({ cookies })),
+    ]);
+
+    expect(account.status).toBe(200);
+    expect(wallet.status).toBe(200);
+    expect(inspections).toBe(1);
+  });
+
+  it("preserves the session cookie during a temporary upstream outage", async () => {
+    const remote = createEatRightFixtureAdapter();
+    const inspect = remote.inspect.bind(remote);
+    let now = 0;
+    let available = true;
+    remote.inspect = async (session) => {
+      if (!available) {
+        throw new EatRightError(
+          "eatright_unavailable",
+          502,
+          "Eat Right is temporarily unavailable",
+        );
+      }
+      return inspect(session);
+    };
+    const module = createEatRightModule({
+      remote,
+      sessionSecret: "test-secret",
+      secureCookies: false,
+      now: () => now,
+    });
+    const { cookies, values } = createCookies();
+
+    await module.handler("login")(event({
+      cookies,
+      method: "POST",
+      body: { userId: "student", password: "password" },
+    }));
+    const sessionCookie = values.get("RioX5EatRightSession");
+    now = 21_000;
+    available = false;
+
+    const response = await module.handler("account")(event({ cookies }));
+
+    expect(response.status).toBe(502);
+    expect(await response.json()).toMatchObject({
+      errorCode: "eatright_unavailable",
+    });
+    expect(values.get("RioX5EatRightSession")).toBe(sessionCookie);
   });
 
   it("presents one stable session error for protected operations", async () => {

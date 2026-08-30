@@ -1,5 +1,4 @@
 @import 'tailwindcss';
-@plugin "tailwindcss-corner-shape/presets/squircle";
 
 :root {
     --safe-area-inset-top: env(safe-area-inset-top, 0px);
@@ -9,38 +8,109 @@
     --bottom-nav-content-height: 4rem;
     --bottom-nav-height: calc(var(--bottom-nav-content-height) + var(--safe-area-inset-bottom));
     --bottom-nav-clearance: calc(var(--bottom-nav-height) + 1.5rem);
+
+    /* NeoPop elevation geometry. Both are structural, not stylistic: the skew
+     * is 45deg because skewY(a) displaces by x*tan(a), and the face must travel
+     * exactly one edge-width at x = edge-width, so tan(a) must equal 1. */
+    --np-edge: 3px;
+    --np-angle: 45deg;
+    --np-press: 0.12s ease-in-out;
 }
 
 /*
- * Eat Right design tokens
- * Cool porcelain neutrals on a soft canvas, one deep oxford-navy primary,
- * muted semantic tones. Every page pulls from this palette only.
+ * Eat Right — NeoPop on a light ground.
+ *
+ * Materials are NeoPop: square corners, flat fills, elevation drawn as real
+ * 45deg side faces that collapse on press. Composition is Apple: a quiet
+ * canvas, generous whitespace, type carrying the hierarchy, and one loud
+ * object per screen.
+ *
+ * The accent (#E5FE40) has a luminance around 0.93 — nearly as bright as
+ * white. It can never be a text colour, a hairline, or a small mark on this
+ * ground; it disappears. It is only ever a FILL carrying black ink, framed by
+ * its own dark olive edges. Structure is black on white; the accent is the
+ * single focal surface.
  */
 @theme {
-    --color-canvas: #f5f6f8;
+    /* ground */
+    --color-canvas: #efefef;
     --color-surface: #ffffff;
-    --color-line: #e6e8ed;
-    --color-line-strong: #d4d8e0;
+    --color-line: #0d0d0d;
+    --color-hairline: #d2d2d2;
 
-    --color-ink: #1a1e26;
-    --color-ink-muted: #626a78;
-    --color-ink-faint: #979fad;
+    /* ink — hierarchy is opacity on black, not separate greys */
+    --color-ink: #0d0d0d;
+    --color-ink-muted: #3d3d3d;
+    --color-ink-faint: #8a8a8a;
 
-    --color-primary: #137ec1;
-    --color-primary-strong: #1a3452;
-    --color-primary-soft: #e9eef5;
+    /* -------------------------------------------------------------------
+     * Accent families.
+     *
+     * Each is a NeoPop ramp: 500 is the face, 600 the right edge, 700 the
+     * bottom edge (the bottom is angled further from the light, so it is
+     * always the darker of the two). Edge values are taken off the ramp, never
+     * computed by darkening the face — an algorithmic darken desaturates and
+     * the faces go muddy.
+     *
+     * Colour here is a ROLE, not decoration. Each family owns one kind of
+     * action across the whole app so a colour is a reliable signal:
+     *
+     *   paccha  commit — the action that completes the task on this screen
+     *   purple  money  — anything that moves funds
+     *   pink    destructive — clear, remove, disconnect
+     *   sun     pending / attention
+     *   mint    confirmed / done
+     * ----------------------------------------------------------------- */
+    --color-accent: #e5fe40;
+    --color-accent-edge: #a0b22d;
+    --color-accent-deep: #727f20;
+    --color-accent-soft: #fbffe6;
 
-    --color-success: #2c7a55;
-    --color-success-soft: #eaf3ee;
-    --color-warning: #94660e;
-    --color-warning-soft: #f7f0dc;
-    --color-danger: #b0413e;
-    --color-danger-soft: #f9edeb;
+    --color-purple: #6a35ff;
+    --color-purple-edge: #4a25b3;
+    --color-purple-deep: #351a80;
+    --color-purple-soft: #e8dfff;
 
-    --shadow-card: 0 1px 2px rgb(26 30 38 / 0.04), 0 8px 24px rgb(26 30 38 / 0.04);
-    --shadow-float: 0 18px 44px rgb(26 30 38 / 0.24);
+    --color-pink: #ff426f;
+    --color-pink-edge: #b32e4e;
+    --color-pink-deep: #802138;
+    --color-pink-soft: #ffe1e9;
+
+    --color-sun: #ffcb45;
+    --color-sun-edge: #b38e30;
+    --color-sun-deep: #806623;
+    --color-sun-soft: #fff8e5;
+
+    --color-mint: #3bffad;
+    --color-mint-edge: #29b379;
+    --color-mint-deep: #1e8057;
+    --color-mint-soft: #ddfff1;
+
+    --color-tang: #ff8744;
+    --color-tang-edge: #b35f30;
+    --color-tang-deep: #804322;
+    --color-tang-soft: #ffefe6;
+
+    /* neutral ramp — edge colours come from here, never from a computed darken */
+    --color-np-white-50: #e0e0e0;
+    --color-np-white-70: #efefef;
+    --color-np-white-90: #fbfbfb;
+    --color-np-black-50: #8a8a8a;
+    --color-np-black-70: #3d3d3d;
+    --color-np-black-90: #161616;
+
+    /* semantic — full strength, no pastels */
+    --color-success: #06c270;
+    --color-success-soft: #e6f9f1;
+    --color-warning: #f08d32;
+    --color-warning-soft: #fef4eb;
+    --color-danger: #ee4d37;
+    --color-danger-soft: #fdedeb;
+    --color-info: #144cc7;
+    --color-info-soft: #ebf1fe;
 
     --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
 }
 
 @theme inline {
@@ -48,31 +118,170 @@
     --font-mono: "Red Hat Mono", monospace;
 }
 
+@layer base {
+    /* Square by default. Corners are cut, never softened — the extrusion only
+     * reads as a solid if its corners are square. */
+    *,
+    *::before,
+    *::after {
+        border-radius: 0;
+    }
+}
+
+/* -------------------------------------------------------------------------
+ * Elevation
+ *
+ * Defined as @utility rather than a plain component class so that @apply can
+ * consume it below — Tailwind v4 only lets @apply reference real utilities.
+ *
+ * The face carries margin on the two edges so the block occupies the space it
+ * appears to occupy. On press the whole assembly translates one edge width
+ * down-right and the wrapper's overflow clip removes the overhang, opening a
+ * gap at the top-left — the block sinks rather than slides.
+ * ---------------------------------------------------------------------- */
+@utility np-elevate {
+    position: relative;
+    overflow: hidden;
+
+    & > .np-face {
+        position: relative;
+        z-index: 2;
+        margin: 0 var(--np-edge) var(--np-edge) 0;
+        background: var(--np-face, transparent);
+        color: var(--np-ink, inherit);
+        transition: transform var(--np-press);
+    }
+    &::before,
+    &::after {
+        content: "";
+        position: absolute;
+        z-index: 2;
+        /* mandatory: the skew is measured from the top-left corner */
+        transform-origin: 0% 0%;
+        transition: transform var(--np-press);
+    }
+    &::before {
+        top: 0;
+        right: 0;
+        width: var(--np-edge);
+        height: calc(100% - var(--np-edge));
+        background: var(--np-edge-right, transparent);
+        transform: skewY(var(--np-angle));
+    }
+    &::after {
+        bottom: 0;
+        left: 0;
+        width: calc(100% - var(--np-edge));
+        height: var(--np-edge);
+        background: var(--np-edge-bottom, transparent);
+        transform: skewX(var(--np-angle));
+    }
+    &:active > .np-face {
+        transform: translate3d(var(--np-edge), var(--np-edge), 0);
+    }
+    &:active::before {
+        transform: translate3d(var(--np-edge), var(--np-edge), 0) skewY(var(--np-angle));
+    }
+    &:active::after {
+        transform: translate3d(var(--np-edge), var(--np-edge), 0) skewX(var(--np-angle));
+    }
+    &:disabled {
+        pointer-events: none;
+    }
+    &:disabled > .np-face,
+    &:disabled::before,
+    &:disabled::after {
+        transform: none;
+    }
+}
+
+/* Keeps the extrusion but never moves — for surfaces that are raised for
+ * hierarchy rather than because they are pressable. */
+@utility np-static {
+    & > .np-face,
+    &::before,
+    &::after {
+        transition: none;
+    }
+    &:active > .np-face,
+    &:active::before,
+    &:active::after {
+        transform: none;
+    }
+}
+
 @layer components {
+    /* ---------------------------------------------------------------------
+     * Surfaces
+     * ------------------------------------------------------------------- */
+    /* Flat plate. Held by a hairline, not a shadow. */
     .card {
-        @apply rounded-3xl border border-line bg-surface shadow-card;
+        @apply border border-hairline bg-surface;
     }
+    /* The one raised plate. Use sparingly — when everything is elevated,
+     * nothing is. */
+    .card-raised {
+        --np-face: var(--color-surface);
+        --np-edge-right: var(--color-np-white-50);
+        --np-edge-bottom: var(--color-np-black-50);
+        @apply np-elevate np-static block w-full;
+    }
+
     .icon-btn {
-        @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-ink transition-all active:scale-95;
+        @apply flex h-10 w-10 shrink-0 items-center justify-center border border-line bg-surface text-ink transition-transform active:translate-x-px active:translate-y-px;
     }
+
+    /* Primary action: accent fill, black ink, olive faces. */
     .btn-primary {
-        @apply flex items-center justify-center gap-2 rounded-2xl bg-primary font-semibold text-white transition-all hover:bg-primary-strong active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45;
+        --np-face: var(--color-accent);
+        --np-ink: var(--color-ink);
+        --np-edge-right: var(--color-accent-edge);
+        --np-edge-bottom: var(--color-accent-deep);
+        @apply np-elevate inline-flex w-fit cursor-pointer border-0 bg-transparent p-0 disabled:pointer-events-none disabled:opacity-40;
     }
+    /* Secondary: white face, black rule, grey faces. */
     .btn-quiet {
-        @apply flex items-center justify-center gap-2 rounded-2xl border border-line bg-surface font-semibold text-ink transition-all hover:bg-canvas active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45;
+        --np-face: var(--color-surface);
+        --np-ink: var(--color-ink);
+        --np-edge-right: var(--color-np-white-50);
+        --np-edge-bottom: var(--color-np-black-50);
+        @apply np-elevate inline-flex w-fit cursor-pointer border-0 bg-transparent p-0 disabled:pointer-events-none disabled:opacity-40;
     }
+    .btn-quiet > .np-face {
+        @apply border border-line;
+    }
+    /* The label plate inside either button. Fixed height, horizontal-only
+     * padding — the label centres via flex. */
+    .btn-face {
+        @apply flex h-[50px] items-center justify-center gap-2 px-[30px] text-sm font-extrabold uppercase tracking-[0.12em];
+    }
+    .btn-face-sm {
+        @apply flex h-10 items-center justify-center gap-2 px-5 text-xs font-extrabold uppercase tracking-[0.12em];
+    }
+
     .field-input {
-        @apply w-full rounded-2xl border border-line bg-surface px-4 py-3.5 text-base font-medium text-ink outline-none transition-all placeholder:text-sm placeholder:normal-case placeholder:text-ink-faint focus:border-primary focus:ring-2 focus:ring-primary/15;
+        @apply w-full border border-line bg-surface px-4 py-3.5 text-base font-semibold text-ink outline-none transition-colors placeholder:text-sm placeholder:font-medium placeholder:normal-case placeholder:text-ink-faint focus:border-accent-edge;
     }
+
+    /* Caps label. 2px tracking is the signature CRED treatment — it is what
+     * makes small text read as a system label rather than as body copy. */
     .section-label {
-        @apply text-[11px] font-bold uppercase tracking-[0.14em] text-ink-faint;
+        @apply text-[10px] font-extrabold uppercase tracking-[0.2em] text-ink-faint;
     }
+
     .page-header {
-        @apply sticky top-0 z-30 border-b border-line/70 bg-canvas/85 backdrop-blur-xl;
+        @apply sticky top-0 z-30 border-b border-line bg-canvas;
     }
+
     .chip {
-        @apply rounded-lg border px-2 py-1 text-[10px] font-bold uppercase tracking-wider;
+        @apply border px-2 py-1 text-[10px] font-extrabold uppercase tracking-[0.14em];
     }
+
+    /* Hairline rule used to separate flat rows in place of card gaps. */
+    .rule {
+        @apply border-t border-hairline;
+    }
+
     /* Fake barcode for the order receipt; bars pick up currentColor */
     .receipt-barcode {
         height: 2.5rem;
@@ -146,13 +355,22 @@ input[type="number"]::-webkit-outer-spin-button {
     margin: 0;
 }
 
-/* Soft crossfade between page navigations */
+/* Crossfade between page navigations. Short and mechanical — the motion
+ * vocabulary here is a solid block moving, not a spring. */
 @media (prefers-reduced-motion: no-preference) {
     ::view-transition-old(root) {
-        animation: 150ms ease both vt-fade-out;
+        animation: 120ms ease both vt-fade-out;
     }
     ::view-transition-new(root) {
-        animation: 200ms ease both vt-fade-in;
+        animation: 160ms ease both vt-fade-in;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .np-elevate > .np-face,
+    .np-elevate::before,
+    .np-elevate::after {
+        transition: none;
     }
 }
 
@@ -170,8 +388,8 @@ input[type="number"]::-webkit-outer-spin-button {
 
 /*
  * Eat Right notifications
- * Dark ink pill floating over the porcelain UI — high contrast.
- * Semantic type is carried by the circular icon chip, not the whole surface.
+ * A hard black plate with a square accent rule. No blur, no gradient, no
+ * radius — a toast is an overlay, so it stays flat rather than extruded.
  */
 html [data-sonner-toaster] {
     --width: min(21rem, calc(100vw - 1.5rem));
@@ -179,122 +397,30 @@ html [data-sonner-toaster] {
 }
 
 html [data-sonner-toast].eatright-toast[data-styled="true"] {
-    /* bright-on-dark semantic tints */
-    --toast-tint: #6db3e8;
-    min-height: 4rem;
+    --toast-tint: var(--color-accent);
+    min-height: 3.5rem;
     align-items: center;
     gap: 0.875rem;
     padding: 0.8rem 3.25rem 0.8rem 0.8rem;
     overflow: hidden;
-    border: 1px solid rgb(255 255 255 / 0.09);
-    border-radius: 2rem;
-    background:
-        linear-gradient(rgb(255 255 255 / 0.05), rgb(255 255 255 / 0)),
-        color-mix(in srgb, var(--color-ink) 94%, transparent);
-    color: #fff;
-    box-shadow:
-        0 1px 1px rgb(26 30 38 / 0.12),
-        0 16px 40px rgb(26 30 38 / 0.35);
-    backdrop-filter: blur(16px) saturate(1.4);
-    -webkit-backdrop-filter: blur(16px) saturate(1.4);
-}
-
-html [data-sonner-toast].eatright-toast[data-styled="true"][data-type="success"] {
-    --toast-tint: #5fd39a;
-}
-
-html [data-sonner-toast].eatright-toast[data-styled="true"][data-type="error"] {
-    --toast-tint: #f08e8b;
-}
-
-html [data-sonner-toast].eatright-toast[data-styled="true"][data-type="warning"] {
-    --toast-tint: #e8bd66;
-}
-
-html [data-sonner-toast].eatright-toast[data-styled="true"] [data-icon].eatright-toast-icon {
-    display: flex;
-    width: 2.4rem;
-    height: 2.4rem;
-    align-items: center;
-    justify-content: center;
-    border-radius: 9999px;
-    background: color-mix(in srgb, var(--toast-tint) 16%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--toast-tint) 24%, transparent);
-    color: var(--toast-tint);
-}
-
-html [data-sonner-toast].eatright-toast[data-styled="true"] [data-icon] svg {
-    width: 1.15rem;
-    height: 1.15rem;
-    margin: 0;
-    stroke-width: 2;
-}
-
-html [data-sonner-toast].eatright-toast[data-styled="true"] [data-content].eatright-toast-content {
-    min-width: 0;
-    gap: 0.2rem;
-    padding-block: 0.125rem;
-}
-
-html [data-sonner-toast].eatright-toast[data-styled="true"] [data-title].eatright-toast-title {
-    color: #fff;
-    font-size: 0.875rem;
-    font-weight: 600;
-    line-height: 1.35;
-    letter-spacing: -0.01em;
-}
-
-html [data-sonner-toast].eatright-toast[data-styled="true"] [data-description].eatright-toast-description {
-    color: rgb(255 255 255 / 0.65);
-    font-size: 0.75rem;
-    line-height: 1.45;
-}
-
-html [data-sonner-toast].eatright-toast[data-styled="true"] [data-close-button].eatright-toast-close {
-    top: 50%;
-    right: 0.9rem;
-    left: auto;
-    width: 1.8rem;
-    height: 1.8rem;
-    transform: translateY(-50%);
     border: 0;
-    border-radius: 9999px;
-    background: rgb(255 255 255 / 0.08);
-    color: rgb(255 255 255 / 0.6);
-    transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
-}
-
-html [data-sonner-toast].eatright-toast[data-styled="true"] [data-close-button].eatright-toast-close:hover {
-    background: rgb(255 255 255 / 0.16);
+    border-left: 3px solid var(--toast-tint);
+    background: var(--color-ink);
     color: #fff;
-    transform: translateY(-50%) scale(1.05);
+    box-shadow: none;
 }
 
-html [data-sonner-toast].eatright-toast[data-styled="true"] [data-close-button].eatright-toast-close:focus-visible {
-    box-shadow: 0 0 0 2px rgb(255 255 255 / 0.35);
+html [data-sonner-toast].eatright-toast .eatright-toast-title {
+    font-weight: 800;
+    letter-spacing: 0.01em;
 }
 
-html [data-sonner-toast].eatright-toast[data-styled="true"] [data-button].eatright-toast-action,
-html [data-sonner-toast].eatright-toast[data-styled="true"] [data-button].eatright-toast-cancel {
-    height: 2rem;
-    border-radius: 9999px;
-    padding-inline: 0.85rem;
-    font-size: 0.75rem;
-    font-weight: 650;
+html [data-sonner-toast].eatright-toast[data-type="success"] {
+    --toast-tint: var(--color-success);
 }
-
-html [data-sonner-toast].eatright-toast[data-styled="true"] [data-button].eatright-toast-action {
-    background: #fff;
-    color: var(--color-ink);
+html [data-sonner-toast].eatright-toast[data-type="error"] {
+    --toast-tint: var(--color-danger);
 }
-
-html [data-sonner-toast].eatright-toast[data-styled="true"] [data-button].eatright-toast-cancel {
-    background: rgb(255 255 255 / 0.1);
-    color: rgb(255 255 255 / 0.85);
-}
-
-@media (prefers-reduced-motion: reduce) {
-    html [data-sonner-toast] {
-        transition-duration: 1ms;
-    }
+html [data-sonner-toast].eatright-toast[data-type="warning"] {
+    --toast-tint: var(--color-warning);
 }

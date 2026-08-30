@@ -58,8 +58,8 @@ export type RechargeResult = Record<string, unknown> & {
 
 export type EatRightRemote = {
   login(credentials: Credentials): Promise<RemoteSession>;
-  validate(session: RemoteSession): Promise<boolean>;
-  account(session: RemoteSession): Promise<AccountSummary>;
+  /** Returns account data when authenticated, or null for an expired session. */
+  inspect(session: RemoteSession): Promise<AccountSummary | null>;
   menu(session: RemoteSession, outletId: number, shopNo: number): Promise<MenuItem[]>;
   orders(session: RemoteSession): Promise<Array<Record<string, unknown>>>;
   orderDetails(session: RemoteSession, orderNo: string, outletId: string): Promise<unknown>;

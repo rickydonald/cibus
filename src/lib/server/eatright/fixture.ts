@@ -33,10 +33,7 @@ export function createEatRightFixtureAdapter(): EatRightRemote {
     async login(credentials): Promise<RemoteSession> {
       return { credentials, cookies: "fixture-session=active" };
     },
-    async validate() {
-      return true;
-    },
-    async account() {
+    async inspect() {
       return {
         user: "Dev User (DEV001)",
         walletBalance: "250.00",

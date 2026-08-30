@@ -15,42 +15,49 @@
     );
 </script>
 
-<div
-    class="fixed left-0 right-0 z-50 px-5"
-    style="bottom: {bottomOffset}"
->
+<!--
+  The cart tray is the one raised object on any screen it appears on, so it
+  carries the extrusion and the accent fill. Everything behind it stays flat.
+-->
+<div class="fixed left-0 right-0 z-50 px-5" style="bottom: {bottomOffset}">
     <a
         href="/view/cart"
-        class="mx-auto flex max-w-sm items-center justify-between gap-4 rounded-[28px] bg-primary px-4 py-3.5 text-white shadow-float backdrop-blur-xl transition-all hover:bg-primary-strong active:scale-[0.985]"
+        class="np-elevate mx-auto block max-w-sm"
+        style="--np-face:var(--color-accent);--np-ink:var(--color-ink);--np-edge-right:var(--color-accent-edge);--np-edge-bottom:var(--color-accent-deep)"
         aria-label="View cart"
     >
-        <div class="flex min-w-0 items-center gap-3">
-            <div
-                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/12"
-            >
-                <ShoppingCart01Icon class="h-5 w-5 text-white" />
-            </div>
-            <div class="min-w-0">
-                <p class="text-sm font-bold tracking-tight text-white">
-                    View cart
-                </p>
-                <p class="text-xs font-medium text-white/70">
-                    {cart.totalItems} {cart.totalItems === 1 ? "item" : "items"}
-                </p>
-            </div>
-        </div>
+        <span class="np-face flex items-center justify-between gap-4 px-4 py-3">
+            <span class="flex min-w-0 items-center gap-3">
+                <span
+                    class="flex h-9 w-9 shrink-0 items-center justify-center bg-ink"
+                >
+                    <ShoppingCart01Icon class="h-4.5 w-4.5 text-accent" />
+                </span>
+                <span class="min-w-0">
+                    <span
+                        class="block text-[10px] font-extrabold uppercase tracking-[0.18em] text-ink/50"
+                    >
+                        {cart.totalItems}
+                        {cart.totalItems === 1 ? "item" : "items"}
+                    </span>
+                    <span
+                        class="block text-sm font-extrabold uppercase tracking-[0.1em] text-ink"
+                    >
+                        View cart
+                    </span>
+                </span>
+            </span>
 
-        <div class="flex shrink-0 items-center gap-2">
-            <p
-                class="rounded-full bg-white px-3.5 py-2 text-sm font-bold text-primary tabular-nums"
-            >
-                ₹ {cart.totalAmount}
-            </p>
-            <div
-                class="flex h-9 w-9 items-center justify-center rounded-full bg-white/12"
-            >
-                <ChevronRightIcon class="h-4 w-4 text-white" />
-            </div>
-        </div>
+            <span class="flex shrink-0 items-center gap-2.5">
+                <span class="text-base font-extrabold tabular-nums text-ink">
+                    ₹{cart.totalAmount}
+                </span>
+                <span
+                    class="flex h-7 w-7 items-center justify-center bg-ink"
+                >
+                    <ChevronRightIcon class="h-4 w-4 text-accent" />
+                </span>
+            </span>
+        </span>
     </a>
 </div>

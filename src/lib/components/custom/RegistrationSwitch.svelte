@@ -36,37 +36,27 @@
 </div>
 
 <style>
+    /* Square segmented control. The indicator is a hard black block that
+     * slides — no radius, no shadow, and a short mechanical transition, since
+     * the vocabulary here is a solid object moving rather than a spring. */
     .segment-control {
         position: relative;
         display: flex;
         width: 100%;
-        padding: 0.25rem;
-        background: var(--color-primary-soft);
+        background: var(--color-surface);
         border: 1px solid var(--color-line);
-        border-radius: 1rem;
         box-sizing: border-box;
         overflow: hidden;
     }
 
     .indicator {
         position: absolute;
-        top: 0.25rem;
-        bottom: 0.25rem;
-        left: 0.25rem;
-
-        width: calc((100% - 0.5rem) / 3);
-
-        background: var(--color-primary);
-        border-radius: 0.75rem;
-
-        box-shadow:
-            0 2px 8px rgba(26, 52, 82, 0.12),
-            0 1px 2px rgba(26, 52, 82, 0.08);
-
-        transition:
-            transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
-            width 200ms ease;
-
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: calc(100% / 3);
+        background: var(--color-ink);
+        transition: transform 160ms ease-in-out;
         will-change: transform;
         z-index: 0;
     }
@@ -75,22 +65,20 @@
         flex: 1;
         border: none;
         background: transparent;
-        border-radius: 0.75rem;
-        padding: 0.75rem 1rem;
+        padding: 0.8rem 1rem;
 
-        font-size: 0.875rem;
-        font-weight: 650;
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
 
-        color: var(--color-ink-muted);
+        color: var(--color-ink-faint);
         cursor: pointer;
 
         position: relative;
         z-index: 1;
 
-        transition:
-            color 250ms ease,
-            transform 150ms ease;
-
+        transition: color 160ms ease;
         white-space: nowrap;
     }
 
@@ -98,12 +86,14 @@
         color: white;
     }
 
-    .segment-button:active {
-        transform: scale(0.98);
+    .segment-button:focus-visible {
+        outline: 2px solid var(--color-accent-edge);
+        outline-offset: -3px;
     }
 
-    .segment-button:focus-visible {
-        outline: 2px solid var(--color-primary);
-        outline-offset: -3px;
+    @media (prefers-reduced-motion: reduce) {
+        .indicator {
+            transition: none;
+        }
     }
 </style>

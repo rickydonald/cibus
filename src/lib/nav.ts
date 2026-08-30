@@ -1,3 +1,5 @@
+import { dev } from "$app/environment";
+
 // Top-level "hub" routes that show the bottom tab bar.
 // Detail flows (order, cart, confirmation) use back-button headers instead.
 export const HUB_ROUTES = [
@@ -8,6 +10,9 @@ export const HUB_ROUTES = [
 ] as const;
 
 export function isHubRoute(pathname: string): boolean {
+    // Dev-only: keeps the /__preview harness laying out like a hub screen.
+    // Remove together with src/routes/__preview.
+    if (dev && pathname === "/__preview") return true;
     return HUB_ROUTES.some(
         (route) => pathname === route || pathname === `${route}/`,
     );

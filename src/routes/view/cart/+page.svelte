@@ -14,6 +14,7 @@
     import { onDestroy, onMount } from "svelte";
     import { browser } from "$app/environment";
     import helpers from "$lib/helpers";
+    import Stepper from "$lib/components/ui/Stepper.svelte";
     import { fly, fade } from "svelte/transition";
     import { toast } from "svelte-sonner";
 
@@ -415,175 +416,120 @@
 </script>
 
 <div class="min-h-screen text-ink antialiased">
-    <!-- Header Bar -->
+    <!-- Header -->
     <div class="page-header">
-        <div
-            class="safe-top-offset flex items-center gap-3 px-5 py-4 max-w-md mx-auto"
-        >
-            <button
-                onclick={() => history.back()}
-                class="icon-btn"
-                aria-label="Go back"
-            >
-                <ArrowLeftIcon class="h-5 w-5 text-ink-muted" />
+        <div class="safe-top-offset mx-auto flex max-w-md items-center gap-3 px-5 py-4">
+            <button onclick={() => history.back()} class="icon-btn" aria-label="Go back">
+                <ArrowLeftIcon class="h-4 w-4" />
             </button>
 
-            <div class="flex-1">
-                <h1 class="text-2xl font-bold tracking-tight text-ink">Cart</h1>
-                <p
-                    class="text-xs text-ink-muted font-medium uppercase tracking-wider mt-0.5"
-                >
+            <div class="min-w-0 flex-1">
+                <p class="section-label">
                     {cart.totalItems}
                     {cart.totalItems === 1 ? "item" : "items"} selected
                 </p>
+                <h1 class="mt-1 text-xl font-extrabold tracking-tight text-ink">Cart</h1>
             </div>
 
-            <div class="flex items-center gap-2">
-                {#if isWalletLoading}
-                    <div
-                        class="h-9 w-24 animate-pulse rounded-full bg-line"
-                        aria-label="Verifying balance"
-                    ></div>
-                {:else}
-                    <a
-                        href="/view/wallet"
-                        class="flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-surface border border-line shadow-card hover:border-primary/30 transition-all"
-                    >
-                        <Wallet02Icon class="h-4 w-4 text-primary" />
-                        <span
-                            class="text-sm font-semibold text-ink tabular-nums"
-                        >
-                            ₹{formatAmount(walletBalance)}
-                        </span>
-                    </a>
-                {/if}
-            </div>
+            {#if isWalletLoading}
+                <div class="h-9 w-24 animate-pulse bg-hairline" aria-label="Verifying balance"></div>
+            {:else}
+                <a
+                    href="/view/wallet"
+                    class="flex shrink-0 items-center gap-2 border border-line bg-surface px-3 py-2 transition-colors active:bg-ink active:text-white"
+                >
+                    <Wallet02Icon class="h-4 w-4" />
+                    <span class="text-[13px] font-extrabold tabular-nums">
+                        ₹{formatAmount(walletBalance)}
+                    </span>
+                </a>
+            {/if}
         </div>
     </div>
 
-    <!-- Scroll Container -->
-    <div
-        class="px-5 pt-4 max-w-md mx-auto"
-        style="padding-bottom: max(env(safe-area-inset-bottom), 160px)"
-    >
+    <div class="mx-auto max-w-md px-5 pt-4" style="padding-bottom: max(env(safe-area-inset-bottom), 168px)">
         {#if error}
             <div
-                class="mb-4 flex items-start gap-2.5 rounded-2xl border border-danger/10 bg-danger-soft px-4 py-3 text-sm font-medium text-danger"
-                in:fly={{ duration: 150, y: -8 }}
+                class="mb-4 flex items-start gap-2.5 border-l-3 border-danger bg-danger-soft px-4 py-3 text-[13px] font-bold text-danger"
+                in:fly={{ duration: 120, y: -8 }}
             >
-                <AlertCircleIcon class="h-4 w-4 mt-0.5 shrink-0" />
+                <AlertCircleIcon class="mt-0.5 h-4 w-4 shrink-0" />
                 <span>{error}</span>
             </div>
         {/if}
 
         {#if cart.items.length === 0}
-            <div
-                class="flex min-h-[60vh] flex-col items-center justify-center text-center"
-            >
-                <div
-                    class="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-surface border border-line shadow-card"
-                >
-                    <ShoppingCart01Icon class="h-9 w-9 text-ink-faint" />
+            <div class="flex min-h-[60vh] flex-col items-center justify-center text-center">
+                <div class="mb-5 flex h-16 w-16 items-center justify-center bg-ink">
+                    <ShoppingCart01Icon class="h-7 w-7 text-accent" />
                 </div>
-                <h2 class="text-lg font-semibold tracking-tight text-ink">
+                <h2 class="text-[11px] font-extrabold uppercase tracking-[0.16em] text-ink">
                     Your cart is empty
                 </h2>
-                <p class="mt-1 max-w-xs text-sm text-ink-muted leading-relaxed">
+                <p class="mt-2 max-w-xs text-xs leading-relaxed text-ink-muted">
                     Browse the available food counters to fill your tray.
                 </p>
-                <a href="/view/home" class="btn-primary mt-5 px-5 py-3 text-sm">
-                    Browse Counters
+                <a
+                    href="/view/home"
+                    class="np-elevate mt-7 inline-flex w-fit"
+                    style="--np-face:var(--color-accent);--np-ink:var(--color-ink);--np-edge-right:var(--color-accent-edge);--np-edge-bottom:var(--color-accent-deep)"
+                >
+                    <span class="np-face flex h-[50px] items-center justify-center px-[30px] text-sm font-extrabold uppercase tracking-[0.14em]">
+                        Browse counters
+                    </span>
                 </a>
             </div>
         {:else}
             {#each Object.entries(grouped) as [outlet, items]}
                 {@const outletItems = items ?? []}
-                <div class="card mb-4 overflow-hidden rounded-[28px]">
-                    <!-- Brand Section Header -->
-                    <div class="border-b border-line bg-canvas/60 px-4 py-3.5">
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-soft border border-primary/10"
-                            >
-                                <img
-                                    src={helpers.mapStoreIcon(
-                                        String(
-                                            cart.items.find(
-                                                (item) =>
-                                                    item.shopno ===
-                                                    outletItems[0].shopno,
-                                            )?.shopno,
-                                        ),
-                                    )}
-                                    alt={outlet}
-                                    class="h-8 w-8 object-contain"
-                                />
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <h2
-                                    class="text-base font-semibold tracking-tight text-ink truncate"
-                                >
-                                    {outlet}
-                                </h2>
-                                <p
-                                    class="text-xs text-ink-muted font-medium uppercase tracking-wider mt-0.5"
-                                >
-                                    Counter {outletItems[0].shopno} • {outletItems.length}
-                                    {outletItems.length === 1
-                                        ? "item"
-                                        : "items"}
-                                </p>
-                            </div>
-                            <button
-                                onclick={() => {
-                                    cart.removeByOutlet(outlet);
-                                    toast.success("Cleared " + outlet);
-                                }}
-                                class="text-[11px] font-semibold text-danger hover:bg-danger-soft transition-colors shrink-0 px-2.5 py-1.5 rounded-lg"
-                            >
-                                Clear
-                            </button>
+                <div class="mb-4 border border-hairline bg-surface">
+                    <!-- Outlet header. Black strip, so each group reads as its own ticket. -->
+                    <div class="flex items-center gap-3 bg-ink px-4 py-3.5 text-white">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden bg-white">
+                            <img
+                                src={helpers.mapStoreIcon(String(outletItems[0].shopno))}
+                                alt={outlet}
+                                class="h-7 w-7 object-contain"
+                            />
                         </div>
+                        <div class="min-w-0 flex-1">
+                            <h2 class="truncate text-[14px] font-extrabold tracking-tight">
+                                {outlet}
+                            </h2>
+                            <p class="mt-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-white/50">
+                                Counter {outletItems[0].shopno} • {outletItems.length}
+                                {outletItems.length === 1 ? "item" : "items"}
+                            </p>
+                        </div>
+                        <!-- Destructive action: pink owns clear/remove app-wide. -->
+                        <button
+                            onclick={() => {
+                                cart.removeByOutlet(outlet);
+                                toast.success("Cleared " + outlet);
+                            }}
+                            class="shrink-0 px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.14em] text-pink transition-colors active:bg-pink active:text-white"
+                        >
+                            Clear
+                        </button>
                     </div>
 
-                    <!-- Individual Menu List Rows -->
-                    <div class="divide-y divide-line/70 px-4">
-                        {#each outletItems as item}
-                            <div class="flex items-center gap-3 py-3.5">
+                    <div>
+                        {#each outletItems as item, i}
+                            <div class="flex items-center gap-3 px-4 py-3.5 {i > 0 ? 'border-t border-hairline' : ''}">
                                 <div class="min-w-0 flex-1">
-                                    <h3
-                                        class="text-sm font-semibold text-ink leading-snug wrap-break-word pr-1"
-                                    >
+                                    <h3 class="pr-1 text-[13px] font-extrabold leading-snug wrap-break-word text-ink">
                                         {item.itemname}
                                     </h3>
-                                    <p
-                                        class="mt-0.5 text-xs text-ink-muted font-medium tabular-nums"
-                                    >
+                                    <p class="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] tabular-nums text-ink-faint">
                                         ₹{item.amount} each
                                     </p>
                                 </div>
 
-                                <!-- Incremental Engine Pill Container -->
-                                <div
-                                    class="flex h-8 shrink-0 items-center rounded-xl border border-line bg-canvas p-0.5 shadow-2xs"
-                                >
-                                    <button
-                                        class="flex h-7 w-7 items-center justify-center text-sm font-semibold text-ink-muted hover:text-primary rounded-lg active:bg-surface transition-colors"
-                                        onclick={() =>
-                                            cart.remove(item.id, item.outletid)}
-                                    >
-                                        −
-                                    </button>
-
-                                    <span
-                                        class="w-6 text-center text-xs font-semibold text-ink tabular-nums"
-                                    >
-                                        {item.qty}
-                                    </span>
-
-                                    <button
-                                        class="flex h-7 w-7 items-center justify-center text-sm font-semibold text-ink-muted hover:text-primary rounded-lg active:bg-surface disabled:opacity-20 transition-colors"
-                                        onclick={() =>
+                                <Stepper
+                                    value={item.qty}
+                                    max={Math.min(MAX_QTY, item.available_qty ?? MAX_QTY)}
+                                    onchange={(next) => {
+                                        if (next > item.qty) {
                                             cart.add({
                                                 id: item.id,
                                                 itemname: item.itemname,
@@ -591,23 +537,16 @@
                                                 outletid: item.outletid,
                                                 outletname: item.outletname,
                                                 shopno: item.shopno,
-                                                available_qty:
-                                                    item.available_qty ??
-                                                    MAX_QTY,
-                                            })}
-                                        disabled={item.qty >=
-                                            Math.min(
-                                                MAX_QTY,
-                                                item.available_qty ?? MAX_QTY,
-                                            )}
-                                    >
-                                        +
-                                    </button>
-                                </div>
+                                                available_qty: item.available_qty ?? MAX_QTY,
+                                            });
+                                        } else {
+                                            cart.remove(item.id, item.outletid);
+                                        }
+                                    }}
+                                    onremove={() => cart.remove(item.id, item.outletid)}
+                                />
 
-                                <div
-                                    class="w-16 shrink-0 text-right text-sm font-semibold text-ink tabular-nums"
-                                >
+                                <div class="w-16 shrink-0 text-right text-[13px] font-extrabold tabular-nums text-ink">
                                     ₹{item.amount * item.qty}
                                 </div>
                             </div>
@@ -618,59 +557,52 @@
         {/if}
     </div>
 
-    <!-- Order Bar Summary Footer -->
+    <!-- Order bar. The commit action of the whole app, so it carries the extrusion. -->
     {#if cart.items.length > 0}
         <div
-            class="fixed bottom-0 left-0 right-0 z-40 border-t border-line bg-surface shadow-[0_-8px_24px_rgba(26,30,38,0.04)]"
+            class="fixed bottom-0 left-0 right-0 z-40 border-t-2 border-line bg-surface"
             style="padding-right: var(--safe-area-inset-right); padding-bottom: var(--safe-area-inset-bottom); padding-left: var(--safe-area-inset-left);"
         >
-            <div
-                class="bg-surface p-5 pb-8 shadow-[0_-8px_32px_rgba(33,32,28,0.08)] border-t border-line max-w-md mx-auto sm:rounded-t-4xl"
-            >
-                <div class="flex items-center justify-between gap-4">
-                    <div class="shrink-0 mr-3">
-                        <p
-                            class="text-[10px] font-medium uppercase tracking-[0.16em] text-ink-faint"
-                        >
-                            To Pay • {cart.totalItems}
-                            {cart.totalItems === 1 ? "item" : "items"}
-                        </p>
-                        <h3
-                            class="text-2xl font-bold tracking-tight text-ink tabular-nums mt-0.5"
-                        >
-                            ₹{cart.totalAmount}
-                        </h3>
-                    </div>
-
-                    <button
-                        class="btn-primary flex-1 rounded-4xl py-3.5 text-sm shadow-md shadow-primary/20"
-                        onclick={openOrderConfirmation}
-                        disabled={isPlacingOrder ||
-                            isWalletLoading ||
-                            isRecharging}
-                    >
-                        {#if isPlacingOrder}
-                            Placing Order...
-                        {:else if isRecharging || isPollingRecharge}
-                            Processing...
-                        {:else}
-                            Review Order
-                        {/if}
-                    </button>
+            <div class="mx-auto flex max-w-md items-center justify-between gap-4 p-5">
+                <div class="shrink-0">
+                    <p class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-ink-faint">
+                        To pay • {cart.totalItems}
+                        {cart.totalItems === 1 ? "item" : "items"}
+                    </p>
+                    <h3 class="mt-1 text-2xl font-extrabold tabular-nums tracking-tight text-ink">
+                        ₹{cart.totalAmount}
+                    </h3>
                 </div>
+
+                <button
+                    class="np-elevate flex-1 cursor-pointer border-0 bg-transparent p-0 disabled:pointer-events-none disabled:opacity-40"
+                    style="--np-face:var(--color-accent);--np-ink:var(--color-ink);--np-edge-right:var(--color-accent-edge);--np-edge-bottom:var(--color-accent-deep)"
+                    onclick={openOrderConfirmation}
+                    disabled={isPlacingOrder || isWalletLoading || isRecharging}
+                >
+                    <span class="np-face flex h-[50px] items-center justify-center px-4 text-[13px] font-extrabold uppercase tracking-[0.13em]">
+                        {#if isPlacingOrder}
+                            Placing order
+                        {:else if isRecharging || isPollingRecharge}
+                            Processing
+                        {:else}
+                            Review order
+                        {/if}
+                    </span>
+                </button>
             </div>
         </div>
     {/if}
 
-    <!-- Order Confirmation Sheet -->
+    <!-- Confirmation sheet -->
     {#if isConfirmOpen}
         <div
-            class="fixed inset-0 z-50 flex items-end justify-center bg-ink/45 backdrop-blur-sm sm:items-center sm:p-5"
+            class="fixed inset-0 z-50 flex items-end justify-center bg-ink/55 sm:items-center sm:p-5"
             role="dialog"
             aria-modal="true"
             aria-labelledby="confirm-order-title"
-            in:fade={{ duration: 150 }}
-            out:fade={{ duration: 150 }}
+            in:fade={{ duration: 120 }}
+            out:fade={{ duration: 120 }}
         >
             <button
                 class="absolute inset-0 cursor-default"
@@ -681,21 +613,15 @@
             ></button>
 
             <div
-                class="relative flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden rounded-t-[32px] border border-line bg-surface shadow-float sm:rounded-[32px]"
-                in:fly={{ duration: 220, y: 80 }}
-                out:fly={{ duration: 160, y: 80 }}
+                class="relative flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden border-2 border-line bg-surface"
+                in:fly={{ duration: 180, y: 60 }}
+                out:fly={{ duration: 140, y: 60 }}
             >
-                <div class="flex justify-center pt-3 sm:hidden">
-                    <div class="h-1 w-10 rounded-full bg-line"></div>
-                </div>
-
-                <div
-                    class="overflow-y-auto px-6 pb-5 pt-5 text-center sm:px-8 sm:pt-8"
-                >
+                <div class="overflow-y-auto px-6 pb-5 pt-6 text-center sm:px-8">
                     <div
-                        class="mx-auto flex h-13 w-13 items-center justify-center rounded-2xl {hasInsufficientBalance
-                            ? 'bg-warning-soft text-warning'
-                            : 'bg-primary-soft text-primary'}"
+                        class="mx-auto flex h-12 w-12 items-center justify-center {hasInsufficientBalance
+                            ? 'bg-sun text-ink'
+                            : 'bg-accent text-ink'}"
                     >
                         {#if hasInsufficientBalance}
                             <Wallet02Icon class="h-5 w-5" />
@@ -704,103 +630,66 @@
                         {/if}
                     </div>
 
-                    <div class="mt-4">
-                        <h2
-                            id="confirm-order-title"
-                            class="text-2xl font-bold tracking-[-0.03em] text-ink"
-                        >
-                            {hasInsufficientBalance
-                                ? "Add money to place order"
-                                : "Review your payment"}
-                        </h2>
-                    </div>
-
-                    <div
-                        class="mt-6 overflow-hidden rounded-3xl border border-line bg-canvas/65 text-left"
+                    <h2
+                        id="confirm-order-title"
+                        class="mt-5 text-2xl font-extrabold tracking-[-0.03em] text-ink"
                     >
-                        <div class="px-5 pb-5 pt-5 text-center">
+                        {hasInsufficientBalance
+                            ? "Add money to place order"
+                            : "Review your payment"}
+                    </h2>
+
+                    <div class="mt-6 border border-line text-left">
+                        <!-- The figure that matters, on black so it carries. -->
+                        <div class="bg-ink px-5 py-6 text-center">
                             <p
-                                class="text-[10px] font-bold uppercase tracking-[0.18em] {hasInsufficientBalance
-                                    ? 'text-warning'
-                                    : 'text-primary'}"
+                                class="text-[10px] font-extrabold uppercase tracking-[0.2em] {hasInsufficientBalance
+                                    ? 'text-sun'
+                                    : 'text-accent'}"
                             >
-                                {hasInsufficientBalance
-                                    ? "Amount Short"
-                                    : "Order total"}
+                                {hasInsufficientBalance ? "Amount short" : "Order total"}
                             </p>
-                            <p
-                                class="mt-1 font-mono text-[42px] font-semibold leading-none tracking-[-0.06em] text-ink tabular-nums"
-                            >
+                            <p class="mt-2 font-mono text-[42px] font-extrabold leading-none tracking-[-0.05em] tabular-nums text-white">
                                 ₹{formatAmount(
-                                    hasInsufficientBalance
-                                        ? rechargeShortfall
-                                        : cart.totalAmount,
+                                    hasInsufficientBalance ? rechargeShortfall : cart.totalAmount,
                                 )}
                             </p>
                         </div>
 
-                        <div class="border-t border-line bg-surface px-5 py-4">
-                            <div class="divide-y divide-line/80">
-                                <div
-                                    class="flex items-center justify-between py-2"
+                        <div class="bg-surface px-5 py-4">
+                            <div class="flex items-center justify-between py-2">
+                                <span class="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-muted">Wallet balance</span>
+                                <span class="font-mono text-sm font-extrabold tabular-nums text-ink">
+                                    ₹{formatAmount(walletBalance)}
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between border-t border-hairline py-2">
+                                <span class="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-muted">Order total</span>
+                                <span class="font-mono text-sm font-extrabold tabular-nums text-ink">
+                                    − ₹{formatAmount(cart.totalAmount)}
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between border-t border-line pt-3">
+                                <span class="text-[12px] font-extrabold uppercase tracking-[0.12em] text-ink">
+                                    {hasInsufficientBalance ? "Still needed" : "Balance left"}
+                                </span>
+                                <span
+                                    class="font-mono text-base font-extrabold tabular-nums {hasInsufficientBalance
+                                        ? 'text-sun-deep'
+                                        : 'text-mint-deep'}"
                                 >
-                                    <span
-                                        class="text-xs font-medium text-ink-muted"
-                                        >Wallet balance</span
-                                    >
-                                    <span
-                                        class="font-mono text-sm font-semibold tracking-tight text-ink tabular-nums"
-                                    >
-                                        ₹{formatAmount(walletBalance)}
-                                    </span>
-                                </div>
-                                <div
-                                    class="flex items-center justify-between py-2"
-                                >
-                                    <span
-                                        class="text-xs font-medium text-ink-muted"
-                                        >Order total</span
-                                    >
-                                    <span
-                                        class="font-mono text-sm font-semibold tracking-tight text-ink tabular-nums"
-                                    >
-                                        − ₹{formatAmount(cart.totalAmount)}
-                                    </span>
-                                </div>
-                                <div
-                                    class="flex items-center justify-between pt-3"
-                                >
-                                    <span class="text-sm font-bold text-ink">
-                                        {hasInsufficientBalance
-                                            ? "Still needed"
-                                            : "Balance left"}
-                                    </span>
-                                    <span
-                                        class="font-mono text-base font-semibold tracking-tight tabular-nums {hasInsufficientBalance
-                                            ? 'text-warning'
-                                            : 'text-success'}"
-                                    >
-                                        {hasInsufficientBalance
-                                            ? "+ "
-                                            : ""}₹{formatAmount(
-                                            hasInsufficientBalance
-                                                ? rechargeShortfall
-                                                : balanceAfterOrder,
-                                        )}
-                                    </span>
-                                </div>
+                                    {hasInsufficientBalance ? "+ " : ""}₹{formatAmount(
+                                        hasInsufficientBalance ? rechargeShortfall : balanceAfterOrder,
+                                    )}
+                                </span>
                             </div>
                         </div>
                     </div>
 
                     {#if paymentMessage}
-                        <div
-                            class="mt-4 flex items-center gap-2.5 rounded-2xl border border-success/10 bg-success-soft px-4 py-3 text-left text-xs font-medium leading-relaxed text-success"
-                        >
+                        <div class="mt-4 flex items-center gap-2.5 border-l-3 border-mint-edge bg-mint-soft px-4 py-3 text-left text-xs font-bold leading-relaxed text-mint-deep">
                             {#if isPollingRecharge}
-                                <RefreshCw01Icon
-                                    class="h-4 w-4 shrink-0 animate-spin"
-                                />
+                                <RefreshCw01Icon class="h-4 w-4 shrink-0 animate-spin" />
                             {:else}
                                 <CheckCircleIcon class="h-4 w-4 shrink-0" />
                             {/if}
@@ -809,10 +698,8 @@
                     {/if}
 
                     {#if error}
-                        <div
-                            class="mt-4 flex items-start gap-2.5 rounded-2xl border border-danger/10 bg-danger-soft px-4 py-3 text-left text-xs font-medium leading-relaxed text-danger"
-                        >
-                            <AlertCircleIcon class="h-4 w-4 mt-0.5 shrink-0" />
+                        <div class="mt-4 flex items-start gap-2.5 border-l-3 border-danger bg-danger-soft px-4 py-3 text-left text-xs font-bold leading-relaxed text-danger">
+                            <AlertCircleIcon class="mt-0.5 h-4 w-4 shrink-0" />
                             <span>{error}</span>
                         </div>
                     {/if}
@@ -823,39 +710,44 @@
                     style="padding-bottom: max(env(safe-area-inset-bottom), 24px)"
                 >
                     {#if hasInsufficientBalance}
+                        <!-- Money action: purple owns anything that moves funds. -->
                         <button
-                            class="btn-primary h-13 w-full rounded-2xl px-4 text-sm shadow-sm"
+                            class="np-elevate block w-full cursor-pointer border-0 bg-transparent p-0 disabled:pointer-events-none disabled:opacity-40"
+                            style="--np-face:var(--color-purple);--np-ink:#ffffff;--np-edge-right:var(--color-purple-edge);--np-edge-bottom:var(--color-purple-deep)"
                             onclick={startCheckoutRecharge}
-                            disabled={isRecharging ||
-                                isPollingRecharge ||
-                                rechargeShortfall > 1000}
+                            disabled={isRecharging || isPollingRecharge || rechargeShortfall > 1000}
                         >
-                            {#if isPollingRecharge}
-                                <RefreshCw01Icon class="h-4 w-4 animate-spin" />
-                                Waiting for recharge…
-                            {:else if isRecharging}
-                                Opening payment…
-                            {:else}
-                                Add ₹{formatAmount(rechargeShortfall)} & place order
-                            {/if}
+                            <span class="np-face flex h-[50px] items-center justify-center gap-2 px-4 text-[13px] font-extrabold uppercase tracking-[0.12em]">
+                                {#if isPollingRecharge}
+                                    <RefreshCw01Icon class="h-4 w-4 animate-spin" />
+                                    Waiting for recharge
+                                {:else if isRecharging}
+                                    Opening payment
+                                {:else}
+                                    Add ₹{formatAmount(rechargeShortfall)} & place order
+                                {/if}
+                            </span>
                         </button>
                     {:else}
                         <button
-                            class="btn-primary h-13 w-full rounded-2xl px-4 text-sm shadow-sm"
+                            class="np-elevate block w-full cursor-pointer border-0 bg-transparent p-0 disabled:pointer-events-none disabled:opacity-40"
+                            style="--np-face:var(--color-accent);--np-ink:var(--color-ink);--np-edge-right:var(--color-accent-edge);--np-edge-bottom:var(--color-accent-deep)"
                             onclick={() => placeOrder()}
                             disabled={isPlacingOrder}
                         >
-                            {#if isPlacingOrder}
-                                <RefreshCw01Icon class="h-4 w-4 animate-spin" />
-                                Placing order…
-                            {:else}
-                                Pay ₹{formatAmount(cart.totalAmount)} & place order
-                            {/if}
+                            <span class="np-face flex h-[50px] items-center justify-center gap-2 px-4 text-[13px] font-extrabold uppercase tracking-[0.12em]">
+                                {#if isPlacingOrder}
+                                    <RefreshCw01Icon class="h-4 w-4 animate-spin" />
+                                    Placing order
+                                {:else}
+                                    Pay ₹{formatAmount(cart.totalAmount)} & place order
+                                {/if}
+                            </span>
                         </button>
                     {/if}
 
                     <button
-                        class="mt-2 h-10 w-full text-sm font-semibold text-ink-muted transition-colors hover:text-ink disabled:opacity-40"
+                        class="mt-2.5 h-11 w-full text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink-faint transition-colors active:text-ink disabled:opacity-40"
                         onclick={() => {
                             if (isPollingRecharge) {
                                 cleanUpRechargeCycle();

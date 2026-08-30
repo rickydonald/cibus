@@ -53,23 +53,23 @@
         if (normalized === "CREDIT") {
             return {
                 icon: ArrowDownLeftIcon,
-                chip: "bg-success-soft text-success",
-                amount: "font-semibold text-success",
+                chip: "bg-mint-soft text-mint-deep",
+                amount: "font-extrabold text-mint-deep",
                 sign: "+",
             };
         }
         if (normalized === "DEBIT") {
             return {
                 icon: ArrowUpRightIcon,
-                chip: "bg-danger-soft text-danger",
-                amount: "font-semibold text-ink",
+                chip: "bg-pink-soft text-pink-edge",
+                amount: "font-extrabold text-ink",
                 sign: "−",
             };
         }
         return {
             icon: MinusIcon,
-            chip: "bg-canvas text-ink-faint",
-            amount: "font-medium text-ink-faint line-through",
+            chip: "bg-canvas text-ink-faint border border-hairline",
+            amount: "font-bold text-ink-faint line-through",
             sign: "",
         };
     }
@@ -360,62 +360,55 @@
 </script>
 
 <div class="min-h-screen text-ink antialiased">
-    <div class="px-4 max-w-md mx-auto pt-4">
-        <!-- Balance hero -->
+    <div class="mx-auto max-w-md px-5 pt-4">
+        <!--
+          Balance hero — the one raised object on this screen. Black face on the
+          light canvas is the hardest contrast available and leaves the accent
+          families free to carry the actions below.
+        -->
         <section
-            class="relative overflow-hidden rounded-[28px] bg-[#1c212b] text-white shadow-float"
+            class="np-elevate np-static block w-full"
+            style="--np-face:var(--color-ink);--np-ink:#ffffff;--np-edge-right:var(--color-np-black-50);--np-edge-bottom:var(--color-np-black-70)"
         >
-            <div
-                class="absolute inset-0 bg-[radial-gradient(85%_70%_at_50%_-15%,rgba(96,146,204,0.28),transparent_70%)]"
-            ></div>
-            <div
-                class="pointer-events-none absolute inset-0 rounded-[28px] ring-1 ring-inset ring-white/10"
-            ></div>
-
-            <div
-                class="relative z-10 flex flex-col items-center px-6 py-9 text-center"
-            >
+            <div class="np-face flex flex-col items-center px-6 py-8 text-center">
                 <p
-                    class="text-[10px] font-bold uppercase tracking-[0.24em] text-white/45"
+                    class="text-[10px] font-extrabold uppercase tracking-[0.24em] text-white/45"
                 >
                     Total Balance
                 </p>
 
                 {#if isLoading}
-                    <div
-                        class="mt-3 h-13 w-44 animate-pulse rounded-2xl bg-white/10"
-                    ></div>
+                    <div class="mt-4 h-12 w-44 animate-pulse bg-white/10"></div>
                 {:else}
-                    <div class="mt-3 flex items-baseline tabular-nums">
-                        <span class="mr-1.5 text-2xl font-medium text-white/50"
+                    <div class="mt-4 flex items-baseline tabular-nums">
+                        <span class="mr-1.5 text-2xl font-bold text-white/40"
                             >₹</span
                         >
                         <h1
-                            class="text-[52px] font-bold leading-none tracking-tight"
+                            class="text-[52px] font-extrabold leading-none tracking-tight"
                         >
                             {formatMain(displayBalance.main)}
                         </h1>
-                        <span class="text-xl font-medium text-white/40"
+                        <span class="text-xl font-bold text-white/40"
                             >.{displayBalance.decimal}</span
                         >
                     </div>
                 {/if}
 
+                <!-- Identity strip, set in mono so the staff ID reads as a record -->
                 <div
-                    class="mt-5 flex max-w-full min-w-0 items-center gap-2 rounded-full bg-white/8 px-4 py-1.5 ring-1 ring-inset ring-white/10 font-mono!"
+                    class="mt-6 flex min-w-0 max-w-full items-center gap-2.5 border border-white/20 px-4 py-2 font-mono!"
                 >
                     <span
-                        class="min-w-0 flex-1 truncate text-xs font-semibold text-white/85 tracking-widest"
+                        class="min-w-0 flex-1 truncate text-[11px] font-bold uppercase tracking-[0.14em] text-white/85"
                         title={profile?.name ?? "Eat Right user"}
                     >
                         {profile?.name ?? "Eat Right user"}
                     </span>
                     {#if profile?.deptNo}
+                        <span class="h-1 w-1 shrink-0 bg-white/30"></span>
                         <span
-                            class="h-1 w-1 shrink-0 rounded-full bg-white/30"
-                        ></span>
-                        <span
-                            class="shrink-0 text-xs font-medium text-white/55 tabular-nums tracking-widest"
+                            class="shrink-0 text-[11px] font-bold tabular-nums tracking-[0.14em] text-white/55"
                         >
                             {profile.deptNo}
                         </span>
@@ -424,65 +417,93 @@
             </div>
         </section>
 
-        <!-- Add money -->
-        <section class="mt-6">
-            <h2 class="section-label pl-4">Add Money</h2>
+        <!--
+          Add money.
 
-            <div class="card mt-2 rounded-[22px] p-5">
-                <div class="flex items-baseline justify-center py-2">
-                    <span class="mr-0.5 text-3xl font-semibold text-ink-faint"
-                        >₹</span
+          The amount plate is black so the acid green can be used as TYPE here —
+          on this dark ground it has the contrast it lacks on the light canvas,
+          which is why the figure is the one green thing on the screen.
+
+          Purple owns money actions throughout the app, so the quick-amount
+          chips and the commit button both take it; the cancel path takes pink,
+          which owns destructive actions.
+        -->
+        <section class="mt-8">
+            <p class="section-label">Add Money</p>
+
+            <div class="mt-2.5 border border-line bg-surface">
+                <div class="bg-ink px-5 py-7">
+                    <label
+                        for="money_input"
+                        class="block text-center text-[10px] font-extrabold uppercase tracking-[0.24em] text-white/40"
                     >
-                    <input
-                        id="money_input"
-                        type="number"
-                        min="1"
-                        max="1000"
-                        step="0.01"
-                        inputmode="decimal"
-                        bind:value={amount}
-                        disabled={isSubmitting || isPolling}
-                        class="bg-transparent text-4xl font-bold tracking-tight text-ink outline-none tabular-nums placeholder:text-ink-faint/40 disabled:opacity-50"
-                        style={`width: ${Math.max(String(amount ?? "").length, 1) + 0.75}ch`}
-                        placeholder="0"
-                    />
+                        Enter amount
+                    </label>
+                    <div class="mt-3 flex items-baseline justify-center">
+                        <span class="mr-1 text-3xl font-extrabold text-white/35"
+                            >₹</span
+                        >
+                        <input
+                            id="money_input"
+                            type="number"
+                            min="1"
+                            max="1000"
+                            step="0.01"
+                            inputmode="decimal"
+                            bind:value={amount}
+                            disabled={isSubmitting || isPolling}
+                            class="bg-transparent text-[44px] font-extrabold tracking-tight text-accent outline-none tabular-nums placeholder:text-white/20 disabled:opacity-50"
+                            style={`width: ${Math.max(String(amount ?? "").length, 1) + 0.75}ch`}
+                            placeholder="0"
+                        />
+                    </div>
+                    <p
+                        class="mt-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-white/30"
+                    >
+                        ₹1 — ₹1000 per recharge
+                    </p>
                 </div>
 
-                <div class="mt-3 flex justify-center gap-2">
-                    {#each [20, 50, 100] as value}
+                <!-- Quick amounts. Square chips, hard fill on select. -->
+                <div class="grid grid-cols-3 border-t border-line">
+                    {#each [20, 50, 100] as value, i}
+                        {@const selected = Number(amount) === value}
                         <button
                             type="button"
                             onclick={() => quickSelect(value)}
                             disabled={isSubmitting || isPolling}
-                            class={`h-9 rounded-full px-5 text-[13px] font-semibold transition-all active:scale-95 disabled:opacity-50 ${
-                                Number(amount) === value
-                                    ? "bg-primary text-white"
-                                    : "bg-primary-soft text-primary hover:bg-primary/15"
-                            }`}
+                            class="h-12 text-[13px] font-extrabold tabular-nums tracking-[0.08em] transition-colors disabled:opacity-40 {i >
+                            0
+                                ? 'border-l border-line'
+                                : ''} {selected
+                                ? 'bg-purple text-white'
+                                : 'bg-surface text-ink active:bg-purple-soft'}"
                         >
                             ₹{value}
                         </button>
                     {/each}
                 </div>
 
-                <div class="mt-5 flex flex-col gap-2">
+                <div class="border-t border-line p-4">
                     <button
                         type="button"
-                        class="btn-primary h-12 w-full rounded-full text-sm"
+                        class="np-elevate block w-full cursor-pointer border-0 bg-transparent p-0 disabled:pointer-events-none disabled:opacity-40"
+                        style="--np-face:var(--color-purple);--np-ink:#ffffff;--np-edge-right:var(--color-purple-edge);--np-edge-bottom:var(--color-purple-deep)"
                         onclick={rechargeWallet}
                         disabled={isSubmitting || isPolling}
                     >
-                        {#if isSubmitting || isPolling}
-                            <Spinner />
-                        {/if}
-
-                        <span>
+                        <span
+                            class="np-face flex h-[50px] items-center justify-center gap-2.5 text-sm font-extrabold uppercase tracking-[0.14em]"
+                        >
+                            {#if isSubmitting || isPolling}
+                                <Spinner />
+                            {/if}
                             {#if isPolling}
-                                Waiting for Payment...
+                                Waiting for payment
                             {:else if isSubmitting}
-                                Starting Payment...
+                                Starting payment
                             {:else}
-                                Add Money
+                                Add money
                             {/if}
                         </span>
                     </button>
@@ -490,46 +511,47 @@
                     {#if isSubmitting || isPolling}
                         <button
                             onclick={cancelPayment}
-                            class="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-danger-soft text-sm font-semibold text-danger transition hover:bg-danger/10 active:scale-[0.99]"
+                            class="mt-2.5 flex h-11 w-full items-center justify-center gap-2 border border-pink bg-pink-soft text-xs font-extrabold uppercase tracking-[0.14em] text-pink-edge transition-colors active:bg-pink active:text-white"
                         >
                             <XCircleIcon class="h-4 w-4" />
-                            Cancel Transaction
+                            Cancel transaction
                         </button>
                     {/if}
-                </div>
 
-                {#if error || message}
-                    <p
-                        class={`mt-4 text-center text-xs font-medium leading-relaxed ${error ? "text-danger" : "text-success"}`}
-                    >
-                        {error || message}
-                    </p>
-                {/if}
+                    {#if error || message}
+                        <p
+                            class="mt-3.5 text-center text-[11px] font-bold leading-relaxed {error
+                                ? 'text-danger'
+                                : 'text-mint-deep'}"
+                        >
+                            {error || message}
+                        </p>
+                    {/if}
+                </div>
             </div>
         </section>
 
         <!-- Recent activity -->
-        <section class="mt-6">
-            <h2 class="section-label pl-4">Recent Activity</h2>
+        <section class="mt-8 pb-4">
+            <p class="section-label">Recent Activity</p>
 
             {#if isLoading}
-                <div class="card mt-2 overflow-hidden rounded-[22px]">
+                <div class="mt-2.5 border border-hairline bg-surface">
                     {#each Array(3) as _, i}
-                        {#if i > 0}
+                        <div
+                            class="flex items-center gap-3.5 p-4 {i > 0
+                                ? 'border-t border-hairline'
+                                : ''}"
+                        >
                             <div
-                                class="ml-[4.25rem] border-t border-line/60"
-                            ></div>
-                        {/if}
-                        <div class="flex items-center gap-3.5 p-4">
-                            <div
-                                class="h-9 w-9 shrink-0 animate-pulse rounded-full bg-canvas"
+                                class="h-9 w-9 shrink-0 animate-pulse bg-canvas"
                             ></div>
                             <div class="flex-1 space-y-2">
                                 <div
-                                    class="h-3.5 w-2/3 animate-pulse rounded bg-canvas"
+                                    class="h-3.5 w-2/3 animate-pulse bg-canvas"
                                 ></div>
                                 <div
-                                    class="h-3 w-1/3 animate-pulse rounded bg-canvas"
+                                    class="h-2.5 w-1/3 animate-pulse bg-canvas"
                                 ></div>
                             </div>
                         </div>
@@ -537,49 +559,46 @@
                 </div>
             {:else if transactions.length === 0}
                 <div
-                    class="card mt-2 rounded-[22px] p-8 text-center text-xs font-medium text-ink-faint"
+                    class="mt-2.5 border border-hairline bg-surface p-10 text-center text-[11px] font-bold uppercase tracking-[0.16em] text-ink-faint"
                 >
-                    No transactions recorded yet.
+                    No transactions yet
                 </div>
             {:else}
-                <div class="card mt-2 overflow-hidden rounded-[22px]">
+                <div class="mt-2.5 border border-hairline bg-surface">
                     {#each transactions as tx, i}
                         {@const parsedAmount = splitPrice(tx.amount)}
                         {@const parsedBalance = splitPrice(tx.balance)}
                         {@const visual = txVisual(tx.type)}
-                        {#if i > 0}
-                            <div
-                                class="ml-[4.25rem] border-t border-line/60"
-                            ></div>
-                        {/if}
-                        <article class="flex items-center gap-3.5 p-4">
+                        <article
+                            class="flex items-center gap-3.5 p-4 {i > 0
+                                ? 'border-t border-hairline'
+                                : ''}"
+                        >
                             <span
-                                class={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${visual.chip}`}
+                                class="grid h-9 w-9 shrink-0 place-items-center {visual.chip}"
                             >
-                                <visual.icon size={16} strokeWidth={2.25} />
+                                <visual.icon size={16} strokeWidth={2.5} />
                             </span>
 
                             <div class="min-w-0 flex-1">
                                 <h3
-                                    class="truncate text-sm font-semibold leading-snug text-ink"
+                                    class="truncate text-[13px] font-extrabold leading-snug tracking-tight text-ink"
                                 >
                                     {tx.remarks}
                                 </h3>
                                 <p
-                                    class="mt-0.5 text-[11px] font-medium text-ink-faint"
+                                    class="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-faint"
                                 >
                                     {tx.date}
                                 </p>
                             </div>
 
                             <div class="shrink-0 text-right">
-                                <p
-                                    class={`text-sm tabular-nums ${visual.amount}`}
-                                >
+                                <p class="text-[13px] tabular-nums {visual.amount}">
                                     {visual.sign}₹{parsedAmount.main}.{parsedAmount.decimal}
                                 </p>
                                 <p
-                                    class="mt-0.5 text-[10px] font-medium tabular-nums text-ink-faint"
+                                    class="mt-1 text-[10px] font-bold tabular-nums tracking-[0.1em] text-ink-faint"
                                 >
                                     Bal ₹{parsedBalance.main}.{parsedBalance.decimal}
                                 </p>

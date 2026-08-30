@@ -72,6 +72,28 @@ function ajaxHeaders(cookieHeader: string): Record<string, string> {
   };
 }
 
+function parseAccount(html: string): AccountSummary | null {
+  const $ = cheerio.load(html);
+  const user = $("#navmenu li:first-child a").text().trim();
+  const outletElements = $(".outlet-card");
+  if (!user && !outletElements.length) return null;
+
+  const outlets = outletElements
+    .map((_, element) => ({
+      id: Number($(element).attr("data-id") ?? 0),
+      name: $(element).attr("data-name") ?? "",
+      shopNo: Number($(element).attr("data-outletno") ?? 0),
+      isClosed: $(element).hasClass("disabled-outlet"),
+    }))
+    .get()
+    .filter((outlet) => outlet.id && outlet.shopNo);
+  const walletBalance = parseFloat(
+    $("h5.text-success").text().match(/₹\s*([\d]+(?:\.\d+)?)/)?.[1] ?? "0",
+  ).toFixed(2);
+
+  return { user, walletBalance, outlets };
+}
+
 function normalizePlacedOrders(payload: unknown, cart: RemoteCartItem[]): PlacedOrder[] {
   const record = payload && typeof payload === "object"
     ? payload as Record<string, unknown>
@@ -225,48 +247,23 @@ export function createEatRightHttpAdapter(
       };
     },
 
-    async validate(session: RemoteSession): Promise<boolean> {
+    async inspect(session: RemoteSession): Promise<AccountSummary | null> {
       const response = await request(PAGE_URL, {
         headers: { Cookie: session.cookies, "User-Agent": USER_AGENT },
         redirect: "manual",
       });
       const location = response.headers.get("location") ?? "";
       if (response.status >= 300 && response.status < 400 && /login|loggedin|index/i.test(location)) {
-        return false;
+        return null;
       }
-      if (!response.ok) return false;
-
-      const $ = cheerio.load(await response.text());
-      return Boolean($("#navmenu li:first-child a").text().trim() || $(".outlet-card").length);
-    },
-
-    async account(session: RemoteSession): Promise<AccountSummary> {
-      const response = await request(PAGE_URL, {
-        headers: { Cookie: session.cookies, "User-Agent": USER_AGENT },
-      });
       if (!response.ok) {
-        throw new EatRightError("eatright_unavailable", 502, "Failed to load account");
+        throw new EatRightError(
+          "eatright_unavailable",
+          502,
+          "Failed to inspect Eat Right session",
+        );
       }
-
-      const $ = cheerio.load(await response.text());
-      const outlets = $(".outlet-card")
-        .map((_, element) => ({
-          id: Number($(element).attr("data-id") ?? 0),
-          name: $(element).attr("data-name") ?? "",
-          shopNo: Number($(element).attr("data-outletno") ?? 0),
-          isClosed: $(element).hasClass("disabled-outlet"),
-        }))
-        .get()
-        .filter((outlet) => outlet.id && outlet.shopNo);
-      const walletBalance = parseFloat(
-        $("h5.text-success").text().match(/₹\s*([\d]+(?:\.\d+)?)/)?.[1] ?? "0",
-      ).toFixed(2);
-
-      return {
-        user: $("#navmenu li:first-child a").text().trim(),
-        walletBalance,
-        outlets,
-      };
+      return parseAccount(await response.text());
     },
 
     async menu(session, outletId, shopNo): Promise<MenuItem[]> {
@@ -305,7 +302,7 @@ export function createEatRightHttpAdapter(
         },
         "Failed to load wallet transactions",
       );
-      return Array.isArray(payload) ? payload : [];
+      return normalizeList(payload, ["transactions", "data"]);
     },
 
     async recharge(session, amount): Promise<RechargeResult> {
