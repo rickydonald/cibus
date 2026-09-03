@@ -9,12 +9,8 @@ import { createPaymentCallbackPath } from "../src/lib/server/payment-callback.ts
 
 test("sends only the Svelte callback path to the JSP backend", () => {
     assert.equal(
-        createPaymentCallbackPath("/view/wallet"),
+        createPaymentCallbackPath(),
         "/view/wallet/callback?return=%2Fview%2Fwallet",
-    );
-    assert.equal(
-        createPaymentCallbackPath("/view/cart"),
-        "/view/wallet/callback?return=%2Fview%2Fcart",
     );
 });
 

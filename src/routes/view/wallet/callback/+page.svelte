@@ -33,11 +33,6 @@
         page.url.searchParams.get("order_id") ??
         "";
     const gatewayStatus = page.url.searchParams.get("status") ?? "";
-    const returnPath =
-        page.url.searchParams.get("return") === "/view/cart"
-            ? "/view/cart"
-            : "/view/wallet";
-
     let verifyState = $state<VerifyState>("verifying");
     let balance = $state<string | null>(null);
     let verifiedAmount = $state<string | null>(null);
@@ -48,7 +43,7 @@
             payment: "success",
             order_id: orderId,
         });
-        return `${returnPath}?${params.toString()}`;
+        return `/view/wallet?${params.toString()}`;
     }
 
     function continueAfterSuccess() {
@@ -222,13 +217,9 @@
                 onclick={() =>
                     verifyState === "success"
                         ? continueAfterSuccess()
-                        : goto(returnPath)}
+                        : goto("/view/wallet")}
             >
-                {verifyState === "success"
-                    ? "Continue"
-                    : returnPath === "/view/cart"
-                    ? "Back to Cart"
-                    : "Go to Wallet"}
+                {verifyState === "success" ? "Continue" : "Go to Wallet"}
             </button>
         {/if}
     </div>

@@ -62,10 +62,9 @@ export async function GET(event) {
 
 export async function POST(event) {
   const { request } = event;
-  const { amount, confirmAmount, returnPath } = await request.json();
+  const { amount, confirmAmount } = await request.json();
   const depositAmount = Number(amount);
   const confirmedAmount = Number(confirmAmount);
-  const safeReturnPath = returnPath === "/view/cart" ? "/view/cart" : "/view/wallet";
 
   if (
     !Number.isFinite(depositAmount) ||
@@ -124,7 +123,7 @@ export async function POST(event) {
     action: "insert",
     amount: String(depositAmount),
     confirmAmount: String(confirmedAmount),
-    returnPath: safeReturnPath,
+    returnPath: "/view/wallet",
   });
 
   let data: unknown;
@@ -175,7 +174,7 @@ export async function POST(event) {
     // Register the app's payment callback with the backend: after the
     // gateway responds, Responsepayload.jsp redirects the user here
     // instead of the JSP page flow.
-    const appCallbackPath = createPaymentCallbackPath(safeReturnPath);
+    const appCallbackPath = createPaymentCallbackPath();
     paymentUrl += `${paymentUrl.includes("?") ? "&" : "?"}app_callback_path=${encodeURIComponent(appCallbackPath)}`;
 
     // The client also needs the order id so it can verify the payment by

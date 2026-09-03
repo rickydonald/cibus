@@ -1,4 +1,3 @@
-export function createPaymentCallbackPath(returnPath: "/view/cart" | "/view/wallet") {
-    const searchParams = new URLSearchParams({ return: returnPath });
-    return `/view/wallet/callback?${searchParams.toString()}`;
+export function createPaymentCallbackPath() {
+    return "/view/wallet/callback?return=%2Fview%2Fwallet";
 }

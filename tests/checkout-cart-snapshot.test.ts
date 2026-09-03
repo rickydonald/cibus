@@ -32,7 +32,7 @@ test("matches the same checkout cart regardless of item ordering", () => {
   assert.equal(matchesCheckoutCartSnapshot(snapshot, [...cart].reverse()), true);
 });
 
-test("detects quantity, price, and item changes after recharge starts", () => {
+test("detects quantity, price, and item changes after checkout starts", () => {
   const snapshot = createCheckoutCartSnapshot(cart);
 
   assert.equal(

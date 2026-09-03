@@ -7,7 +7,6 @@
     import {
         ArrowLeftIcon,
         ShoppingCart01Icon,
-        CheckCircleIcon,
         AlertCircleIcon,
         ReceiptCheckIcon,
         MinusIcon,
@@ -17,26 +16,13 @@
     } from "@untitled-theme/icons-svelte";
     import Spinner from "$lib/components/custom/Spinner.svelte";
     import { cart, MAX_QTY, type CartItem } from "$lib/stores/cart.svelte";
-    import {
-        getPendingPayment,
-        setPendingPayment,
-    } from "$lib/client/pending-payment";
     import { onMount } from "svelte";
-    import { browser } from "$app/environment";
     import helpers from "$lib/helpers";
     import { fly, fade } from "svelte/transition";
     import { flip } from "svelte/animate";
     import { contentReveal, collapse } from "$lib/utils/transitions";
     import { toast } from "svelte-sonner";
-    import {
-        MAX_WALLET_BALANCE,
-        walletLimitMessage,
-        wouldExceedWalletLimit,
-    } from "$lib/wallet";
-    import {
-        createCheckoutCartSnapshot,
-        matchesCheckoutCartSnapshot,
-    } from "$lib/checkout-cart-snapshot";
+    import { createCheckoutCartSnapshot } from "$lib/checkout-cart-snapshot";
     import {
         clearPendingOrderCheckout,
         getOrCreatePendingOrderCheckout,
@@ -44,27 +30,14 @@
     import { normalizeStoreName } from "$lib/utils/display-text";
     import { WalletIcon } from "@lucide/svelte";
 
-    const PENDING_CHECKOUT_RECHARGE_KEY_PREFIX =
-        "eatright:pending_checkout_recharge:";
-    const PENDING_CHECKOUT_MAX_AGE_MS = 10 * 60 * 1000;
     const ALL_STORES_CLOSED_MESSAGE =
         "All food counters are closed. Checkout is unavailable.";
 
-    type PendingCheckoutRecharge = {
-        amount: number;
-        baselineBalance: number;
-        cartSnapshot: string;
-        createdAt: number;
-        orderId?: string;
-    };
-
     let isPlacingOrder = $state(false);
-    let isRecharging = $state(false);
     let isWalletLoading = $state(true);
     let isConfirmOpen = $state(false);
     let error = $state("");
     let success = $state("");
-    let paymentMessage = $state("");
     let walletBalance = $state<number | null>(null);
     let areAllStoresClosed = $state(false);
     let closedOutletIds = $state<Set<number>>(new Set());
@@ -86,12 +59,6 @@
         return "Some counters are closed. Remove their items to continue.";
     });
 
-    function pendingCheckoutRechargeKey() {
-        return cart.userId
-            ? `${PENDING_CHECKOUT_RECHARGE_KEY_PREFIX}${encodeURIComponent(cart.userId)}`
-            : null;
-    }
-
     const hasInsufficientBalance = $derived(
         walletBalance !== null && cart.totalAmount > walletBalance,
     );
@@ -99,10 +66,6 @@
         walletBalance === null
             ? 0
             : Number(Math.max(cart.totalAmount - walletBalance, 0).toFixed(2)),
-    );
-    const checkoutRechargeExceedsWalletLimit = $derived(
-        walletBalance !== null &&
-            wouldExceedWalletLimit(walletBalance, rechargeShortfall),
     );
     const balanceAfterOrder = $derived(
         walletBalance === null
@@ -196,47 +159,8 @@
         }
     }
 
-    onMount(async () => {
-        const params = new URLSearchParams(window.location.search);
-        const payment = params.get("payment");
-        const callbackMessage = params.get("payment_message");
-        const orderId = params.get("order_id");
-
-        // A recharge was started but the gateway never redirected back to
-        // this app (e.g. local dev) — resume verification on the callback
-        // page instead.
-        // if (!payment && !orderId) {
-        //     const pending = getPendingPayment();
-        //     if (pending && pending.returnPath === "/view/cart") {
-        //         await goto(
-        //             `/view/wallet/callback?order_id=${encodeURIComponent(pending.orderId)}&return=${encodeURIComponent(pending.returnPath)}`,
-        //         );
-        //         return;
-        //     }
-        // }
-        let verifiedStatus: string | null = null;
-        if (orderId) {
-            try {
-                const response = await fetchEatRight(
-                    `/api/v1/wallet/payment-status?order_id=${encodeURIComponent(orderId)}`,
-                );
-                const data = await response.json();
-                if (response.ok) verifiedStatus = data.status;
-            } catch {
-                error = "Unable to verify the returned payment.";
-            }
-        }
-        const balance = await getWalletBalance();
-        if (payment === "success" && verifiedStatus === "SUCCESS") {
-            await resumePendingCheckout(balance, orderId);
-        } else if (payment) {
-            clearPendingCheckoutRecharge();
-            error = callbackMessage || "Wallet recharge failed or was cancelled.";
-            toast.error(error);
-        }
-        if (payment) {
-            history.replaceState({}, "", window.location.pathname);
-        }
+    onMount(() => {
+        void getWalletBalance();
     });
 
     function openOrderConfirmation() {
@@ -255,6 +179,7 @@
         }
 
         if (hasInsufficientBalance) {
+            error = "Insufficient EatRight wallet balance.";
             isConfirmOpen = true;
             return;
         }
@@ -262,7 +187,7 @@
         isConfirmOpen = true;
     }
 
-    async function placeOrder(options: { skipBalanceCheck?: boolean } = {}) {
+    async function placeOrder() {
         if (isPlacingOrder || cart.items.length === 0) return;
         if (checkoutAvailabilityMessage) {
             error = checkoutAvailabilityMessage;
@@ -274,7 +199,7 @@
             error = "Your account session is still loading. Please try again.";
             return;
         }
-        if (!options.skipBalanceCheck && hasInsufficientBalance) {
+        if (hasInsufficientBalance) {
             error = "Insufficient EatRight wallet balance.";
             isConfirmOpen = false;
             return;
@@ -360,7 +285,6 @@
             // the empty-cart screen on slower connections.
             clearPendingOrderCheckout(placedUserId);
             cart.clear();
-            clearPendingCheckoutRecharge();
         } catch {
             error = "Unable to reach EatRight. Please try again.";
         } finally {
@@ -368,226 +292,6 @@
         }
     }
 
-    function getRechargeAmount() {
-        return Number(rechargeShortfall.toFixed(2));
-    }
-
-    function savePendingCheckoutRecharge(
-        amount: number,
-        baselineBalance: number,
-    ): string {
-        const cartSnapshot = createCheckoutCartSnapshot(cart.items);
-        if (!browser) return cartSnapshot;
-
-        const storageKey = pendingCheckoutRechargeKey();
-        if (!storageKey) return cartSnapshot;
-        localStorage.setItem(
-            storageKey,
-            JSON.stringify({
-                amount,
-                baselineBalance,
-                cartSnapshot,
-                createdAt: Date.now(),
-            } satisfies PendingCheckoutRecharge),
-        );
-
-        return cartSnapshot;
-    }
-
-    function bindPendingCheckoutRechargeToOrder(orderId: string): boolean {
-        if (!browser || !orderId) return false;
-
-        try {
-            const storageKey = pendingCheckoutRechargeKey();
-            if (!storageKey) return false;
-            const raw = localStorage.getItem(storageKey);
-            if (!raw) return false;
-
-            const pending = JSON.parse(raw) as PendingCheckoutRecharge;
-            if (
-                typeof pending.cartSnapshot !== "string" ||
-                typeof pending.createdAt !== "number"
-            ) {
-                clearPendingCheckoutRecharge();
-                return false;
-            }
-
-            localStorage.setItem(
-                storageKey,
-                JSON.stringify({ ...pending, orderId }),
-            );
-            return true;
-        } catch {
-            clearPendingCheckoutRecharge();
-            return false;
-        }
-    }
-
-    function clearPendingCheckoutRecharge() {
-        if (!browser) return;
-        const storageKey = pendingCheckoutRechargeKey();
-        if (storageKey) localStorage.removeItem(storageKey);
-    }
-
-    async function startCheckoutRecharge() {
-        const amount = getRechargeAmount();
-        const currentBalance = Number(walletBalance ?? 0);
-
-        error = "";
-        paymentMessage = "";
-
-        if (checkoutAvailabilityMessage) {
-            error = checkoutAvailabilityMessage;
-            isConfirmOpen = false;
-            toast.error(error);
-            return;
-        }
-
-        if (!Number.isFinite(amount) || amount <= 0) {
-            error =
-                "Wallet balance is enough now. Try placing the order again.";
-            return;
-        }
-
-        if (wouldExceedWalletLimit(currentBalance, amount)) {
-            error = walletLimitMessage(currentBalance);
-            return;
-        }
-
-        isRecharging = true;
-        const checkoutCartSnapshot = savePendingCheckoutRecharge(
-            amount,
-            currentBalance,
-        );
-        try {
-            const response = await fetchEatRight("/api/v1/wallet", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    amount,
-                    confirmAmount: amount,
-                    returnPath: "/view/cart",
-                }),
-            });
-            const data = await response.json();
-
-            if (!response.ok || data.error) {
-                if (await redirectIfEatRightConnectRequired(data.errorCode))
-                    return;
-
-                clearPendingCheckoutRecharge();
-                error =
-                    data.error ?? data.message ?? "Unable to start recharge.";
-                isRecharging = false;
-                return;
-            }
-
-            if (data.status === "redirect" && data.url) {
-                if (
-                    typeof data.orderId === "string" &&
-                    bindPendingCheckoutRechargeToOrder(data.orderId)
-                ) {
-                    setPendingPayment(data.orderId, "/view/cart");
-                } else {
-                    // The recharge can continue, but without a verifiable
-                    // payment ID it must never auto-submit the cart.
-                    clearPendingCheckoutRecharge();
-                }
-                window.location.assign(data.url);
-                return;
-            }
-
-            if (data.status === "success") {
-                walletBalance = Number(walletBalance ?? 0) + amount;
-                clearPendingCheckoutRecharge();
-                isRecharging = false;
-                if (
-                    matchesCheckoutCartSnapshot(
-                        checkoutCartSnapshot,
-                        cart.items,
-                    )
-                ) {
-                    paymentMessage = "Wallet recharged. Placing your order...";
-                    toast.success("Wallet recharged. Placing order...");
-                    await placeOrder({ skipBalanceCheck: true });
-                } else {
-                    isConfirmOpen = true;
-                    paymentMessage =
-                        "Wallet recharged. Review your updated cart before placing the order.";
-                    toast.info(
-                        "Cart changed. Review it before placing your order.",
-                    );
-                }
-                return;
-            }
-
-            clearPendingCheckoutRecharge();
-            error = data.message ?? "Unable to start recharge.";
-            isRecharging = false;
-        } catch {
-            clearPendingCheckoutRecharge();
-            error = "Unable to reach EatRight wallet.";
-            isRecharging = false;
-        }
-    }
-
-    async function resumePendingCheckout(
-        balance: number | null,
-        returnedOrderId: string | null,
-    ) {
-        if (!browser) return;
-
-        const storageKey = pendingCheckoutRechargeKey();
-        if (!storageKey) return;
-        const pending = localStorage.getItem(storageKey);
-        if (!pending) return;
-
-        try {
-            const saved = JSON.parse(pending) as Partial<PendingCheckoutRecharge>;
-
-            const isFresh =
-                typeof saved.createdAt === "number" &&
-                Date.now() - saved.createdAt < PENDING_CHECKOUT_MAX_AGE_MS;
-            const isExpectedPayment =
-                typeof saved.orderId === "string" &&
-                saved.orderId === returnedOrderId;
-            const isSameCart =
-                typeof saved.cartSnapshot === "string" &&
-                matchesCheckoutCartSnapshot(saved.cartSnapshot, cart.items);
-
-            if (!isFresh || !isExpectedPayment || cart.items.length === 0) {
-                clearPendingCheckoutRecharge();
-                return;
-            }
-
-            if (!isSameCart) {
-                clearPendingCheckoutRecharge();
-                isConfirmOpen = true;
-                paymentMessage =
-                    "Wallet recharged, but your cart changed during payment.";
-                error =
-                    "Review the updated cart and confirm it again. No order was placed automatically.";
-                toast.info(
-                    "Cart changed. Review it before placing your order.",
-                );
-                return;
-            }
-
-            if (balance !== null && balance >= cart.totalAmount) {
-                paymentMessage = "Wallet recharged. Placing your order...";
-                toast.success("Wallet recharged. Placing order...");
-                clearPendingCheckoutRecharge();
-                await placeOrder({ skipBalanceCheck: true });
-                return;
-            }
-
-            clearPendingCheckoutRecharge();
-            isConfirmOpen = true;
-            error = "The gateway reported success, but the wallet balance was not updated.";
-        } catch {
-            clearPendingCheckoutRecharge();
-        }
-    }
 </script>
 
 <div class="min-h-screen text-ink antialiased">
@@ -878,13 +582,10 @@
                         onclick={openOrderConfirmation}
                         disabled={isPlacingOrder ||
                             isWalletLoading ||
-                            isRecharging ||
                             checkoutAvailabilityMessage !== ""}
                     >
                         {#if isPlacingOrder}
                             Placing Order...
-                        {:else if isRecharging}
-                            Processing...
                         {:else if areAllStoresClosed}
                             Stores closed
                         {:else if checkoutAvailabilityMessage}
@@ -947,7 +648,7 @@
                             class="text-2xl font-bold tracking-[-0.03em] text-ink"
                         >
                             {hasInsufficientBalance
-                                ? "Add money to place order"
+                                ? "Insufficient wallet balance"
                                 : "Review your payment"}
                         </h2>
                     </div>
@@ -1030,15 +731,6 @@
                         </div>
                     </div>
 
-                    {#if paymentMessage}
-                        <div
-                            class="mt-4 flex items-center gap-2.5 rounded-2xl border border-success/10 bg-success-soft px-4 py-3 text-left text-xs font-medium leading-relaxed text-success"
-                        >
-                            <CheckCircleIcon class="h-4 w-4 shrink-0" />
-                            <span>{paymentMessage}</span>
-                        </div>
-                    {/if}
-
                     {#if error}
                         <div
                             class="mt-4 flex items-start gap-2.5 rounded-2xl border border-danger/10 bg-danger-soft px-4 py-3 text-left text-xs font-medium leading-relaxed text-danger"
@@ -1053,24 +745,7 @@
                     class="shrink-0 border-t border-line bg-surface px-6 pt-4"
                     style="padding-bottom: max(env(safe-area-inset-bottom), 24px)"
                 >
-                    {#if hasInsufficientBalance}
-                        <button
-                            class="btn-primary h-13 w-full rounded-2xl px-4 text-sm shadow-sm"
-                            onclick={startCheckoutRecharge}
-                            disabled={isRecharging || checkoutRechargeExceedsWalletLimit}
-                        >
-                            {#if isRecharging}
-                                <Spinner />
-                                Opening payment…
-                            {:else}
-                                {#if checkoutRechargeExceedsWalletLimit}
-                                    Wallet limit is ₹{MAX_WALLET_BALANCE.toLocaleString("en-IN")}
-                                {:else}
-                                    Add ₹{formatAmount(rechargeShortfall)} & place order
-                                {/if}
-                            {/if}
-                        </button>
-                    {:else}
+                    {#if !hasInsufficientBalance}
                         <button
                             class="btn-primary h-13 w-full rounded-2xl px-4 text-sm shadow-sm"
                             onclick={() => placeOrder()}
@@ -1086,7 +761,7 @@
                     {/if}
 
                     <button
-                        class="mt-2 h-10 w-full text-sm font-semibold text-ink-muted transition-colors hover:text-ink disabled:opacity-40"
+                        class="{hasInsufficientBalance ? 'h-13 rounded-2xl border border-line' : 'mt-2 h-10'} w-full text-sm font-semibold text-ink-muted transition-colors hover:text-ink disabled:opacity-40"
                         onclick={() => {
                             isConfirmOpen = false;
                         }}

@@ -10,7 +10,7 @@ export type CheckoutCartItem = {
 
 /**
  * Captures every cart field sent to the order API in a stable order so a
- * checkout recharge can never authorize a different cart implicitly.
+ * pending order checkout cannot authorize a different cart implicitly.
  */
 export function createCheckoutCartSnapshot(
   items: ReadonlyArray<CheckoutCartItem>,

@@ -18,10 +18,7 @@
     import { toast } from "svelte-sonner";
     import Spinner from "$lib/components/custom/Spinner.svelte";
     import { goto } from "$app/navigation";
-    import {
-        getPendingPayment,
-        setPendingPayment,
-    } from "$lib/client/pending-payment";
+    import { setPendingPayment } from "$lib/client/pending-payment";
     import {
         MAX_WALLET_BALANCE,
         remainingWalletCapacity,
@@ -281,7 +278,6 @@
                 body: JSON.stringify({
                     amount: depositAmount,
                     confirmAmount: depositAmount,
-                    returnPath: "/view/wallet",
                 }),
             });
             const data = await response.json();
