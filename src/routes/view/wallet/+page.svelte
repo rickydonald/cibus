@@ -3,6 +3,7 @@
         ArrowDownLeftIcon,
         ArrowUpRightIcon,
         MinusIcon,
+        RotateCcwIcon,
     } from "@lucide/svelte";
     import { XCloseIcon } from "@untitled-theme/icons-svelte";
     import {
@@ -21,6 +22,7 @@
     import { setPendingPayment } from "$lib/client/pending-payment";
     import {
         MAX_WALLET_BALANCE,
+        isWalletRefund,
         remainingWalletCapacity,
         walletLimitMessage,
         wouldExceedWalletLimit,
@@ -68,8 +70,16 @@
         return Number.isFinite(num) ? String(num) : main;
     }
 
-    function txVisual(type: string) {
-        const normalized = type.toUpperCase();
+    function txVisual(transaction: WalletTransaction) {
+        const normalized = transaction.type.toUpperCase();
+        if (isWalletRefund(transaction.remarks)) {
+            return {
+                icon: RotateCcwIcon,
+                chip: "bg-success-soft text-success",
+                amount: "font-semibold text-success",
+                sign: "+",
+            };
+        }
         if (normalized === "CREDIT") {
             return {
                 icon: ArrowDownLeftIcon,
@@ -592,7 +602,7 @@
                     {#each transactions as tx, i}
                         {@const parsedAmount = splitPrice(tx.amount)}
                         {@const parsedBalance = splitPrice(tx.balance)}
-                        {@const visual = txVisual(tx.type)}
+                        {@const visual = txVisual(tx)}
                         {#if i > 0}
                             <div
                                 class="ml-[4.25rem] border-t border-line/60"

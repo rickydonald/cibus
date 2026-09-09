@@ -179,7 +179,7 @@
         }
 
         if (hasInsufficientBalance) {
-            error = "Insufficient EatRight wallet balance.";
+            error = "Insufficient Eat Right wallet balance.";
             isConfirmOpen = true;
             return;
         }
@@ -200,7 +200,7 @@
             return;
         }
         if (hasInsufficientBalance) {
-            error = "Insufficient EatRight wallet balance.";
+            error = "Insufficient Eat Right wallet balance.";
             isConfirmOpen = false;
             return;
         }

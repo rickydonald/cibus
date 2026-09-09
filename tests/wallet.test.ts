@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+    isWalletRefund,
     remainingWalletCapacity,
     walletLimitMessage,
     wouldExceedWalletLimit,
@@ -12,6 +13,12 @@ test("sends only the Svelte callback path to the JSP backend", () => {
         createPaymentCallbackPath(),
         "/view/wallet/callback?return=%2Fview%2Fwallet",
     );
+});
+
+test("distinguishes refunds from wallet recharges", () => {
+    assert.equal(isWalletRefund("Order cancellation refund: ORD-1"), true);
+    assert.equal(isWalletRefund("Re-Fund"), true);
+    assert.equal(isWalletRefund("Online Recharge"), false);
 });
 
 test("limits the wallet by its resulting balance", () => {

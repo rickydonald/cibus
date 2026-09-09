@@ -1,5 +1,9 @@
 export const MAX_WALLET_BALANCE = 1000;
 
+export function isWalletRefund(remarks: string): boolean {
+    return /\bre[\s-]?fund\b/i.test(remarks);
+}
+
 function toPaise(value: number): number {
     return Math.round(value * 100);
 }
