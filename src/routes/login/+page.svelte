@@ -1,6 +1,7 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { page } from "$app/state";
+    import { env } from "$env/dynamic/public";
     import { onMount } from "svelte";
     import {
         cacheEatRightProfile,
@@ -8,7 +9,9 @@
     } from "$lib/client/eatright-profile";
     import {
         authenticateWithPasskey,
+        cancelPasskeyAuthentication,
         getPasskeyErrorMessage,
+        supportsPasskeyAutofill,
         supportsPasskeys,
     } from "$lib/client/passkeys";
     import { getSafeRedirectPath } from "$lib/auth-redirect";
@@ -47,9 +50,16 @@
     const isLoginButtonDisabled = $derived(
         !userId.trim() || !password || isAuthBusy,
     );
+    const passkeyAutofillEnabled = env.PUBLIC_PASSKEY_AUTOFILL !== "false";
+    let conditionalPasskeyController: AbortController | null = null;
+    let conditionalPasskeyAttempt = 0;
 
     onMount(() => {
         passkeysSupported = supportsPasskeys();
+        if (passkeysSupported && passkeyAutofillEnabled) {
+            void startConditionalPasskeyLogin();
+        }
+        return cancelConditionalPasskeyLogin;
     });
 
     $effect(() => {
@@ -60,6 +70,7 @@
 
     async function handleLogin() {
         if (isAuthBusy || isLoginButtonDisabled) return;
+        cancelConditionalPasskeyLogin();
         isLoginLoading = true;
         error = "";
         passkeyError = "";
@@ -90,6 +101,7 @@
 
     async function handlePasskeyLogin() {
         if (isAuthBusy) return;
+        cancelConditionalPasskeyLogin();
         isPasskeyLoginLoading = true;
         passkeyError = "";
         error = "";
@@ -106,6 +118,38 @@
             );
         } finally {
             isPasskeyLoginLoading = false;
+        }
+    }
+
+    function cancelConditionalPasskeyLogin() {
+        conditionalPasskeyAttempt += 1;
+        conditionalPasskeyController?.abort();
+        conditionalPasskeyController = null;
+        cancelPasskeyAuthentication();
+    }
+
+    async function startConditionalPasskeyLogin() {
+        const attempt = ++conditionalPasskeyAttempt;
+        if (!(await supportsPasskeyAutofill()) || attempt !== conditionalPasskeyAttempt) {
+            return;
+        }
+
+        const controller = new AbortController();
+        conditionalPasskeyController = controller;
+        try {
+            const result = await authenticateWithPasskey({
+                useBrowserAutofill: true,
+                signal: controller.signal,
+            });
+            if (attempt !== conditionalPasskeyAttempt) return;
+            cacheEatRightProfile(result.name, result.userid);
+            await goto(redirectTo || "/view/home");
+        } catch {
+            // Conditional mediation is optional; explicit attempts report errors.
+        } finally {
+            if (conditionalPasskeyController === controller) {
+                conditionalPasskeyController = null;
+            }
         }
     }
 
@@ -149,7 +193,7 @@
                 bind:value={userId}
                 placeholder="Dept. number or staff ID"
                 id="user-id"
-                autocomplete="username"
+                autocomplete="username webauthn"
                 autocapitalize="characters"
                 required
                 class="auth-input font-semibold uppercase"

@@ -1,5 +1,7 @@
 import {
+    WebAuthnAbortService,
     browserSupportsWebAuthn,
+    browserSupportsWebAuthnAutofill,
     startAuthentication,
     startRegistration,
 } from "@simplewebauthn/browser";
@@ -98,6 +100,7 @@ function postJson<T>(
     path: string,
     body: unknown,
     fallbackError: string,
+    signal?: AbortSignal,
 ): Promise<T> {
     return apiRequest<T>(
         path,
@@ -105,6 +108,7 @@ function postJson<T>(
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body),
+            signal,
         },
         fallbackError,
     );
@@ -118,17 +122,37 @@ export function supportsPasskeys(): boolean {
     }
 }
 
-export async function authenticateWithPasskey(): Promise<PasskeyAuthenticationResult> {
+export async function supportsPasskeyAutofill(): Promise<boolean> {
+    try {
+        return await browserSupportsWebAuthnAutofill();
+    } catch {
+        return false;
+    }
+}
+
+export function cancelPasskeyAuthentication() {
+    WebAuthnAbortService.cancelCeremony();
+}
+
+export async function authenticateWithPasskey(options: {
+    useBrowserAutofill?: boolean;
+    signal?: AbortSignal;
+} = {}): Promise<PasskeyAuthenticationResult> {
     const optionsJSON = await postJson<AuthenticationOptionsJSON>(
         "/api/v1/passkeys/authenticate/options",
         {},
         "Unable to start passkey sign-in.",
+        options.signal,
     );
-    const response = await startAuthentication({ optionsJSON });
+    const response = await startAuthentication({
+        optionsJSON,
+        useBrowserAutofill: options.useBrowserAutofill,
+    });
     const result = await postJson<PasskeyAuthenticationResult>(
         "/api/v1/passkeys/authenticate/verify",
         response,
         "Unable to verify this passkey.",
+        options.signal,
     );
 
     if (!result?.success || !result.userid) {

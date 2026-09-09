@@ -49,7 +49,7 @@
 <Sheet
     bind:open
     title="Add Eat Right to your home screen"
-    description="Open it like any other app — no browser tabs, and it starts where you left off."
+    description="Open it like any other app - no browser tabs, and it starts where you left off."
 >
     <div class="px-5 pb-6">
         {#if install.mode === "promptable"}

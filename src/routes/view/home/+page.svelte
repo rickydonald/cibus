@@ -169,9 +169,9 @@
                                 Welcome
                             {/if}
                         </h1>
-                        <!-- <p class="text-xs font-medium text-ink-muted mt-0.5">
-                            It's Thursday
-                        </p> -->
+                        <p class="text-xs font-medium text-ink-muted mt-0.5">
+                            What are you eating today?
+                        </p>
                     </div>
                     <a
                         href="/view/settings"
