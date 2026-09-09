@@ -1,6 +1,7 @@
 <script lang="ts">
     import AuthShell from "$lib/components/custom/AuthShell.svelte";
     import Spinner from "$lib/components/custom/Spinner.svelte";
+    import OtpInput from "$lib/components/custom/OtpInput.svelte";
     import { withViewTransition } from "$lib/view-transition";
     import {
         isGuestUserId,
@@ -185,10 +186,6 @@
     });
 
     $effect(() => {
-        otp = normalizePasswordResetOtp(otp);
-    });
-
-    $effect(() => {
         if (resendSeconds <= 0) return;
         const timer = window.setTimeout(() => (resendSeconds -= 1), 1000);
         return () => window.clearTimeout(timer);
@@ -307,16 +304,10 @@
         >
             <div>
                 <label class="auth-label" for="reset-otp">One-time code</label>
-                <input
+                <OtpInput
                     id="reset-otp"
-                    type="text"
                     bind:value={otp}
-                    inputmode="numeric"
-                    autocomplete="one-time-code"
-                    maxlength="6"
-                    placeholder="••••••"
-                    class="auth-code-input"
-                    required
+                    disabled={isSubmitting}
                 />
             </div>
 

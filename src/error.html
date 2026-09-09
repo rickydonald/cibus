@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="robots" content="noindex" />
+        <meta name="theme-color" content="#f8f7f4" />
+        <title>%sveltekit.status% · Unable to load page | Eat Right</title>
+        <!-- Self-contained so this page still works when application assets fail. -->
+        <style>
+            :root { color-scheme: light; font-family: "Plus Jakarta Sans", system-ui, sans-serif; color: #1c1917; background: #f8f7f4; }
+            * { box-sizing: border-box; }
+            body { margin: 0; }
+            main { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; padding: max(2rem, env(safe-area-inset-top)) 1.25rem max(1rem, env(safe-area-inset-bottom)); text-align: center; }
+            a { color: inherit; text-decoration: none; }
+            .brand { font: 600 1.5rem "Fraunces", Georgia, serif; }
+            .college { display: block; margin-top: .5rem; font: 700 .625rem system-ui, sans-serif; letter-spacing: .24em; text-transform: uppercase; color: #736c65; }
+            .content { width: 100%; max-width: 32rem; flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 2.5rem 0; }
+            section { padding: 2.25rem 1.5rem; border: 1px solid #eae7e1; border-radius: 1.5rem; background: #fff; box-shadow: 0 1px 2px #1c19170a, 0 8px 24px #1c19170f; }
+            .symbol { display: grid; place-items: center; width: 3.5rem; height: 3.5rem; margin: auto; border: 1px solid #e1320e1a; border-radius: 50%; background: #ffece7; color: #c22c0a; }
+            .status { margin: 1.25rem 0 0; font: 5rem/1 "Fraunces", Georgia, serif; letter-spacing: -.06em; color: #c22c0a; }
+            h1 { margin: 1.25rem 0 0; font: 400 1.9rem/1.15 "Fraunces", Georgia, serif; letter-spacing: -.025em; text-wrap: balance; }
+            .description { max-width: 24rem; margin: 1rem auto 0; font-size: .875rem; line-height: 1.75; color: #56504a; }
+            .action { display: flex; align-items: center; justify-content: center; min-height: 3.25rem; margin-top: 2rem; padding: .75rem 1.25rem; border-radius: 1rem; background: #e1320e; color: #fff; font-size: .875rem; font-weight: 600; }
+            .action:hover { background: #b52709; }
+            a:focus-visible { outline: 2px solid #e1320e; outline-offset: 4px; }
+            footer { margin-top: 1.5rem; color: #736c65; font-size: .75rem; line-height: 1.65; }
+            @media (min-width: 640px) { section { padding: 2.75rem 2.5rem; } .status { font-size: 6rem; } h1 { font-size: 2.25rem; } }
+        </style>
+    </head>
+    <body>
+        <main>
+            <a class="brand" href="/" aria-label="Eat Right home">Eat Right<span class="college">Loyola College</span></a>
+            <div class="content">
+                <section aria-labelledby="error-title">
+                    <div class="symbol" aria-hidden="true">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m16 2-2.3 2.3a4 4 0 0 0 0 5.6l.4.4L3 21m12-6 6 6M2 2l20 20M7 2 2 7m10-5L2 12" /></svg>
+                    </div>
+                    <p class="status" aria-label="Error %sveltekit.status%">%sveltekit.status%</p>
+                    <h1 id="error-title">Something didn’t go as planned</h1>
+                    <p class="description">We couldn’t load this page. Please try again in a moment, or head home to continue.</p>
+                    <a class="action" href="/">Back to home &nbsp; →</a>
+                </section>
+                <footer>Good food. A fresh start.</footer>
+            </div>
+        </main>
+    </body>
+</html>

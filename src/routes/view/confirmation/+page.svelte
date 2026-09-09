@@ -710,7 +710,7 @@
                                     <div class="px-4 pb-4 pt-5">
                                         <p class="section-label">Pickup Code</p>
                                         <p
-                                            class="mt-1.5 mr-[-0.16em] font-geist-mono text-[44px] font-bold! leading-none tracking-[0.16em] text-ink"
+                                            class="mt-1.5 mr-[-0.16em] font-geist-mono text-[48px] font-bold! leading-none tracking-[0.16em] text-ink"
                                         >
                                             {pickupCode(order.order_no)}
                                         </p>
@@ -753,7 +753,7 @@
                                                     Code hides in
                                                 </p>
                                                 <p
-                                                    class={`mt-0.5 font-geist-mono text-[22px] font-bold leading-none tracking-tight tabular-nums ${isPreviewEnding ? "text-warning" : "text-ink"}`}
+                                                    class={`mt-0.5 font-geist-mono text-[20px] font-bold leading-none tracking-tight tabular-nums ${isPreviewEnding ? "text-warning" : "text-gray-700"}`}
                                                     aria-label={`${previewCountdown} remaining`}
                                                 >
                                                     {previewCountdown}
