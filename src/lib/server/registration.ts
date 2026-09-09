@@ -1,4 +1,4 @@
-import { FOODCOURT_API_BASE_URL } from "$lib/server/foodcourt-api";
+import { officialApiUrl } from "$lib/server/foodcourt-api";
 
 export const REGISTRATION_SESSION_COOKIE = "CibusRegistrationSession";
 const REGISTRATION_API_TIMEOUT_MS = 20_000;
@@ -52,7 +52,7 @@ export async function foodcourtRegistrationRequest(
         headers.set("Cookie", `JSESSIONID=${backendSessionId}`);
     }
 
-    const response = await fetch(`${FOODCOURT_API_BASE_URL}${path}`, {
+    const response = await fetch(officialApiUrl(path), {
         method: "POST",
         headers,
         body: form.toString(),

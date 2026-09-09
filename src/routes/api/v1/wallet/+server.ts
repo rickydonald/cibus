@@ -2,7 +2,7 @@ import { json } from "@sveltejs/kit";
 import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
 import { clearEatRightDataCache, getAccountSummary, getWalletTransactions } from "$lib/server/eatright-data";
 import { DEV_MODE } from "$lib/server/dev";
-import { FOODCOURT_API_BASE_URL, foodcourtApiRequest, FoodcourtApiError } from "$lib/server/foodcourt-api";
+import { officialApiUrl, foodcourtApiRequest, FoodcourtApiError } from "$lib/server/foodcourt-api";
 import { createPaymentCallbackPath } from "$lib/server/payment-callback";
 import { walletLimitMessage, wouldExceedWalletLimit } from "$lib/wallet";
 import {
@@ -148,7 +148,7 @@ export async function POST(event) {
   const result = data as Record<string, unknown>;
 
   if (result.status === "redirect" && typeof result.url === "string") {
-    const apiBase = new URL(`${FOODCOURT_API_BASE_URL}/`);
+    const apiBase = new URL(officialApiUrl("/"));
     const returnedUrl = result.url.trim();
     let paymentUrl: string;
 

@@ -1,20 +1,39 @@
 import { env } from "$env/dynamic/private";
 
-export const FOODCOURT_API_BASE_URL = (
-   env.FOODCOURT_API_BASE_URL
-).replace(/\/$/, "");
-
 const FOODCOURT_API_TIMEOUT_MS = 15_000;
 
 export class FoodcourtApiError extends Error {
+    status: number;
+    payload: unknown;
+
     constructor(
         message: string,
-        public status: number,
-        public payload: unknown,
+        status: number,
+        payload: unknown,
     ) {
         super(message);
         this.name = "FoodcourtApiError";
+        this.status = status;
+        this.payload = payload;
     }
+}
+
+export function getFoodcourtApiBaseUrl(): string {
+    const value = env.FOODCOURT_API_BASE_URL?.trim();
+    if (!value) {
+        throw new FoodcourtApiError("Foodcourt API is not configured", 503, null);
+    }
+
+    try {
+        const url = new URL(value);
+        if (!["http:", "https:"].includes(url.protocol)
+            || url.username || url.password || url.search || url.hash) {
+            throw new Error("Invalid API base URL");
+        }
+    } catch {
+        throw new FoodcourtApiError("Foodcourt API configuration is invalid", 503, null);
+    }
+    return value.replace(/\/+$/, "");
 }
 
 function parsePayload(text: string): unknown {
@@ -42,7 +61,7 @@ export async function foodcourtApiRequest<T>(
         headers.set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
     }
 
-    const response = await fetch(`${FOODCOURT_API_BASE_URL}${path}`, {
+    const response = await fetch(officialApiUrl(path), {
         method: options.method ?? "GET",
         headers,
         body: options.body?.toString(),
@@ -66,5 +85,5 @@ export async function foodcourtApiRequest<T>(
 }
 
 export function officialApiUrl(path: string): string {
-    return `${FOODCOURT_API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+    return `${getFoodcourtApiBaseUrl()}${path.startsWith("/") ? path : `/${path}`}`;
 }

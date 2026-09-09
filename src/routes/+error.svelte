@@ -40,7 +40,6 @@
                 </a>
             </div>
         </section>
-        <p class="mt-6 text-xs leading-5 text-ink-faint">Good food. A fresh start.</p>
     </div>
 </main>
 
