@@ -10,6 +10,8 @@ import {
   parseWalletTransactionPage,
 } from "$lib/wallet-pagination";
 
+const PAYMENT_INIT_TIMEOUT_MS = 15_000;
+
 const DEV_TRANSACTIONS = [
   { date: "2026-06-22 10:30 AM", amount: 200, balance: 250, sort_time: 1719045000, type: "CREDIT", remarks: "Online Recharge" },
   { date: "2026-06-21 02:15 PM", amount: 120, balance: 50, sort_time: 1718958000, type: "DEBIT", remarks: "Chicken Momo - Steamed" },
@@ -196,6 +198,7 @@ export async function POST(event) {
           Authorization: `Bearer ${accessToken}`,
         },
         redirect: "manual",
+        signal: AbortSignal.timeout(PAYMENT_INIT_TIMEOUT_MS),
       });
     } catch {
       return json(

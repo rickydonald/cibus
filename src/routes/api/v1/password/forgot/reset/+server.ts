@@ -12,6 +12,7 @@ import {
   DEFAULT_RATE_LIMIT_WINDOW_MS,
   enforceRateLimits,
 } from "$lib/server/rate-limit";
+import { clearEatRightSessionCookie } from "$lib/server/eatright";
 
 const noStore = { "Cache-Control": "no-store" };
 type ResetResponse = { status?: string; message?: string };
@@ -69,6 +70,7 @@ export const POST: RequestHandler = async (event) => {
         { status: 502, headers: noStore },
       );
     }
+    clearEatRightSessionCookie(event.cookies, event.url);
     return json(
       { status: "SUCCESS", message: payload.message ?? "Password reset successfully" },
       { headers: noStore },

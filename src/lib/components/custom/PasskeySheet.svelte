@@ -442,13 +442,12 @@
     bind:open
     title="Passkeys"
     showClose
-    maxHeight="auto" 
     dismissible={!isBusy}
     onopen={refreshPasskeys}
     onclose={resetSensitiveFields}
     style="--hades-padding-top: 20px"
 >
-    <div class="no-scrollbar px-2">
+    <div class="stage no-scrollbar px-2">
         <div class="steps">
             {#if step === "list"}
                 <div class="step" in:fly={stepEnter} out:fly={stepExit}>

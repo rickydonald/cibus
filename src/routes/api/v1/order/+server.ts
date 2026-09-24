@@ -10,6 +10,7 @@ const MAX_CART_ITEMS = 50;
 const MAX_ITEM_QTY = 10;
 const MAX_TOTAL_QTY = 100;
 const MAX_ORDER_TOTAL = 1000;
+const CHECKOUT_TIMEOUT_MS = 15_000;
 const CHECKOUT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type OrderItem = {
@@ -161,6 +162,7 @@ export async function POST(event) {
       method: "POST",
       headers: foodcourtHeaders(session.accessToken),
       body: form.toString(),
+      signal: AbortSignal.timeout(CHECKOUT_TIMEOUT_MS),
     });
   } catch {
     return json({ error: "Unable to reach the Foodcourt checkout service" }, { status: 502 });
