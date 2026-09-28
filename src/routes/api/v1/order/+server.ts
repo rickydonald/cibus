@@ -1,5 +1,8 @@
 import { json } from "@sveltejs/kit";
-import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
+import {
+  eatRightSessionExpiredResponse,
+  resolveEatRightSessionFromEvent,
+} from "$lib/server/eatright";
 import { clearEatRightDataCache } from "$lib/server/eatright-data";
 import { DEV_MODE } from "$lib/server/dev";
 import { officialApiUrl } from "$lib/server/foodcourt-api";
@@ -170,6 +173,9 @@ export async function POST(event) {
 
   const responseText = await response.text();
   const payload = parseJson(responseText);
+  if (response.status === 401) {
+    return eatRightSessionExpiredResponse(event);
+  }
   if (!response.ok || payload?.status !== "success") {
     const message = typeof payload?.message === "string"
       ? payload.message

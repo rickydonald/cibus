@@ -5,6 +5,7 @@ import {
 } from "$lib/server/foodcourt-api";
 import {
     clearEatRightSessionCookie,
+    foodcourtAuthErrorResponse,
     resolveEatRightSessionFromEvent,
 } from "$lib/server/eatright";
 
@@ -86,6 +87,8 @@ export const POST: RequestHandler = async (event) => {
             { headers: noStore },
         );
     } catch (error) {
+        const authError = foodcourtAuthErrorResponse(event, error);
+        if (authError) return authError;
         if (error instanceof FoodcourtApiError) {
             return json(
                 { error: error.message },

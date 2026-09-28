@@ -1,5 +1,8 @@
 import { json } from "@sveltejs/kit";
-import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
+import {
+  foodcourtAuthErrorResponse,
+  resolveEatRightSessionFromEvent,
+} from "$lib/server/eatright";
 import { getAccountSummary, getMenuItems, type MenuItem } from "$lib/server/eatright-data";
 import { DEV_MODE } from "$lib/server/dev";
 
@@ -32,34 +35,38 @@ export async function GET(event) {
   const session = await resolveEatRightSessionFromEvent(event);
   if (!session.ok) return session.response;
 
-  const { accessToken } = session;
+  try {
+    const { accessToken } = session;
+    const { outlets } = await getAccountSummary(session);
+    const openOutlets = outlets.filter((outlet) => !outlet.isClosed);
+    const menus = await Promise.all(
+      openOutlets.map((outlet) =>
+        getMenuItems({
+          accessToken,
+          outletId: outlet.id,
+          shopNo: outlet.shopNo,
+        }),
+      ),
+    );
 
-  const { outlets } = await getAccountSummary(session);
-  const openOutlets = outlets.filter((outlet) => !outlet.isClosed);
+    const query = q.toLowerCase();
+    const results: SearchResult[] = [];
 
-  const menus = await Promise.all(
-    openOutlets.map((outlet) =>
-      getMenuItems({
-        accessToken,
-        outletId: outlet.id,
-        shopNo: outlet.shopNo,
-      }).catch(() => []),
-    ),
-  );
+    for (let i = 0; i < openOutlets.length; i++) {
+      const outlet = openOutlets[i];
+      const items = menus[i];
 
-  const query = q.toLowerCase();
-  const results: SearchResult[] = [];
-
-  for (let i = 0; i < openOutlets.length; i++) {
-    const outlet = openOutlets[i];
-    const items = menus[i];
-
-    for (const item of items) {
-      if (item.itemname.toLowerCase().includes(query)) {
-        results.push({ ...item, shopno: outlet.shopNo });
+      for (const item of items) {
+        if (item.itemname.toLowerCase().includes(query)) {
+          results.push({ ...item, shopno: outlet.shopNo });
+        }
       }
     }
-  }
 
-  return json({ results });
+    return json({ results });
+  } catch (error) {
+    const authError = foodcourtAuthErrorResponse(event, error);
+    if (authError) return authError;
+    return json({ error: "Unable to search menu items" }, { status: 502 });
+  }
 }

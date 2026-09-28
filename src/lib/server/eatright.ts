@@ -1,9 +1,9 @@
 import { json, type Cookies, type RequestEvent } from "@sveltejs/kit";
-import { dev } from "$app/environment";
 import {
     EatRightAuthConfigurationError,
     verifyEatRightJwt,
 } from "./eatright-jwt";
+import { FoodcourtApiError } from "./foodcourt-api";
 
 const SESSION_COOKIE_NAME = "KairosX5EatRightSession";
 
@@ -68,7 +68,7 @@ function sessionCookieOptions(url: URL) {
         path: "/",
         httpOnly: true,
         sameSite: "lax" as const,
-        secure: false,
+        secure: url.protocol === "https:",
     };
 }
 
@@ -97,6 +97,26 @@ export function setEatRightSessionCookie(
  */
 export function clearEatRightSessionCookie(cookies: Cookies, url: URL) {
     cookies.delete(SESSION_COOKIE_NAME, sessionCookieOptions(url));
+}
+
+export function eatRightSessionExpiredResponse(event: RequestEvent) {
+    clearEatRightSessionCookie(event.cookies, event.url);
+    return json(
+        {
+            error: "Eat Right session has expired. Please sign in again.",
+            errorCode: "eatright_session_expired",
+        },
+        { status: 401 },
+    );
+}
+
+export function foodcourtAuthErrorResponse(
+    event: RequestEvent,
+    error: unknown,
+) {
+    return error instanceof FoodcourtApiError && error.status === 401
+        ? eatRightSessionExpiredResponse(event)
+        : null;
 }
 
 /**

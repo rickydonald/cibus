@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import type { RequestEvent } from "@sveltejs/kit";
 import { exportSPKI, generateKeyPair, SignJWT } from "jose";
@@ -197,4 +198,37 @@ test("formats the remaining rate-limit wait time", () => {
     assert.equal(formatRetryAfter(60), "1 minute");
     assert.equal(formatRetryAfter(119), "1 minute 59 seconds");
     assert.equal(formatRetryAfter(120), "2 minutes");
+});
+
+test("the session cookie and API proxies honor authentication expiry", async () => {
+    const sessionServer = await readFile(
+        new URL("../src/lib/server/eatright.ts", import.meta.url),
+        "utf8",
+    );
+    const client = await readFile(
+        new URL("../src/lib/client/eatright-client.ts", import.meta.url),
+        "utf8",
+    );
+    const proxyFiles = [
+        "account/show/+server.ts",
+        "outlets/+server.ts",
+        "outlets/menu/[outlet_id]/[shop_no]/+server.ts",
+        "orders/+server.ts",
+        "order/details/+server.ts",
+        "wallet/+server.ts",
+        "wallet/payment-status/+server.ts",
+    ];
+    const proxies = await Promise.all(proxyFiles.map((path) => readFile(
+        new URL(`../src/routes/api/v1/${path}`, import.meta.url),
+        "utf8",
+    )));
+
+    assert.match(sessionServer, /maxAge: Math\.max\(0, tokenLifetime\)/);
+    assert.match(sessionServer, /secure: url\.protocol === "https:"/);
+    assert.match(sessionServer, /errorCode: "eatright_session_expired"/);
+    assert.match(client, /response\.status === 401/);
+    assert.match(client, /redirectIfEatRightConnectRequired\(payload\?\.errorCode\)/);
+    for (const proxy of proxies) {
+        assert.match(proxy, /foodcourtAuthErrorResponse|eatRightSessionExpiredResponse/);
+    }
 });

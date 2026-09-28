@@ -1,5 +1,8 @@
 import { json } from "@sveltejs/kit";
-import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
+import {
+  foodcourtAuthErrorResponse,
+  resolveEatRightSessionFromEvent,
+} from "$lib/server/eatright";
 import { DEV_MODE } from "$lib/server/dev";
 import { foodcourtApiRequest, FoodcourtApiError } from "$lib/server/foodcourt-api";
 
@@ -49,6 +52,8 @@ export async function GET(event) {
       { accessToken: session.accessToken },
     ));
   } catch (error) {
+    const authError = foodcourtAuthErrorResponse(event, error);
+    if (authError) return authError;
     const status = error instanceof FoodcourtApiError ? error.status : 502;
     return json(
       { error: "Failed to load Foodcourt order details" },

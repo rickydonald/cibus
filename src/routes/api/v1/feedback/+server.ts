@@ -1,6 +1,9 @@
 import { json, type RequestHandler } from "@sveltejs/kit";
 import { validateFeedbackInput } from "$lib/feedback";
-import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
+import {
+    foodcourtAuthErrorResponse,
+    resolveEatRightSessionFromEvent,
+} from "$lib/server/eatright";
 import {
     foodcourtApiRequest,
     FoodcourtApiError,
@@ -105,6 +108,8 @@ export const POST: RequestHandler = async (event) => {
         }
         return json({ success: true, id: Number(payload.id) }, { headers: noStore });
     } catch (error) {
+        const authError = foodcourtAuthErrorResponse(event, error);
+        if (authError) return authError;
         if (error instanceof FoodcourtApiError) {
             const payload =
                 error.payload && typeof error.payload === "object"

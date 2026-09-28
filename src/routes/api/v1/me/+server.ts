@@ -1,6 +1,6 @@
 import { json } from "@sveltejs/kit";
 import {
-  clearEatRightSessionCookie,
+  foodcourtAuthErrorResponse,
   resolveEatRightSessionFromEvent,
 } from "$lib/server/eatright";
 import { getAccountSummary } from "$lib/server/eatright-data";
@@ -28,16 +28,8 @@ export async function GET(event) {
     });
   } catch (error) {
     console.error(error);
-    if (error instanceof FoodcourtApiError && (error.status === 401 || error.status === 403)) {
-      clearEatRightSessionCookie(event.cookies, event.url);
-      return json(
-        {
-          error: "EatRight session is no longer valid. Please sign in again.",
-          errorCode: "eatright_session_expired",
-        },
-        { status: 401 },
-      );
-    }
+    const authError = foodcourtAuthErrorResponse(event, error);
+    if (authError) return authError;
 
     return json(
       { error: "Unable to load the EatRight account" },

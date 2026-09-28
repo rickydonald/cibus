@@ -15,7 +15,7 @@ export async function redirectIfEatRightConnectRequired(
 ): Promise<boolean> {
     if (!isEatRightConnectRequired(errorCode)) return false;
     clearCachedEatRightProfile();
-    await goto("/login");
+    if (window.location.pathname !== "/login") await goto("/login");
     return true;
 }
 
@@ -23,5 +23,12 @@ export async function fetchEatRight(
     input: RequestInfo | URL,
     init?: RequestInit,
 ): Promise<Response> {
-    return fetch(input, { ...init, cache: "no-store" });
+    const response = await fetch(input, { ...init, cache: "no-store" });
+    if (response.status === 401) {
+        const payload = await response.clone().json().catch(() => null) as {
+            errorCode?: string;
+        } | null;
+        await redirectIfEatRightConnectRequired(payload?.errorCode);
+    }
+    return response;
 }

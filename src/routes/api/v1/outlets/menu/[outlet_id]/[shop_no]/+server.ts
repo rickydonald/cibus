@@ -1,5 +1,8 @@
 import { json } from "@sveltejs/kit";
-import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
+import {
+  foodcourtAuthErrorResponse,
+  resolveEatRightSessionFromEvent,
+} from "$lib/server/eatright";
 import { getMenuItems } from "$lib/server/eatright-data";
 import { DEV_MODE } from "$lib/server/dev";
 
@@ -61,6 +64,8 @@ export async function GET(event) {
     return json(await getMenuItems({ accessToken, outletId: outlet_id, shopNo: shop_no }));
   } catch (error) {
     console.error(error);
+    const authError = foodcourtAuthErrorResponse(event, error);
+    if (authError) return authError;
     return json({ error: "Failed to fetch items" }, { status: 502 });
   }
 }

@@ -1,5 +1,9 @@
 import { json } from "@sveltejs/kit";
-import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
+import {
+  eatRightSessionExpiredResponse,
+  foodcourtAuthErrorResponse,
+  resolveEatRightSessionFromEvent,
+} from "$lib/server/eatright";
 import { clearEatRightDataCache, getAccountSummary, getWalletTransactions } from "$lib/server/eatright-data";
 import { DEV_MODE } from "$lib/server/dev";
 import { officialApiUrl, foodcourtApiRequest, FoodcourtApiError } from "$lib/server/foodcourt-api";
@@ -56,6 +60,8 @@ export async function GET(event) {
       },
     });
   } catch (error) {
+    const authError = foodcourtAuthErrorResponse(event, error);
+    if (authError) return authError;
     const status = error instanceof FoodcourtApiError ? error.status : 502;
     const message = error instanceof FoodcourtApiError ? error.message : "Failed to load wallet transactions";
     return json({ error: message }, { status });
@@ -114,6 +120,8 @@ export async function POST(event) {
       );
     }
   } catch (error) {
+    const authError = foodcourtAuthErrorResponse(event, error);
+    if (authError) return authError;
     const status = error instanceof FoodcourtApiError ? error.status : 502;
     const message = error instanceof FoodcourtApiError
       ? error.message
@@ -136,6 +144,8 @@ export async function POST(event) {
       body: form,
     });
   } catch (error) {
+    const authError = foodcourtAuthErrorResponse(event, error);
+    if (authError) return authError;
     const status = error instanceof FoodcourtApiError ? error.status : 502;
     const message = error instanceof FoodcourtApiError
       ? error.message
@@ -207,6 +217,9 @@ export async function POST(event) {
       );
     }
     const gatewayText = await gatewayResponse.text();
+    if (gatewayResponse.status === 401) {
+      return eatRightSessionExpiredResponse(event);
+    }
 
     const gatewayLocation = gatewayResponse.headers.get("location");
     if (gatewayResponse.status >= 300 && gatewayResponse.status < 400 && gatewayLocation) {

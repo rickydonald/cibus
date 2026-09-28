@@ -1,5 +1,8 @@
 import { json } from "@sveltejs/kit";
-import { resolveEatRightSessionFromEvent } from "$lib/server/eatright";
+import {
+  foodcourtAuthErrorResponse,
+  resolveEatRightSessionFromEvent,
+} from "$lib/server/eatright";
 import { getAccountSummary } from "$lib/server/eatright-data";
 import { DEV_MODE } from "$lib/server/dev";
 
@@ -30,6 +33,8 @@ export async function GET(event) {
     });
   } catch (error) {
     console.error(error);
+    const authError = foodcourtAuthErrorResponse(event, error);
+    if (authError) return authError;
 
     return json(
       {
