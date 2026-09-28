@@ -12,8 +12,8 @@ function fallbackRandomBytes(bytes: Uint8Array) {
 }
 
 export function createCheckoutId(
-  cryptoApi: CheckoutCrypto | null = typeof globalThis.crypto === "object"
-    ? globalThis.crypto
+  cryptoApi: CheckoutCrypto | null = typeof crypto === "object"
+    ? crypto
     : null,
 ): string {
   if (typeof cryptoApi?.randomUUID === "function") {

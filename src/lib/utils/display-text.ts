@@ -130,8 +130,10 @@ function removeMatchingSourceSuffix(value: string, aliases: string[]): string {
     const fingerprints = new Set(aliases.map(sourceFingerprint).filter(Boolean));
     if (fingerprints.has(sourceFingerprint(value))) return "";
 
-    for (const delimiter of value.matchAll(/\s*(?:-|\/|:|\|)\s*/gu)) {
-        const delimiterIndex = delimiter.index ?? 0;
+    const delimiterPattern = /\s*(?:-|\/|:|\|)\s*/gu;
+    let delimiter: RegExpExecArray | null;
+    while ((delimiter = delimiterPattern.exec(value)) !== null) {
+        const delimiterIndex = delimiter.index;
         const suffix = value.slice(delimiterIndex + delimiter[0].length).trim();
         if (fingerprints.has(sourceFingerprint(suffix))) {
             return value.slice(0, delimiterIndex).trim();

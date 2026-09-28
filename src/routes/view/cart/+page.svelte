@@ -617,7 +617,7 @@
             ></button>
 
             <div
-                class="relative flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden rounded-t-[32px] border border-line bg-surface shadow-float sm:rounded-[32px]"
+                class="relative flex max-h-[92vh] max-h-[92dvh] w-full max-w-md flex-col overflow-hidden rounded-t-[32px] border border-line bg-surface shadow-float sm:rounded-[32px]"
                 in:fly={{ duration: 220, y: 80 }}
                 out:fly={{ duration: 160, y: 80 }}
             >
@@ -774,7 +774,7 @@
 
     {#if isPlacingOrder}
         <div
-            class="fixed inset-0 z-70 flex min-h-dvh items-center justify-center bg-canvas px-6 text-center"
+            class="fixed inset-0 z-70 flex min-h-[100vh] min-h-dvh items-center justify-center bg-canvas px-6 text-center"
             role="status"
             aria-live="assertive"
             aria-label="Order is being placed"

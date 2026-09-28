@@ -253,17 +253,24 @@
                 history.map((order) => [order.order_no, order]),
             );
 
-            orders = responses.flat().map((order) => {
-                const listed = historyByOrderNo.get(order.order_no);
-                return {
-                    ...order,
-                    created_on:
-                        order.created_on ?? listed?.created_on ?? null,
-                    // getOrderDetails.jsp does not always carry order_status,
-                    // so a cancellation may only be visible on the list.
-                    order_status: order.order_status ?? listed?.order_status,
-                };
-            });
+            orders = responses
+                .reduce<OrderDetails[]>(
+                    (allOrders, responseOrders) =>
+                        allOrders.concat(responseOrders),
+                    [],
+                )
+                .map((order) => {
+                    const listed = historyByOrderNo.get(order.order_no);
+                    return {
+                        ...order,
+                        created_on:
+                            order.created_on ?? listed?.created_on ?? null,
+                        // getOrderDetails.jsp does not always carry order_status,
+                        // so a cancellation may only be visible on the list.
+                        order_status:
+                            order.order_status ?? listed?.order_status,
+                    };
+                });
             lastStatusCheck = new Date();
             liveStatusUnavailable = false;
         } catch (err) {

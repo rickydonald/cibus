@@ -38,12 +38,7 @@
 		"jsbarcode": "^3.12.3",
 		"luxon": "^3.7.2",
 		"svelte-sonner": "^1.1.1",
-		"tailwindcss-corner-shape": "^1.4.6",
-		"workbox-core": "^7.4.1",
-		"workbox-expiration": "^7.4.1",
-		"workbox-precaching": "^7.4.1",
-		"workbox-routing": "^7.4.1",
-		"workbox-strategies": "^7.4.1"
+		"tailwindcss-corner-shape": "^1.4.6"
 	},
 	"overrides": {
 		"cookie": "0.7.2"

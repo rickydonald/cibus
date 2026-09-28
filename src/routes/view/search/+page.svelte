@@ -92,7 +92,10 @@
                 }),
             );
 
-            allItems = menus.flat();
+            allItems = menus.reduce<SearchItem[]>(
+                (items, menu) => items.concat(menu),
+                [],
+            );
         } catch (error) {
             console.error(error);
             loadError = "Unable to load menus. Pull to retry.";

@@ -8,6 +8,7 @@
 	import { dev } from "$app/environment";
 	import { isHubRoute } from "$lib/nav";
 	import { install } from "$lib/client/install.svelte";
+	import { iosSplashScreens } from "$lib/pwa";
 
 	let { children } = $props();
 
@@ -37,18 +38,27 @@
 				return;
 			}
 
+			const hadController = navigator.serviceWorker.controller !== null;
 			let reloadingForUpdate = false;
 			navigator.serviceWorker.addEventListener("controllerchange", () => {
-				if (reloadingForUpdate) return;
+				// A first install should not refresh a page the user is already using.
+				// Existing clients reload once so their HTML and hashed assets agree.
+				if (!hadController || reloadingForUpdate) return;
 				reloadingForUpdate = true;
 				window.location.reload();
 			});
 
 			void navigator.serviceWorker
-				.register("/service-worker.js")
+				.register("/service-worker.js", {
+					scope: "/",
+					updateViaCache: "none",
+				})
 				.then((registration) => {
 					const activate = (worker: ServiceWorker | null) => {
-						if (worker?.state === "installed") {
+						if (
+							worker?.state === "installed" &&
+							navigator.serviceWorker.controller
+						) {
 							worker.postMessage({ type: "SKIP_WAITING" });
 						}
 					};
@@ -64,7 +74,10 @@
 							activate(worker),
 						);
 					});
-					void registration.update();
+					if (hadController) void registration.update();
+				})
+				.catch((error: unknown) => {
+					console.warn("Service worker registration failed", error);
 				});
 		}
 	});
@@ -128,7 +141,40 @@
 	<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 	<meta name="apple-mobile-web-app-title" content="Eat Right" />
 	<meta name="mobile-web-app-capable" content="yes" />
-	<link rel="apple-touch-icon" href="/icons/512.png" />
+	<meta name="application-name" content="Eat Right" />
+	<meta name="msapplication-TileColor" content="#f8f7f4" />
+	<link
+		rel="apple-touch-icon"
+		sizes="180x180"
+		href="/icons/apple-touch-icon-180.png"
+	/>
+	<link
+		rel="apple-touch-icon"
+		sizes="167x167"
+		href="/icons/apple-touch-icon-167.png"
+	/>
+	<link
+		rel="apple-touch-icon"
+		sizes="152x152"
+		href="/icons/apple-touch-icon-152.png"
+	/>
+	<link
+		rel="apple-touch-icon-precomposed"
+		sizes="114x114"
+		href="/icons/apple-touch-icon-114.png"
+	/>
+	<link
+		rel="apple-touch-icon-precomposed"
+		sizes="57x57"
+		href="/icons/apple-touch-icon-57.png"
+	/>
+	{#each iosSplashScreens as splash}
+		<link
+			rel="apple-touch-startup-image"
+			href={splash.href}
+			media={splash.media}
+		/>
+	{/each}
 	<title>Eat Right - Loyola College</title>
 </svelte:head>
 <Toaster

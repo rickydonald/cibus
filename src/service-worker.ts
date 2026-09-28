@@ -1,80 +1,88 @@
 /// <reference lib="webworker" />
 
-import { clientsClaim } from "workbox-core";
-import { cleanupOutdatedCaches, precacheAndRoute } from "workbox-precaching";
-import { registerRoute } from "workbox-routing";
-import {
-    CacheFirst,
-    NetworkOnly,
-    StaleWhileRevalidate
-} from "workbox-strategies";
+import { build, files, version } from "$service-worker";
 
-import { ExpirationPlugin } from "workbox-expiration";
+declare const self: ServiceWorkerGlobalScope;
 
+const CACHE_PREFIX = "eatright-static";
+const CURRENT_CACHE = `${CACHE_PREFIX}-${version}`;
+const LEGACY_CACHES = new Set([
+	"api-cache",
+	"assets-cache",
+	"font-cache",
+	"image-cache",
+]);
 
-declare let self: ServiceWorkerGlobalScope & {
-    __WB_MANIFEST: Array<{
-        url: string;
-        revision?: string | null;
-    }>;
-};
-
-precacheAndRoute(self.__WB_MANIFEST);
-
-cleanupOutdatedCaches();
-
-clientsClaim();
+// SvelteKit supplies only this deployment's generated and static assets. Pages,
+// API responses, and third-party resources deliberately stay on the network so
+// authenticated data can never be replayed from a shared cache.
+const cacheableUrls = new Set(
+	[...build, ...files].map((path) => new URL(path, self.location.origin).href),
+);
 
 self.addEventListener("message", (event) => {
-    if (event.data?.type === "SKIP_WAITING") {
-        self.skipWaiting();
-    }
+	if (event.data?.type === "SKIP_WAITING") {
+		void self.skipWaiting();
+	}
 });
 
-// API responses contain authenticated, user-specific data and must never be
-// shared or replayed from a runtime cache. Remove the previous cache as soon
-// as this service worker activates.
 self.addEventListener("activate", (event) => {
-    event.waitUntil(caches.delete("api-cache"));
+	event.waitUntil(
+		(async () => {
+			let cacheNames: string[] = [];
+			try {
+				cacheNames = await caches.keys();
+			} catch {
+				// Activation and network access should not depend on Cache Storage.
+			}
+
+			await Promise.all(
+				cacheNames
+					.filter(
+						(name) =>
+							LEGACY_CACHES.has(name) ||
+							(name.startsWith(`${CACHE_PREFIX}-`) &&
+								name !== CURRENT_CACHE),
+					)
+					.map((name) => caches.delete(name).catch(() => false)),
+			);
+			await self.clients.claim();
+		})(),
+	);
 });
 
-registerRoute(
-    ({ url }) => url.pathname.startsWith("/api/"),
-    new NetworkOnly()
-);
+self.addEventListener("fetch", (event) => {
+	const { request } = event;
+	if (request.method !== "GET") return;
 
-registerRoute(
-    ({ request }) =>
-        request.destination === "style" ||
-        request.destination === "script" ||
-        request.destination === "worker",
-    new StaleWhileRevalidate({
-        cacheName: "assets-cache"
-    })
-);
+	const url = new URL(request.url);
+	if (url.origin !== self.location.origin || !cacheableUrls.has(url.href)) {
+		return;
+	}
 
-registerRoute(
-    ({ request }) => request.destination === "font",
-    new CacheFirst({
-        cacheName: "font-cache",
-        plugins: [
-            new ExpirationPlugin({
-                maxEntries: 20,
-                maxAgeSeconds: 60 * 60 * 24 * 365
-            })
-        ]
-    })
-);
+	event.respondWith(serveStaticAsset(event));
+});
 
-registerRoute(
-    ({ request }) => request.destination === "image",
-    new CacheFirst({
-        cacheName: "image-cache",
-        plugins: [
-            new ExpirationPlugin({
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 30
-            })
-        ]
-    })
-);
+async function serveStaticAsset(event: FetchEvent): Promise<Response> {
+	try {
+		const cached = await caches.match(event.request, {
+			cacheName: CURRENT_CACHE,
+		});
+		if (cached) return cached;
+	} catch {
+		// Cache Storage can be unavailable in private browsing or under quota
+		// pressure. A normal network request must still succeed in that case.
+	}
+
+	const response = await fetch(event.request);
+	if (response.ok && response.type === "basic") {
+		event.waitUntil(
+			caches
+				.open(CURRENT_CACHE)
+				.then((cache) => cache.put(event.request, response.clone()))
+				.catch(() => undefined),
+		);
+	}
+
+	return response;
+}

@@ -42,7 +42,7 @@
     });
 </script>
 
-<main class="flex min-h-dvh flex-col bg-surface">
+<main class="flex min-h-[100vh] min-h-dvh flex-col bg-surface">
     <div
         class="mx-auto flex w-full max-w-[26.5rem] flex-1 flex-col px-6 pb-[max(1.75rem,var(--safe-area-inset-bottom))] pt-[calc(var(--safe-area-inset-top)+3rem)] sm:justify-center sm:px-8 sm:py-16"
     >

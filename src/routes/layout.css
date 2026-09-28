@@ -254,6 +254,7 @@
         padding-top: calc(env(safe-area-inset-top, 0px) + 1rem);
     }
     .hub-page-shell {
+        min-height: 100vh;
         min-height: 100dvh;
         padding-bottom: var(--bottom-nav-clearance);
         scroll-padding-bottom: var(--bottom-nav-clearance);
@@ -298,6 +299,7 @@
 
 html {
     background: var(--color-canvas);
+    overflow-x: hidden;
     overflow-x: clip;
 }
 
@@ -307,6 +309,7 @@ body {
     color: var(--color-ink);
     touch-action: manipulation;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
     overflow-x: clip;
 }
 
@@ -420,6 +423,7 @@ html [data-sonner-toast].eatright-toast[data-styled="true"] {
     overflow: hidden;
     border: 1px solid rgb(255 255 255 / 0.09);
     border-radius: 2rem;
+    background: #1c1917;
     background:
         linear-gradient(rgb(255 255 255 / 0.05), rgb(255 255 255 / 0)),
         color-mix(in srgb, var(--color-ink) 94%, transparent);
@@ -450,7 +454,9 @@ html [data-sonner-toast].eatright-toast[data-styled="true"] [data-icon].eatright
     align-items: center;
     justify-content: center;
     border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.1);
     background: color-mix(in srgb, var(--toast-tint) 16%, transparent);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--toast-tint) 24%, transparent);
     color: var(--toast-tint);
 }

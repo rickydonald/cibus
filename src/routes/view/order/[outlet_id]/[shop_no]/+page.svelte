@@ -227,7 +227,7 @@
 
 <svelte:window onscroll={handleWindowScroll} />
 
-<div class="min-h-dvh text-ink antialiased">
+<div class="min-h-[100vh] min-h-dvh text-ink antialiased">
     <div
         class={`sticky top-0 z-40 border-b border-line/80 bg-canvas/95 shadow-[0_1px_0_rgba(28,25,23,0.02)] backdrop-blur-xl transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${
             isHeaderCollapsed && !isLoading

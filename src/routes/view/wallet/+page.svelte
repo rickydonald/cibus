@@ -19,7 +19,12 @@
     import { toast } from "svelte-sonner";
     import Spinner from "$lib/components/custom/Spinner.svelte";
     import { goto } from "$app/navigation";
-    import { setPendingPayment } from "$lib/client/pending-payment";
+    import {
+        clearPendingPayment,
+        getPendingPayment,
+        setPendingPayment,
+        type PendingPayment,
+    } from "$lib/client/pending-payment";
     import {
         MAX_WALLET_BALANCE,
         isWalletRefund,
@@ -53,6 +58,7 @@
     let transactionPage = $state(1);
     let hasMoreTransactions = $state(false);
     let isSubmitting = $state(false);
+    let pendingPayment = $state<PendingPayment | null>(null);
     let error = $state("");
     let message = $state("");
 
@@ -145,6 +151,23 @@
             amountValue <= MAX_RECHARGE &&
             !exceedsWalletLimit,
     );
+    const isPaymentLocked = $derived(isSubmitting || pendingPayment !== null);
+
+    function syncPendingPayment() {
+        pendingPayment = getPendingPayment();
+        // Browser back/forward cache restores isSubmitting=true from the page
+        // that left for the gateway. The persisted record now owns the lock.
+        isSubmitting = false;
+    }
+
+    function cancelPendingTransaction() {
+        clearPendingPayment();
+        pendingPayment = null;
+        isSubmitting = false;
+        error = "";
+        message = "Pending payment attempt cancelled. You can add money again.";
+        toast.success(message, { duration: 3000 });
+    }
 
     async function loadWallet(options: { preserveError?: boolean } = {}) {
         isLoading = true;
@@ -261,6 +284,11 @@
         message = "";
         const depositAmount = Number(amount);
 
+        if (pendingPayment) {
+            error = "Cancel the pending transaction before starting another payment.";
+            return;
+        }
+
         if (!amount) {
             error = "Enter the recharge amount.";
             return;
@@ -303,7 +331,10 @@
 
             if (data.status === "redirect" && data.url) {
                 if (data.orderId) {
-                    setPendingPayment(data.orderId, "/view/wallet");
+                    pendingPayment = setPendingPayment(
+                        data.orderId,
+                        "/view/wallet",
+                    );
                 }
                 window.location.assign(data.url);
                 return;
@@ -347,10 +378,14 @@
         }
 
         if (payment === "success" && verifiedStatus === "SUCCESS") {
+            clearPendingPayment();
+            pendingPayment = null;
             message = paymentMessage || "Payment completed successfully!";
             toast.success(message, { duration: 3000 });
             amount = "";
         } else if (payment) {
+            clearPendingPayment();
+            pendingPayment = null;
             error = paymentMessage || "Payment failed or was cancelled.";
             toast.error(error, { duration: 3000 });
         }
@@ -363,6 +398,16 @@
                 !!payment &&
                 !(payment === "success" && verifiedStatus === "SUCCESS"),
         });
+    });
+
+    onMount(() => {
+        syncPendingPayment();
+        window.addEventListener("pageshow", syncPendingPayment);
+        window.addEventListener("storage", syncPendingPayment);
+        return () => {
+            window.removeEventListener("pageshow", syncPendingPayment);
+            window.removeEventListener("storage", syncPendingPayment);
+        };
     });
 
     let isRechargeInputFocused: HTMLInputElement;
@@ -479,7 +524,7 @@
                         maxlength="4"
                         value={amount}
                         oninput={handleAmountInput}
-                        disabled={isSubmitting || walletCapacity < MIN_RECHARGE}
+                        disabled={isPaymentLocked || walletCapacity < MIN_RECHARGE}
                         class="w-full bg-transparent text-2xl font-bold tracking-tight text-ink outline-none tabular-nums placeholder:text-ink-faint/50 disabled:opacity-50"
                         placeholder="0"
                         bind:this={isRechargeInputFocused}
@@ -490,7 +535,7 @@
                             aria-label="Clear amount"
                             tabindex="-1"
                             onclick={() => (amount = "")}
-                            disabled={isSubmitting}
+                            disabled={isPaymentLocked}
                             class="grid h-6 w-6 shrink-0 place-items-center rounded-circle bg-line/70 text-ink-muted transition-colors hover:bg-line-strong"
                         >
                             <XCloseIcon class="h-3.5 w-3.5" />
@@ -503,7 +548,7 @@
                         <button
                             type="button"
                             onclick={() => quickSelect(value)}
-                            disabled={isSubmitting || value > walletCapacity}
+                            disabled={isPaymentLocked || value > walletCapacity}
                             class={`h-9 rounded-circle text-[13px] font-semibold transition-all active:scale-95 disabled:opacity-50 ${
                                 Number(amount) === value
                                     ? "bg-primary text-white"
@@ -531,19 +576,42 @@
                     </p>
                 {/if}
 
+                {#if pendingPayment}
+                    <div
+                        class="mt-4 rounded-2xl border border-warning/20 bg-warning/10 p-4"
+                        role="status"
+                    >
+                        <p class="text-sm font-semibold text-ink">
+                            Payment still pending
+                        </p>
+                        <p class="mt-1 text-xs leading-relaxed text-ink-muted">
+                            If you closed the payment window or went back, cancel this attempt to enable Add Money again. This does not reverse a completed payment.
+                        </p>
+                        <button
+                            type="button"
+                            class="mt-3 h-10 w-full rounded-circle border border-danger/25 bg-surface text-sm font-semibold text-danger transition-colors hover:bg-danger-soft focus:outline-none focus:ring-2 focus:ring-danger/25"
+                            onclick={cancelPendingTransaction}
+                        >
+                            Cancel transaction
+                        </button>
+                    </div>
+                {/if}
+
                 <div class="mt-5 flex flex-col gap-2">
                     <button
                         type="button"
                         class="btn-primary h-12 w-full rounded-circle text-sm"
                         onclick={rechargeWallet}
-                        disabled={isSubmitting || !isAmountValid}
+                        disabled={isPaymentLocked || !isAmountValid}
                     >
                         {#if isSubmitting}
                             <Spinner />
                         {/if}
 
                         <span>
-                            {#if isSubmitting}
+                            {#if pendingPayment}
+                                Payment pending
+                            {:else if isSubmitting}
                                 Starting Payment...
                             {:else if isAmountValid}
                                 Add ₹{amountValue.toLocaleString("en-IN")}

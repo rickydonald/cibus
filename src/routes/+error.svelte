@@ -11,7 +11,7 @@
     <meta name="robots" content="noindex" />
 </svelte:head>
 
-<main class="error-shell flex min-h-dvh flex-col items-center bg-canvas px-5 text-center sm:px-8">
+<main class="error-shell flex min-h-[100vh] min-h-dvh flex-col items-center bg-canvas px-5 text-center sm:px-8">
     <a href="/" data-sveltekit-reload class="rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary" aria-label="Eat Right home">
         <span class="block font-display text-2xl font-semibold tracking-tight text-ink">Eat Right</span>
         <span class="mt-2 block text-[10px] font-bold uppercase tracking-[0.24em] text-ink-faint">Loyola College</span>

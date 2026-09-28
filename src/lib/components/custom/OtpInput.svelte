@@ -40,7 +40,7 @@
                 class:active={focused && (selectionStart === selectionEnd
                     ? index === Math.min(selectionStart, 5)
                     : index >= selectionStart && index < selectionEnd)}
-            ></div>
+            >{value[index] ?? ""}</div>
         {/each}
     </div>
     <div class="otp-text">
@@ -68,7 +68,6 @@
 <style>
     .otp-field {
         position: relative;
-        container-type: inline-size;
         height: 3.5rem;
     }
     .otp-boxes {
@@ -78,40 +77,47 @@
         height: 100%;
     }
     .otp-box {
+        display: grid;
+        place-items: center;
         border: 1px solid var(--color-line);
         border-radius: 0.75rem;
         background: var(--color-canvas);
+        color: var(--color-ink);
+        font-family: var(--font-mono, monospace);
+        font-size: 1.5rem;
+        font-weight: 700;
     }
     .otp-box.active {
         border-color: var(--color-primary);
         background: var(--color-surface);
+        box-shadow: 0 0 0 3px rgba(225, 50, 14, 0.12);
         box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
     }
     .otp-text {
         position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
         inset: 0;
         /* Clip without creating a scroll container: focusing the trailing caret
            must never shift the digits away from their boxes. */
+        overflow: hidden;
         overflow: clip;
         border-radius: 0.75rem;
     }
     input {
-        --cell-step: calc((100cqw + 0.5rem) / 6);
         display: block;
         box-sizing: border-box;
-        width: calc(100% + var(--cell-step));
+        width: 100%;
         height: 100%;
         border: 0;
         padding: 0;
-        padding-left: calc((var(--cell-step) - 0.5rem - 1ch) / 2);
         background: transparent;
-        color: var(--color-ink);
+        color: transparent;
+        -webkit-text-fill-color: transparent;
         outline: none;
-        font-family: var(--font-mono, monospace);
-        font-size: 1.5rem;
-        font-weight: 700;
-        letter-spacing: calc(var(--cell-step) - 1ch);
-        caret-color: var(--color-primary);
+        caret-color: transparent;
     }
     .disabled { opacity: 0.5; }
 </style>

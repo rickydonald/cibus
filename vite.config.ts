@@ -4,12 +4,24 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+	build: {
+		// Lowest stable native-module browsers supported by Vite. This keeps one
+		// production bundle while covering iOS 12 and Chrome-era Android phones.
+		target: ['es2018', 'chrome64', 'edge79', 'firefox67', 'safari12', 'ios12']
+	},
 	server: {
 		allowedHosts: ['er.rdmw.net']
 	},
 	plugins: [
 		tailwindcss(),
 		sveltekit({
+			serviceWorker: {
+				// Registration is handled in the root layout so updates can switch
+				// atomically. Launch images are OS-only and should not inflate the
+				// service worker's runtime asset list.
+				register: false,
+				files: (file) => !file.startsWith('splash/') && file !== '.DS_Store'
+			},
 			compilerOptions: {
 				// Force runes mode for the project, except for libraries. Can be removed in svelte 6.
 				runes: ({ filename }) => filename.split(/[/\\]/).includes('node_modules') ? undefined : true
