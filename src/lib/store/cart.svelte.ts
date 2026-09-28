@@ -223,10 +223,10 @@ class CartStore {
    * Method to list items by outlet
    */
   get groupedByOutlet(): Record<string, CartItem[]> {
-    return Object.groupBy(
-      this.items,
-      (item) => item.outletname,
-    ) as Record<string, CartItem[]>;
+    return this.items.reduce<Record<string, CartItem[]>>((groups, item) => {
+      (groups[item.outletname] ??= []).push(item);
+      return groups;
+    }, Object.create(null) as Record<string, CartItem[]>);
   }
 }
 

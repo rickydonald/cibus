@@ -89,9 +89,7 @@
               ),
     );
 
-    const grouped = $derived(
-        Object.groupBy(cart.items, (item) => item.outletname),
-    );
+    const grouped = $derived(cart.groupedByOutlet);
 
     // Distinct counters in the cart — drives the header subtitle.
     const counterCount = $derived(Object.keys(grouped).length);
