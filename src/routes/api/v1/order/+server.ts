@@ -10,9 +10,6 @@ import { hasDuplicateItemIds } from "$lib/order-validation";
 
 const MAX_BODY_BYTES = 64 * 1024;
 const MAX_CART_ITEMS = 50;
-const MAX_ITEM_QTY = 10;
-const MAX_TOTAL_QTY = 100;
-const MAX_ORDER_TOTAL = 1000;
 const CHECKOUT_TIMEOUT_MS = 15_000;
 const CHECKOUT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -21,6 +18,7 @@ type OrderItem = {
   itemname: string;
   amount: number;
   qty: number;
+  available_qty: number;
   shopno: number;
   outletid: number;
   outletname: string;
@@ -69,7 +67,6 @@ function validateCart(value: unknown): { cart: OrderItem[]; error?: never }
     return { error: "Cart contains duplicate items" };
   }
 
-  let totalQty = 0;
   let total = 0;
   for (const item of cart) {
     if (!item || typeof item !== "object") return { error: "Cart contains invalid items" };
@@ -77,21 +74,21 @@ function validateCart(value: unknown): { cart: OrderItem[]; error?: never }
       !Number.isSafeInteger(item.id) || item.id <= 0 ||
       !Number.isSafeInteger(item.outletid) || item.outletid <= 0 ||
       !Number.isSafeInteger(item.shopno) || item.shopno <= 0 ||
-      !Number.isInteger(item.qty) || item.qty < 1 || item.qty > MAX_ITEM_QTY ||
-      !Number.isFinite(item.amount) || item.amount <= 0 || item.amount > MAX_ORDER_TOTAL ||
+      !Number.isSafeInteger(item.qty) || item.qty < 1 ||
+      !Number.isSafeInteger(item.available_qty) || item.available_qty < 1 ||
+      item.qty > item.available_qty ||
+      !Number.isFinite(item.amount) || item.amount <= 0 ||
       Math.abs(item.amount * 100 - Math.round(item.amount * 100)) > 1e-7 ||
       typeof item.itemname !== "string" || item.itemname.length < 1 || item.itemname.length > 200 ||
       typeof item.outletname !== "string" || item.outletname.length > 200
     ) {
       return { error: "Cart contains invalid items" };
     }
-    totalQty += item.qty;
     total += item.amount * item.qty;
   }
 
-  if (totalQty > MAX_TOTAL_QTY) return { error: "Cart quantity is too large" };
-  if (!Number.isFinite(total) || total <= 0 || total > MAX_ORDER_TOTAL) {
-    return { error: `Order total must be between ₹1 and ₹${MAX_ORDER_TOTAL}` };
+  if (!Number.isFinite(total) || total <= 0) {
+    return { error: "Order total must be positive" };
   }
   return { cart };
 }

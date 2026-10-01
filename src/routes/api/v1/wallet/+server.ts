@@ -8,7 +8,7 @@ import { clearEatRightDataCache, getAccountSummary, getWalletTransactions } from
 import { DEV_MODE } from "$lib/server/dev";
 import { officialApiUrl, foodcourtApiRequest, FoodcourtApiError } from "$lib/server/foodcourt-api";
 import { createPaymentCallbackPath } from "$lib/server/payment-callback";
-import { walletLimitMessage, wouldExceedWalletLimit } from "$lib/wallet";
+import { isValidRechargeAmount } from "$lib/wallet";
 import {
   paginateWalletTransactions,
   parseWalletTransactionPage,
@@ -75,15 +75,12 @@ export async function POST(event) {
   const confirmedAmount = Number(confirmAmount);
 
   if (
-    !Number.isFinite(depositAmount) ||
-    !Number.isFinite(confirmedAmount) ||
     depositAmount !== confirmedAmount ||
-    depositAmount < 1 ||
-    depositAmount > 1000
+    !isValidRechargeAmount(depositAmount)
   ) {
     return json(
       {
-        error: "Enter matching amounts between ₹1 and ₹1000",
+        error: "Enter matching positive whole-rupee amounts",
         errorCode: "invalid_amount",
       },
       { status: 400 },
@@ -91,12 +88,6 @@ export async function POST(event) {
   }
 
   if (DEV_MODE) {
-    if (wouldExceedWalletLimit(250, depositAmount)) {
-      return json(
-        { error: walletLimitMessage(250), errorCode: "wallet_limit_exceeded" },
-        { status: 400 },
-      );
-    }
     return json({ status: "success", message: "Dev recharge successful" });
   }
 
@@ -106,28 +97,6 @@ export async function POST(event) {
   }
 
   const { accessToken } = session;
-
-  try {
-    const account = await getAccountSummary(session);
-    const currentBalance = Number(account.walletBalance);
-    if (wouldExceedWalletLimit(currentBalance, depositAmount)) {
-      return json(
-        {
-          error: walletLimitMessage(currentBalance),
-          errorCode: "wallet_limit_exceeded",
-        },
-        { status: 400 },
-      );
-    }
-  } catch (error) {
-    const authError = foodcourtAuthErrorResponse(event, error);
-    if (authError) return authError;
-    const status = error instanceof FoodcourtApiError ? error.status : 502;
-    const message = error instanceof FoodcourtApiError
-      ? error.message
-      : "Failed to verify wallet balance";
-    return json({ error: message }, { status });
-  }
 
   const form = new URLSearchParams({
     action: "insert",

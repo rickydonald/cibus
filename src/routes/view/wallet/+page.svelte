@@ -25,13 +25,7 @@
         setPendingPayment,
         type PendingPayment,
     } from "$lib/client/pending-payment";
-    import {
-        MAX_WALLET_BALANCE,
-        isWalletRefund,
-        remainingWalletCapacity,
-        walletLimitMessage,
-        wouldExceedWalletLimit,
-    } from "$lib/wallet";
+    import { isValidRechargeAmount, isWalletRefund } from "$lib/wallet";
 
     type WalletTransaction = {
         date: string;
@@ -115,41 +109,23 @@
     }
 
     const MIN_RECHARGE = 1;
-    const MAX_RECHARGE = MAX_WALLET_BALANCE;
 
-    // Whole rupees only: strip non-digits, drop leading zeros, cap at
-    // 4 digits and clamp anything above the recharge ceiling.
+    // Whole rupees only: strip non-digits and unnecessary leading zeros.
     function sanitizeAmount(raw: string) {
-        let digits = raw.replace(/\D/g, "").replace(/^0+/, "").slice(0, 4);
-        if (digits && Number(digits) > MAX_RECHARGE) {
-            digits = String(MAX_RECHARGE);
-        }
-        return digits;
+        return raw.replace(/\D/g, "").replace(/^0+/, "");
     }
 
     function handleAmountInput(event: Event) {
         const input = event.currentTarget as HTMLInputElement;
         const clean = sanitizeAmount(input.value);
         amount = clean;
-        // Keep the DOM in sync even when the sanitized value is unchanged
-        // (e.g. a rejected fifth digit would otherwise stay visible).
+        // Keep the DOM in sync after removing non-digits or leading zeros.
         input.value = clean;
     }
 
     const amountValue = $derived(Number(amount));
-    const walletBalanceValue = $derived(Number(walletBalance ?? 0));
-    const walletCapacity = $derived(
-        remainingWalletCapacity(walletBalanceValue),
-    );
-    const exceedsWalletLimit = $derived(
-        amount !== "" &&
-            wouldExceedWalletLimit(walletBalanceValue, amountValue),
-    );
     const isAmountValid = $derived(
-        amount !== "" &&
-            amountValue >= MIN_RECHARGE &&
-            amountValue <= MAX_RECHARGE &&
-            !exceedsWalletLimit,
+        amount !== "" && isValidRechargeAmount(amountValue),
     );
     const isPaymentLocked = $derived(isSubmitting || pendingPayment !== null);
 
@@ -294,17 +270,8 @@
             return;
         }
 
-        if (
-            !Number.isInteger(depositAmount) ||
-            depositAmount < MIN_RECHARGE ||
-            depositAmount > MAX_RECHARGE
-        ) {
-            error = `Recharge amount must be between ₹${MIN_RECHARGE} and ₹${MAX_RECHARGE}.`;
-            return;
-        }
-
-        if (wouldExceedWalletLimit(walletBalanceValue, depositAmount)) {
-            error = walletLimitMessage(walletBalanceValue);
+        if (!isValidRechargeAmount(depositAmount)) {
+            error = `Recharge amount must be at least ₹${MIN_RECHARGE} and use whole rupees.`;
             return;
         }
 
@@ -501,13 +468,7 @@
                         Enter amount
                     </label>
                     <span class="text-[11px] font-medium text-ink-faint">
-                        {#if walletCapacity >= MIN_RECHARGE}
-                            Up to ₹{walletCapacity.toLocaleString("en-IN", {
-                                maximumFractionDigits: 2,
-                            })}
-                        {:else}
-                            Wallet limit reached
-                        {/if}
+                        Whole rupees
                     </span>
                 </div>
 
@@ -521,10 +482,9 @@
                         type="text"
                         inputmode="numeric"
                         autocomplete="off"
-                        maxlength="4"
                         value={amount}
                         oninput={handleAmountInput}
-                        disabled={isPaymentLocked || walletCapacity < MIN_RECHARGE}
+                        disabled={isPaymentLocked}
                         class="w-full bg-transparent text-2xl font-bold tracking-tight text-ink outline-none tabular-nums placeholder:text-ink-faint/50 disabled:opacity-50"
                         placeholder="0"
                         bind:this={isRechargeInputFocused}
@@ -548,7 +508,7 @@
                         <button
                             type="button"
                             onclick={() => quickSelect(value)}
-                            disabled={isPaymentLocked || value > walletCapacity}
+                            disabled={isPaymentLocked}
                             class={`h-9 rounded-circle text-[13px] font-semibold transition-all active:scale-95 disabled:opacity-50 ${
                                 Number(amount) === value
                                     ? "bg-primary text-white"
@@ -559,22 +519,6 @@
                         </button>
                     {/each}
                 </div>
-
-                {#if exceedsWalletLimit}
-                    <p
-                        class="mt-3 text-center text-xs font-medium leading-relaxed text-danger"
-                    >
-                        {walletLimitMessage(walletBalanceValue)}
-                    </p>
-                {:else if walletCapacity < MIN_RECHARGE}
-                    <p
-                        class="mt-3 text-center text-xs font-medium leading-relaxed text-ink-muted"
-                    >
-                        Your wallet can hold a maximum of ₹{MAX_WALLET_BALANCE.toLocaleString(
-                            "en-IN",
-                        )}.
-                    </p>
-                {/if}
 
                 {#if pendingPayment}
                     <div

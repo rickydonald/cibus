@@ -1,4 +1,5 @@
 import { browser } from "$app/environment";
+import { availableItemQuantity } from "$lib/cart-quantity";
 
 export type CartItem = {
   id: number;
@@ -14,7 +15,6 @@ export type CartItem = {
 const LEGACY_CART_STORAGE_KEY = "kairos:eatright:cart";
 const LEGACY_PENDING_CHECKOUT_KEY = "eatright:pending_checkout_recharge";
 const CART_STORAGE_PREFIX = "kairos:eatright:cart:";
-export const MAX_QTY = 10;
 
 function isCartItem(value: unknown): value is CartItem {
   if (!value || typeof value !== "object") return false;
@@ -26,10 +26,15 @@ function isCartItem(value: unknown): value is CartItem {
     typeof item.itemname === "string" &&
     typeof item.amount === "number" &&
     typeof item.qty === "number" &&
+    Number.isSafeInteger(item.qty) &&
     typeof item.outletid === "number" &&
     typeof item.outletname === "string" &&
     typeof item.shopno === "number" &&
-    item.qty > 0
+    typeof item.available_qty === "number" &&
+    Number.isSafeInteger(item.available_qty) &&
+    item.qty > 0 &&
+    item.available_qty > 0 &&
+    item.qty <= item.available_qty
   );
 }
 
@@ -101,27 +106,27 @@ class CartStore {
    */
   add(item: Omit<CartItem, "qty">) {
     const existing = this.getItem(item.id, item.outletid);
+    const limit = availableItemQuantity(item.available_qty);
 
     if (existing) {
-      const limit = Math.min(
-        MAX_QTY,
-        Math.max(1, existing.available_qty || MAX_QTY),
-      );
+      existing.available_qty = limit;
 
-      if (existing.qty >= limit) return;
+      if (existing.qty >= limit) {
+        this.persist();
+        return;
+      }
 
       existing.qty += 1;
       this.persist();
       return;
     }
 
+    if (limit === 0) return;
+
     this.items.push({
       ...item,
       qty: 1,
-      available_qty: Math.max(
-        1,
-        Math.min(item.available_qty ?? MAX_QTY, MAX_QTY),
-      ),
+      available_qty: limit,
     });
 
     this.persist();
@@ -162,7 +167,7 @@ class CartStore {
 
     if (!item) return;
 
-    const limit = Math.min(MAX_QTY, item.available_qty);
+    const limit = availableItemQuantity(item.available_qty);
 
     if (quantity <= 0) {
       this.remove(itemId, outletId);

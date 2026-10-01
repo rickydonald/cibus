@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { PageProps } from "./$types";
-    import { cart, MAX_QTY } from "$lib/stores/cart.svelte";
+    import { cart } from "$lib/stores/cart.svelte";
+    import { availableItemQuantity } from "$lib/cart-quantity";
     import { onMount } from "svelte";
     import {
         ArrowLeftIcon,
@@ -172,7 +173,7 @@
     }
 
     function itemLimit(item: MenuItem) {
-        return Math.min(MAX_QTY, Math.max(0, item.available_qty));
+        return availableItemQuantity(item.available_qty);
     }
 
     function cartEntry(item: MenuItem) {

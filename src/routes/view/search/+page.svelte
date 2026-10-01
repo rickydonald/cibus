@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { cart, MAX_QTY } from "$lib/stores/cart.svelte";
+    import { cart } from "$lib/stores/cart.svelte";
+    import { availableItemQuantity } from "$lib/cart-quantity";
     import Fuse from "fuse.js";
     import { onMount } from "svelte";
     import {
@@ -146,7 +147,7 @@
     });
 
     function itemLimit(item: SearchItem) {
-        return Math.min(MAX_QTY, Math.max(0, item.available_qty));
+        return availableItemQuantity(item.available_qty);
     }
 
     function cartEntry(item: SearchItem) {

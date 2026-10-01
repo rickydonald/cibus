@@ -15,7 +15,8 @@
         ChevronRightIcon,
     } from "@untitled-theme/icons-svelte";
     import Spinner from "$lib/components/custom/Spinner.svelte";
-    import { cart, MAX_QTY, type CartItem } from "$lib/stores/cart.svelte";
+    import { cart, type CartItem } from "$lib/stores/cart.svelte";
+    import { availableItemQuantity } from "$lib/cart-quantity";
     import { onMount } from "svelte";
     import helpers from "$lib/helpers";
     import { fly, fade } from "svelte/transition";
@@ -458,10 +459,7 @@
                             {#each outletItems as item (item.id + "-" + item.outletid)}
                                 {@const atMax =
                                     item.qty >=
-                                    Math.min(
-                                        MAX_QTY,
-                                        item.available_qty ?? MAX_QTY,
-                                    )}
+                                    availableItemQuantity(item.available_qty)}
                                 <div
                                     class="flex items-center gap-3 py-4"
                                     out:collapse={{ duration: 260 }}
@@ -527,8 +525,7 @@
                                                     outletname: item.outletname,
                                                     shopno: item.shopno,
                                                     available_qty:
-                                                        item.available_qty ??
-                                                        MAX_QTY,
+                                                        item.available_qty,
                                                 })}
                                             disabled={atMax || outletClosed}
                                             aria-label={`Add one ${item.itemname}`}
